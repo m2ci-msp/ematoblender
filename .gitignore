@@ -1,0 +1,17 @@
+old/*
+output/*
+unused/*
+blendfiles
+lib/*
+.gitignore.bak
+*.dia
+*.dia~
+videomaterials
+data/*
+*.bak
+__init__.py
+*__pycache__
+code_examples/*
+blender_objects/
+test_sounds/
+testing/

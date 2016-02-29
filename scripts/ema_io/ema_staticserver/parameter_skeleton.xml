@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<RT_Parameters Ver='1.00'>
+    <General> # Note only General section used
+        <Server>
+         <Name>StaticData</Name>  # update with file format
+         <Ver>1.02.03</Ver>
+         <IPadd></IPadd>   # update with IPadd
+         <Port>3030</Port> # update with port from properties
+         <Stats>
+            <FramesSent>0</FramesSent> # update as sending
+            <FramesPerSec>0</FramesPerSec> # update as sending
+         </Stats>
+        </Server>
+        <Multimodal>
+            <MocapFileAbsLoc></MocapFileAbsLoc> # update with the location/filename of the mocap file
+            <AudioFileAbsLoc></AudioFileAbsLoc> # update with the location/filename of the sycnhronised audio file
+            <VideoFileAbsLoc></VideoFileAbsLoc> # update with the location/filename of the ultrasound file
+        </Multimodal>
+    </General>
+    <The_3D>
+        <Frequency>60.00</Frequency> # Change this based on sampling rate
+        <Unit>mm</Unit>
+        <Markers> # Add the sufficient number of markers and their labels
+          <Marker id = '100'>
+        <Label>marker 1</Label>
+         <Description> </Description>
+          </Marker>
+        </Markers>
+    </The_3D>
+    <The_6D>
+     <Frequency>60.00</Frequency> # Change this based on sampling frequency
+     <Tools>
+      <Tool id='1'> # Add the sufficient number of markers and labels
+      <Label> </Label>
+      <Description> </Description>
+      <Markers>
+       <Marker id='12'> </Marker>
+       <Marker id='14'> </Marker>
+       <Marker id='20'> </Marker>
+    </Markers>
+      </Tool>
+    </Tools>
+    </The_6D>
+    <!--<Force></Force>--> # Force, Analog and Events functions not supported
+    <!--<Analog></Analog>-->
+    <!--<Events></Events>-->
+</RT_Parameters>

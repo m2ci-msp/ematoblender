@@ -1,0 +1,36 @@
+This is a list of TODOs - ideas for future work on the software.
+It is divided into fixes/additions, and ideas for new features.
+This list is ongoing.
+Last updated 19 Feb 2016.
+
+FIXES:
+coord_transforms.py: Add checks to make sure the data includes 3 axes worth, handle rotation as well.
+revise the head-moving camera control for more intuitive control, and for a non-jerky starting position/transition
+find a way to make the webcam-livestreaming work in Windows
+If present, get the video filepath through the XML, not as a hard-coded reference
+In bge_menus_overlays, check that these textures are indeed initialising correctly.
+
+On closing the game/restarting the file improve the communication to the gameserver (it should clear the queues/counts etc)
+
+In the movement of the coils, rotation values are not currently included in the transformations. This is fine for the current IK, but ideally should be included.
+
+Work on the rotation values for Carstens POS files (phi, theta)
+
+Review what happens when streaming file is switched. Changes were made in this area, but do they capture every case?
+Eg should the setting of the file change a value in the pps file?
+
+Look at streaming ALL the possible information from the WAVE API, not just the location values.
+
+Set TCP_NODELAY on both the client and server side of the RTSERVER, as this may bring speed improvements
+
+FEATURES:
+Gameserver to get a GUI, this should encompass some of the CL argument issues, eg choosing output directories.
+
+Improve the way XML is received and used from the WAVE (eg show stats?) and generate better XML from staticserver.
+
+Work to move vertices dymanically in Game Engine.
+
+More stats and controls in Game engine - dynamically add new views/flip axes?
+
+Ghost tongue from recording in game engine on top of live to show template?
+Touching targets and changing colors in GE?

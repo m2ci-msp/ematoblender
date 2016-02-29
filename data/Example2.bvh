@@ -1,0 +1,96 @@
+HIERARCHY
+ROOT head_left
+{
+	OFFSET	-0.142	0.989	-0.031
+	CHANNELS 6 XPosition YPosition ZPosition XRotation YRotation ZRotation
+	End Site
+	{
+		OFFSET	0.000	-1.000	0.000
+	}
+}
+ROOT head_right
+{
+	OFFSET	0.343	-0.199	-0.917
+	CHANNELS 6 XPosition YPosition ZPosition XRotation YRotation ZRotation
+	End Site
+	{
+		OFFSET	0.000	-1.000	0.000
+	}
+}
+ROOT jaw
+{
+	OFFSET	0.068	0.425	-0.902
+	CHANNELS 6 XPosition YPosition ZPosition XRotation YRotation ZRotation
+	End Site
+	{
+		OFFSET	0.000	-1.000	0.000
+	}
+}
+ROOT lowerlip
+{
+	OFFSET	0.985	0.159	-0.048
+	CHANNELS 6 XPosition YPosition ZPosition XRotation YRotation ZRotation
+	End Site
+	{
+		OFFSET	0.000	-1.000	0.000
+	}
+}
+ROOT nose
+{
+	OFFSET	0.990	0.034	0.134
+	CHANNELS 6 XPosition YPosition ZPosition XRotation YRotation ZRotation
+	End Site
+	{
+		OFFSET	0.000	-1.000	0.000
+	}
+}
+ROOT ref
+{
+	OFFSET	-0.999	-0.023	0.006
+	CHANNELS 6 XPosition YPosition ZPosition XRotation YRotation ZRotation
+	End Site
+	{
+		OFFSET	0.000	-1.000	0.000
+	}
+}
+ROOT T1
+{
+	OFFSET	0.138	-0.539	-0.830
+	CHANNELS 6 XPosition YPosition ZPosition XRotation YRotation ZRotation
+	End Site
+	{
+		OFFSET	0.000	-1.000	0.000
+	}
+}
+ROOT T2
+{
+	OFFSET	-0.149	-0.982	-0.111
+	CHANNELS 6 XPosition YPosition ZPosition XRotation YRotation ZRotation
+	End Site
+	{
+		OFFSET	0.000	-1.000	0.000
+	}
+}
+ROOT T3
+{
+	OFFSET	-0.083	-0.686	0.722
+	CHANNELS 6 XPosition YPosition ZPosition XRotation YRotation ZRotation
+	End Site
+	{
+		OFFSET	0.000	-1.000	0.000
+	}
+}
+ROOT upperlip
+{
+	OFFSET	-0.945	0.297	-0.130
+	CHANNELS 6 XPosition YPosition ZPosition XRotation YRotation ZRotation
+	End Site
+	{
+		OFFSET	0.000	-1.000	0.000
+	}
+}
+MOTION
+Frames:	724
+Frame Time:	0.005
+6.790	12.273	1.200	-8.137	56.687	-1.782	-6.083	12.965	0.386	19.706	-11.455	-52.567	0.175	0.978	-3.002	3.939	24.401	-51.690	0.053	-0.487	-2.579	56.493	9.144	-2.778	0.005	-0.006	5.717	56.740	1.991	7.709	-0.003	-0.026	0.006	-57.279	-1.344	0.390	0.258	1.551	-0.986	7.964	-30.909	-47.582	0.106	3.215	0.254	-8.542	-56.293	-6.396	0.112	5.056	-0.049	-4.804	-39.311	41.405	0.096	-1.061	-0.194	-54.183	17.068	-7.465
+6.789	12.272	1.201	-8.140	56.686	-1.790	-6.083	12.966	0.386	19.704	-11.460	-52.566	0.172	0.979	-3.003	3.946	24.397	-51.692	0.050	-0.489	-2.579	56.493	9.144	-2.788	0.005	-0.006	5.717	56.741	1.995	7.702	-0.003	-0.025	0.006	-57.279	-1.347	0.390	0.260	1.550	-0.986	7.962	-30.937	-47.564	0.107	3.215	0.254	-8.544	-56.295	-6.380	0.114	5.058	-0.051	-4.791	-39.304	41.413	0.094	-1.057	-0.196	-54.183	17.063	-7.476
