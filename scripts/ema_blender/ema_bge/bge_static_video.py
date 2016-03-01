@@ -43,7 +43,8 @@ def bge_reset_videoplane(newlocation, planename='UltrasoundPlane'):
     bge_update_videoplane(0, newlocation, planename=planename)
 
 # must be abs path here
-bge_update_videoplane(0, 'F:\\PostureData\\VP01_uti.mp4')
+if __name__ == "__main__":
+    bge_update_videoplane(0, os.path.abspath(video_override))
 
 
 

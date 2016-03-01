@@ -201,8 +201,8 @@ def update():
         mo.bge_update_webcam()
 
     if show_ultrasound:
-        # TODO: Get video location like sound location, not hard-coded
-        vid.bge_update_videoplane(0, 'F:\\PostureData\\VP01_uti.mp4')
+        # TODO: Get video location like sound location, not hard-coded in properties file
+        vid.bge_update_videoplane(0, pps.video_override)
 
     ################ COLLECT AND PARSE NEW DATA FROM UDP SOCKET ####################
 
