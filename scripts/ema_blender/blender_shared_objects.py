@@ -2,9 +2,6 @@ __author__ = 'Kristy'
 
 
 # sound actuator for streaming
-blendpath = 'C:\\Users\\Kristy\\Documents\\GitHub\\repos\\ematoblender\\' # set this during run_bpy using bpy.path etc
-
-
 soundpath = None
 vidpath = None
 mocappath = None

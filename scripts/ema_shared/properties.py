@@ -1,8 +1,5 @@
 __author__ = 'Kristy'
 
-# working directory
-abspath_to_repo = 'C:/Users/Kristy/Documents/GitHub/repos/ematoblender'
-
 # networking
 
 gameserver_port = 9995

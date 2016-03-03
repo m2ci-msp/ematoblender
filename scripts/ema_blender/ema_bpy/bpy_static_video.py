@@ -45,13 +45,13 @@ def create_video_plane(alpha='ADD', planename='UltrasoundPlane', placeholderfile
     screenmat.game_settings.use_backface_culling = True
     screenmat.game_settings.alpha_blend = alpha
 
-    # todo: save this placeholder in repositoy, access relative to blend file
+    # if an abspath to the placeholder file is not given, look for it relative to this blend file
     if not os.path.isabs(placeholderfile):
-        fp = os.path.normpath(pps.abspath_to_repo + os.path.sep + placeholderfile)
+        fp = os.path.normpath(bpy.path.abspath('//'+placeholderfile))
     else:
         fp = placeholderfile
     _, placeholdername = os.path.split(fp)
-    print('opening', fp)
+    print('Initialising a blank video texture called: {}\n'.format(fp))
     bpy.ops.image.open(filepath=fp)
 
     # Add any texture
