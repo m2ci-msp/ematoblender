@@ -7,9 +7,15 @@ to the relevant place within the Ematoblender package.
 
 Save the old User Preference settings in case a restore is required.
 Only one backup is performed (initial state before Ematoblender settings are applied).
+
+This is likely to be run from the commandline:
+use "blender --factory-startup  --background --python PATH_TO_FILE/configure_blender.py" to set the UPs
+use "blender --factory-startup --background --python PATH_TO_FILE/configure_blender.py --restore" to undo this
 """
+
 import bpy
 import os
+import sys
 from shutil import copy2, move
 
 
@@ -46,5 +52,8 @@ class UserPrefBackup(object):
 
 
 if __name__ == "__main__":
-    #UserPrefBackup.set_ematoblender_ups('./scripts')
-    UserPrefBackup.restore_old_ups()
+    args = sys.argv[1:]
+    if '--restore' in args:
+        UserPrefBackup.restore_old_ups()
+    else:
+        UserPrefBackup.set_ematoblender_ups('./scripts')
