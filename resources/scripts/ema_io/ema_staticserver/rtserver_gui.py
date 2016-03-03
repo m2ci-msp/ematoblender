@@ -17,11 +17,17 @@ def main():
     import scripts.ema_shared.properties as pps
     files = []
     abspath = os.path.abspath(pps.mocap_list_of_files)
-    if os.path.isfile(abspath):
+    if os.path.isfile(abspath):  # open the abspath of the file list
         with open(abspath, 'r') as f:
             for line in f:
-                line = line.rstrip('\t\r\n ')
-                if os.path.isfile(line) and line != '':
+                line = line.rstrip('\t\r\n ')  # verbatim filepath
+                # open the filepath relative to project directory, this is the parent of the dataserver file
+                projdir = os.path.abspath('../')
+                print('Searching for relative paths from', projdir)
+                relpath = os.path.normpath(projdir + './' + line)
+                if os.path.isfile(relpath):
+                    files.append(relpath)
+                elif os.path.isfile(line) and line != '':
                     files.append(os.path.abspath(line))
                 else:
                     print('Warning: filepath {} cannot be found, and is not shown in the GUI.'.format(line))
