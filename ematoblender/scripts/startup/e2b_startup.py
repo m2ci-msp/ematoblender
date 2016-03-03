@@ -71,6 +71,8 @@ def register():
     check_script_access()
     print('E2B: Registering all the operators used in menus.')
     # register all the operators needed later
+
+
     from scripts.ema_blender.bpy_operators.op_connectempties import ParentingOperator
     bpy.utils.register_class(ParentingOperator)
 
@@ -80,6 +82,9 @@ def register():
     from scripts.ema_blender.bpy_operators.ops_bpy_palate_trace import ModalDrawOperator, PalateVertsToMesh
     bpy.utils.register_class(ModalDrawOperator)
     bpy.utils.register_class(PalateVertsToMesh)
+
+    from scripts.ema_blender.bpy_operators.operator_definitions import AddGameMasterOperator
+    bpy.utils.register_class(AddGameMasterOperator)
 
     print('E2B: Ematoblender\'s startup process complete')
 

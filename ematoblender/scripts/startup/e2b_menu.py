@@ -52,7 +52,7 @@ class EmaReadInPanel(bpy.types.Panel):
 
         layout.label(text="Set scene properties:")
         row = layout.row()
-        row.operator("render.render") # TODO: Define operators for the other things
+        row.operator("object.add_gamemaster") # TODO: Define operators for the other things
 
         row = layout.row()
         row.operator("render.render")
