@@ -12,7 +12,8 @@ By pressing Alt+P when the cursor is in the text window, this script and the sce
 It also reloads the bpy module on each execution so if you make modifications to bpy_emareadin these should execute.
 '''
 
-scriptsdir = os.path.abspath(os.path.dirname(__file__)+'/../')  # scripts directory
+packagedir = os.path.abspath(os.path.dirname(__file__)+'/../../')  # ematoblender directory
+
 
 def check_saved():
     # is the .blend file saved
@@ -25,9 +26,9 @@ def check_saved():
 
 def add_to_path():
     # put the ematoblender/scripts directory into sys.path
-    print("Now adding {} to sys.path".format(scriptsdir))
-    if scriptsdir not in sys.path:
-        sys.path.append(scriptsdir)
+    print("Now adding {} to sys.path".format(packagedir))
+    if packagedir not in sys.path:
+        sys.path.append(packagedir)
 
 
 def add_blenddir_to_path():
@@ -51,7 +52,9 @@ def check_script_access():
         bge_script_path = 'scripts.ema_blender.ema_bge.bge_emareadin'
 
     available_modules = [x[0] for x in
-                         bpy.path.module_names(os.path.normpath(scriptsdir+'/../'), recursive=True)]
+                         bpy.path.module_names(os.path.normpath(packagedir), recursive=True)]
+    for x in available_modules:
+        print(x)
 
     if bge_script_path not in available_modules:
         print('Warning - the game script is not accessible.')
@@ -66,6 +69,18 @@ def register():
     print("E2B: Starting blender with the Ematoblender add-ons startup process")
     add_to_path()
     check_script_access()
+    print('E2B: Registering all the operators used in menus.')
+    # register all the operators needed later
+    from scripts.ema_blender.bpy_operators.op_connectempties import ParentingOperator
+    bpy.utils.register_class(ParentingOperator)
+
+    from scripts.ema_blender.bpy_operators.op_transparentmaterial import TransMatOperator
+    bpy.utils.register_class(TransMatOperator)
+
+    from scripts.ema_blender.bpy_operators.ops_bpy_palate_trace import ModalDrawOperator, PalateVertsToMesh
+    bpy.utils.register_class(ModalDrawOperator)
+    bpy.utils.register_class(PalateVertsToMesh)
+
     print('E2B: Ematoblender\'s startup process complete')
 
 
