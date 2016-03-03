@@ -12,54 +12,62 @@ By pressing Alt+P when the cursor is in the text window, this script and the sce
 It also reloads the bpy module on each execution so if you make modifications to bpy_emareadin these should execute.
 '''
 
-def check_script_access():
-    fail=False
-    currblendpath = bpy.path.abspath("//")
+scriptsdir = os.path.abspath(os.path.dirname(__file__)+'/../')  # scripts directory
+
+def check_saved():
     # is the .blend file saved
     if not bpy.data.is_saved:
         print('The current .blend file must be saved before you can add links to the game script.')
-        fail = True
-        # note: if still necessary can use bpy.ops.wm.save_as_mainfile() to save the blend in a ancestor directory
-        # see http://www.blender.org/api/blender_python_api_2_74_5/bpy.ops.wm.html?highlight=wm#module-bpy.ops.wm
-        raise FileNotFoundError
+        return False
+    else:
+        return bpy.path.abspath("//")
 
+
+def add_to_path():
+    # put the ematoblender/scripts directory into sys.path
+    print("Now adding {} to sys.path".format(scriptsdir))
+    if scriptsdir not in sys.path:
+        sys.path.append(scriptsdir)
+
+
+def add_blenddir_to_path():
     # add the blend file's directory to the path
     blend_dir = os.path.dirname(bpy.data.filepath)
     if blend_dir not in sys.path:
         sys.path.append(blend_dir)
 
+
+def check_script_access():
+    """Check whether the essential bpy_emareadin and bge_emareadin scripts are accessible."""
     try:
         import scripts.ema_shared.properties as pps
         # get the path to the script minus any '.main' suffix
         lessmain = lambda x: x[:-5] if x.endswith('.main') else x
-        bpy_script_path = lessmain(pps.bpy_script_path)
-        bge_script_path = lessmain(pps.bge_script_path)
+        bpy_script_path, bge_script_path = lessmain(pps.bpy_script_path), lessmain(pps.bge_script_path)
         print('PROPERTIES FILE FOUND, SCRIPT PATHS ARE:', bpy_script_path, bge_script_path)
     except ImportError:
         # these vals are hard-coded and duplicates use for testing if the properties file is not accessible
         bpy_script_path = 'scripts.ema_blender.ema_bpy.bpy_emareadin'
         bge_script_path = 'scripts.ema_blender.ema_bge.bge_emareadin'
 
-    # can .blend access ema_bpy.bpy_emareadin?
-    if bge_script_path not in [x[0] for x in bpy.path.module_names(currblendpath, recursive=True)]:
-        fail = True
-        print('Warning - the game script is not accessible from the file location')
+    available_modules = [x[0] for x in
+                         bpy.path.module_names(os.path.normpath(scriptsdir+'/../'), recursive=True)]
+
+    if bge_script_path not in available_modules:
+        print('Warning - the game script is not accessible.')
         raise ImportWarning
 
-    # can .blend access ema_bge.bge_emareadin?
-    elif bpy_script_path not in [x[0] for x in bpy.path.module_names(currblendpath, recursive=True)]:
-        fail = True
-        print('Warning - the bpy script you are about to try to build from is inaccessible from the .blend file location.')
+    elif bpy_script_path not in available_modules:
+        print('Warning - the bpy scene building script is not accessible.')
+        raise ImportWarning
 
-    return fail
 
-print('\n----------------------------------------')
-print('EXECUTING THE EMATOBLENDER BUILD PROCESS')
-print('PASSED MODULE TEST T/F:', not check_script_access(), '\n')
+def register():
+    print("E2B: Starting blender with the Ematoblender add-ons startup process")
+    add_to_path()
+    check_script_access()
+    print('E2B: Ematoblender\'s startup process complete')
 
-# load and reload the bpy build script in case changes made
-import importlib as imp
-from scripts.ema_blender.ema_bpy import bpy_emareadin as be
-imp.reload(be)
 
-be.main()
+def unregister():
+    print("Ematoblender closing too.")
