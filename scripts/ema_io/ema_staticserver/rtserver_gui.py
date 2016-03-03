@@ -17,13 +17,16 @@ def main():
     import scripts.ema_shared.properties as pps
     files = []
     abspath = os.path.abspath(pps.mocap_list_of_files)
-    with open(abspath, 'r') as f:
-        for line in f:
-            line = line.rstrip('\t\r\n ')
-            if os.path.isfile(line) and line != '':
-                files.append(os.path.abspath(line))
-            else:
-                print('Warning: filepath {} cannot be found, and is not shown in the GUI.'.format(line))
+    if os.path.isfile(abspath):
+        with open(abspath, 'r') as f:
+            for line in f:
+                line = line.rstrip('\t\r\n ')
+                if os.path.isfile(line) and line != '':
+                    files.append(os.path.abspath(line))
+                else:
+                    print('Warning: filepath {} cannot be found, and is not shown in the GUI.'.format(line))
+    else:
+        print('Warning - the file list {} could not be found.'.format(abspath))
 
     # start the server
     server_thread, server = rts.initialise_server(datafile=files[0], loop=True)
