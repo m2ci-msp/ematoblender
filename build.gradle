@@ -14,7 +14,6 @@ buildscript {
 }
 apply plugin: 'org.m2ci.msp.findbinary'
 
-
 /*
 Tasks in this build script: (TODOS)
 1. Check that Blender is installed (ONGOING)
@@ -31,74 +30,8 @@ Tasks in this build script: (TODOS)
     a. Install
     b. Copy the package into ematoblender/ematoblender/scripts/modules/numpy
     c. Check with CL that Blender can use numpy
-    
+
 
 */
 
 import org.ajoberstar.grgit.*
-import org.apache.tools.ant.taskdefs.condition.Os
-
-
-task findBlender << {
-    def blenderpath = findbinary{ binary "blender.exe" }.path
-    println(blenderpath)
-    println(System.getenv('PATH'))
-}
-
-
-// define different tasks for downloading and installing mathutils based on OS
-if (Os.isFamily(Os.FAMILY_WINDOWS)){ // OS is windows
-    task downloadMathUtils{
-        doFirst{
-            File f = new File("external")
-            f.mkdirs()
-        }
-        doLast{
-        FileTree tree = fileTree('external').include("blender_mathutils-*.whl")
-            if (tree.isEmpty()){
-                println("\n\n----------------NOTICE-----------------------")
-                println("Please manually download an appropriate version of mathutils into ./external")
-                println("We recommend blender_mathutils-2.74-cp34-none-win32.whl")
-                println("From http://www.lfd.uci.edu/~gohlke/pythonlibs/#blender-mathutils")
-                throw new GradleException("You must firstly download this file.")
-            }
-        } 
-    }
-    
-    task cloneMathUtils(type:Copy){ // copies the mathutils file into the right directory for building
-        dependsOn downloadMathUtils
-        from('external/')
-        into( 'build/mathutils')
-        include( 'blender_mathutils*.whl')
-        
-    }
-    
-    task installMathUtils(type: Exec) << { // use pip to install Blender-mathutils
-        dependsOn cloneMathUtils
-        workingDir = 'build/mathutils'
-        
-        // get all relevant blender whls
-        FileTree tree = fileTree('build/mathutils').include("blender_mathutils-*.whl")
-        def names = tree.filter {it.isFile() }.files.name
-        // pip install the first one
-        assert names.size() >= 1
-        commandLine = sprintf("pip install %s", names[0]).tokenize()
-    }
-}
-else{ //OS is Unix/Mac
-    
-    task cloneMathUtils{
-        outputs.dir file('build/mathutils')
-        doLast{
-            Grgit.clone(dir: file('build/mathutils'), uri: 'https://gitlab.com/ideasman42/blender-mathutils.git')
-        }
-    }
-
-    task installMathUtils(type: Exec){
-        dependsOn cloneMathUtils
-        commandLine = "python3 setup.py install --user".tokenize()
-        workingDir = file('build/mathutils')
-    }
-}    
-
-

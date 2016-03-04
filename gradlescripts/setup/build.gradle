@@ -1,0 +1,125 @@
+buildscript {
+  repositories {
+    jcenter()
+    maven {
+      url  "http://dl.bintray.com/m2ci-msp/maven"
+    }
+  }
+  dependencies {
+        classpath 'org.ajoberstar:gradle-git:1.4.2'
+        classpath 'de.undercouch:gradle-download-task:1.0'
+        classpath 'org.m2ci.msp:gradle-findbinary-plugin:0.2'
+  }
+}
+
+import org.apache.tools.ant.taskdefs.condition.Os
+import org.ajoberstar.grgit.*
+
+apply plugin: 'org.m2ci.msp.findbinary'
+
+// define different tasks for downloading and installing mathutils based on OS
+if (Os.isFamily(Os.FAMILY_WINDOWS)){ // OS is windows
+
+  /*--------------------------------------------------------------------------*/
+
+  task findBlender << {
+    def blenderpath = findbinary{ binary "blender.exe" }.path
+    println(blenderpath)
+    println(System.getenv('PATH'))
+  }
+
+  /*--------------------------------------------------------------------------*/
+
+  task downloadMathUtils{
+
+    doLast{
+      def tree = fileTree('external').include("blender_mathutils-*.whl")
+      if (tree.isEmpty()){
+        println("\n\n----------------NOTICE-----------------------")
+        println("Please manually download an appropriate version of mathutils into ./external")
+        println("We recommend blender_mathutils-2.74-cp34-none-win32.whl")
+        println("From http://www.lfd.uci.edu/~gohlke/pythonlibs/#blender-mathutils")
+        throw new GradleException("You must firstly download this file.")
+      }
+    }
+  }
+
+  /*--------------------------------------------------------------------------*/
+
+  task cloneMathUtils(type:Copy){ // copies the mathutils file into the right directory for building
+
+    dependsOn downloadMathUtils
+    from('external/')
+    into( "$rootProject.buildDir/mathutils")
+    include( 'blender_mathutils*.whl')
+
+  }
+
+  /*--------------------------------------------------------------------------*/
+
+  task installMathUtils(type: Exec) << { // use pip to install Blender-mathutils
+
+    dependsOn cloneMathUtils
+    workingDir = "$rootProject.buildDir/mathutils"
+
+    // get all relevant blender whls
+    def tree = fileTree("$rootProject.buildDir/mathutils").include("blender_mathutils-*.whl")
+    def fileName = tree.findResult { currentFile ->
+      if(currentFile.isFile() ) {
+        return currentFile
+      }
+      else{
+        return null
+      }
+    }
+
+    // pip install the first one
+    assert fileName != null
+    commandLine = "pip install $fileName".tokenize()
+  }
+
+  /*--------------------------------------------------------------------------*/
+
+}
+
+else{ //OS is Unix/Mac
+
+  /*--------------------------------------------------------------------------*/
+
+  task findBlender << {
+    def blenderpath = findbinary{ binary "blender" }.path
+    println(blenderpath)
+    println(System.getenv('PATH'))
+  }
+
+  /*--------------------------------------------------------------------------*/
+
+  task cloneMathUtils{
+    outputs.dir file("$rootProject.buildDir/mathutils")
+
+    doLast{
+      Grgit.clone(dir: file("$rootProject.buildDir/mathutils"),
+        uri: 'https://gitlab.com/ideasman42/blender-mathutils.git'
+      )
+    }
+  }
+
+  /*--------------------------------------------------------------------------*/
+
+  task installMathUtils(type: Exec){
+
+    dependsOn cloneMathUtils
+    outputs.dir file("$rootProject.buildDir/mathutils/build")
+
+    // use "--prefix=" as workaround for bug on os x
+    commandLine = "python3 setup.py install --user --prefix=".tokenize()
+    workingDir = file("$rootProject.buildDir/mathutils")
+  }
+
+  /*--------------------------------------------------------------------------*/
+
+} // end OS check
+
+task setup() {
+  dependsOn installMathUtils
+}
