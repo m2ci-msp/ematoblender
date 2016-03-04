@@ -191,6 +191,7 @@ else{ //OS is Unix/Mac
 ext.parseCL = {param -> // get the output from the  CL call
   def clOutput = new ByteArrayOutputStream()
   exec{
+    workingDir = rootProject.buildDir
     commandLine = param.tokenize()
     standardOutput = clOutput
   }
@@ -200,21 +201,34 @@ ext.parseCL = {param -> // get the output from the  CL call
 }
 
 ext.parseVerString = { verstring, boundstring ->  // return true if verstring > boundstring
+  println("Comparing versions $verstring and $boundstring")
   def verlist = verstring.tokenize('.').take(2)
   def boundlist = boundstring.tokenize('.').take(2)
    return verlist[0] > boundlist[0] || (verlist[0] == boundlist[0] & verlist[1] >= boundlist[1])
   }
 
 
+ext.pythonNumber = null
+
 task checkPython() {
   println("Checking python installation")
-  def pyStr = parseCL("python --version")
+  // try to search for python3 1 TODO
+  def pyStr = null
+  try{
+    pyStr = parseCL("python3 --version")
+    pythonNumber = "python3"
+  } catch(e){
+    println(e)
+    println("Command python3 failed")
+    pyStr = parseCL("python --version")
+    pythonNumber = "python"
+  }
   def pyVer = pyStr.tokenize()[1]
   println("Python version is $pyVer")
-  assert parseVerString(pyVer, versionsnumbers.python.failBelow)
-  if parseVerString(pyVer, versionsnumbers.python.warnBelow){
+  assert parseVerString(pyVer, versionNumbers.python.failBelow)
+  if (! parseVerString(pyVer, versionNumbers.python.warnBelow)){
     println("WARNING - OLD PYTHON VERSION")
-  }
+}
 }
 
 task checkPip() {
@@ -223,15 +237,20 @@ task checkPip() {
   def pipStr = parseCL("pip -V")
   def pipVer = pipStr.tokenize()[1] 
   println("Pip version is $pipVer")
-  assert parseVerStirng(pipVer, versionsnumbers.pip.failBelow)
-  if parseVerString(pipVer, versionsnumbers.pip.warnBelow){
+  assert parseVerString(pipVer, versionNumbers.pip.failBelow)
+  if (! parseVerString(pipVer, versionNumbers.pip.warnBelow)){
     println("WARNING - OLD PIP VERSION")
   }
 }
 
 task checkNumpy() {
   dependsOn checkPython
-  println("Checking Numpy installation")
+  println("Checking Numpy installation with python command $pythonNumber")
+  def numpyVer = parseCL("$pythonNumber -c \"import numpy;print(numpy.__version__)\"")
+  assert parseVerString(numpyVer, versionNumbers.numpy.failBelow)
+  if (! parseVerString(numpyVer, versionNumbers.numpy.warnBelow)){
+    println("WARNING - OLD NUMPY VERSION")
+  }
 }
 
 task setup() {
