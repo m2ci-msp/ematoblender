@@ -10,4 +10,5 @@ python{
 
 numpy{
   warnBelow = "1.9"
+  failBelow = "1.0"
 }
