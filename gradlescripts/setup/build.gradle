@@ -113,6 +113,7 @@ else{ //OS is Unix/Mac
   task installMathUtils(type: Exec){
 
     dependsOn cloneMathUtils
+    dependsOn checkPip
     outputs.dir file("$rootProject.buildDir/mathutils/build")
 
     // use "--prefix=" as workaround for bug on os x
@@ -123,6 +124,42 @@ else{ //OS is Unix/Mac
   /*--------------------------------------------------------------------------*/
 
 } // end OS check
+
+/*--------------------------------------------------------------------------*/
+
+ext.parseCL = {param -> // get the output from the  CL call
+  def clOutput = new ByteArrayOutputStream()
+  exec{
+    commandLine = param.tokenize()
+    standardOutput = clOutput
+  }
+  def outputAsString = clOutput.toString()
+  println "Result of call was: ${outputAsString}"
+  return outputAsString
+}
+
+task checkPython() {
+  println("Checking python installation")
+  def pyStr = parseCL("python --version")
+  def pyVer = pyStr.tokenize()[1]
+  println("Python version is $pyVer")
+  def pyFloat = pyVer.split('.')
+  //assert pyFloat[0] >= 3 & pyFloat[1] >= 1
+  //println("Python version float is $pyFloat")
+}
+
+task checkPip() {
+  dependsOn checkPython
+  println("Checking Pip installation")
+  def pipStr = parseCL("pip -V")
+  def pipVer = pipStr.tokenize()[1] //ongoing
+  println("Pip version is $pipVer")
+}
+
+task checkNumpy() {
+  dependsOn checkPython
+  println("Checking Numpy installation")
+}
 
 task setup() {
   dependsOn installMathUtils
