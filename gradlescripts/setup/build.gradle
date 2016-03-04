@@ -57,25 +57,29 @@ if (Os.isFamily(Os.FAMILY_WINDOWS)){ // OS is windows
 
   /*--------------------------------------------------------------------------*/
 
-  task installMathUtils(type: Exec) << { // use pip to install Blender-mathutils
-
+  task installMathUtils { // use pip to install Blender-mathutils
+    
     dependsOn cloneMathUtils
-    workingDir = "$rootProject.buildDir/mathutils"
-
-    // get all relevant blender whls
-    def tree = fileTree("$rootProject.buildDir/mathutils").include("blender_mathutils-*.whl")
-    def fileName = tree.findResult { currentFile ->
-      if(currentFile.isFile() ) {
-        return currentFile
+    
+    doLast{
+        
+      // get all relevant blender whls
+      def tree = fileTree("$rootProject.buildDir/mathutils").include("blender_mathutils-*.whl")
+      def fileName = tree.findResult { currentFile ->
+        if(currentFile.isFile() ) {
+          return currentFile
+        }
+        else{
+          return null
+        }
       }
-      else{
-        return null
+      assert fileName != null
+      exec{
+        workingDir = "$rootProject.buildDir/mathutils"
+        // pip install the first one
+        commandLine = "pip install $fileName".tokenize()
       }
     }
-
-    // pip install the first one
-    assert fileName != null
-    commandLine = "pip install $fileName".tokenize()
   }
 
   /*--------------------------------------------------------------------------*/
