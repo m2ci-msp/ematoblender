@@ -8,6 +8,24 @@ buildscript {
   }
 }
 
+/*
+Tasks in this build script: (TODOS)
+1. Check that Blender is installed
+    a. Find the location of the exec
+    b. Add the exec to the path so Blender can be used in CL
+    c. Use CL to check version
+    d. Parse version string and notify user if this is/is not acceptable
+2. Check that Python3 is installed
+    a. If not, notify the user and abort
+3. Install mathutils into the local Python dist (Y)
+4. Install numpy (for Windows this may involve a different procedure)
+    a. Install
+    b. Copy the package into ematoblender/ematoblender/scripts/modules/numpy
+    c. Check with CL that Blender can use numpy
+    
+5. Run blender in the command line to set the UP.filepaths.script_directory to the scripts directory
+*/
+
 import org.ajoberstar.grgit.*
 import org.apache.tools.ant.taskdefs.condition.Os
 
