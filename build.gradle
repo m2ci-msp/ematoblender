@@ -1,0 +1,74 @@
+buildscript {
+  repositories {
+    mavenCentral()
+  }
+  dependencies {
+        classpath 'org.ajoberstar:gradle-git:1.4.2'
+        classpath 'de.undercouch:gradle-download-task:1.0'
+  }
+}
+
+import org.ajoberstar.grgit.*
+import org.apache.tools.ant.taskdefs.condition.Os
+if (Os.isFamily(Os.FAMILY_WINDOWS)){ // OS is windows
+    task downloadMathUtils{
+        doFirst{
+            File f = new File("external")
+            f.mkdirs()
+        }
+        doLast{
+        FileTree tree = fileTree('external').include("blender_mathutils-*.whl")
+            if (tree.isEmpty()){
+                println("\n\n----------------NOTICE-----------------------")
+                println("Please manually download an appropriate version of mathutils into ./external")
+                println("We recommend blender_mathutils-2.74-cp34-none-win32.whl")
+                println("From http://www.lfd.uci.edu/~gohlke/pythonlibs/#blender-mathutils")
+                throw new GradleException("You must firstly download this file.")
+            }
+        } 
+    }
+    
+    task cloneMathUtils(type:Copy){ // copies the mathutils file into the right directory for building
+        dependsOn downloadMathUtils
+        from('external/')
+        into( 'build/mathutils')
+        include( 'blender_mathutils*.whl')
+        
+    }
+    
+    task installMathUtils(type: Exec){ // use pip to install Blender-mathutils
+        dependsOn cloneMathUtils
+        workingDir = 'build/mathutils'
+        
+        // get all relevant blender whls
+        FileTree tree = fileTree('build/mathutils').include("blender_mathutils-*.whl")
+        def names = tree.filter {it.isFile() }.files.name
+
+        // pip install the first one
+        commandLine = sprintf("pip install %s", names[0]).tokenize()
+        
+        
+    }
+}
+else{ //OS is Unix/Mac
+    
+    task cloneMathUtils{
+        outputs.dir file('build/mathutils')
+        doLast{
+            Grgit.clone(dir: file('build/mathutils'), uri: 'https://gitlab.com/ideasman42/blender-mathutils.git')
+        }
+    }
+
+    task installMathUtils(type: Exec){
+        dependsOn cloneMathUtils
+        commandLine = "python3 setup.py install --user".tokenize()
+        workingDir = file('build/mathutils')
+    }
+}    
+
+task cloneEmaToBlenderRepo{ // get the Ematoblender repo from Github
+    outputs.dir file('src')
+    doLast{
+        Grgit.clone(dir: file('src'), uri: 'https://github.com/m2ci-msp/ematoblender.git')
+    }
+}
