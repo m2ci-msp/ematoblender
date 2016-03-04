@@ -17,7 +17,10 @@ import org.ajoberstar.grgit.*
 
 apply plugin: 'org.m2ci.msp.findbinary'
 
-ext.parseVersion = { command ->
+/*----------------------------------------------------------------------------*/
+
+ext{
+  parseVersion = { command ->
 
       def clOutput = new ByteArrayOutputStream()
 
@@ -30,7 +33,15 @@ ext.parseVersion = { command ->
       def version = clOutput.toString().tokenize()[1]
 
       return version
+  }
+
+  versionNumbers = (new ConfigSlurper()).parse(
+    file("$rootDir/buildconfig/versionNumbers.groovy").text
+  )
+
 }
+
+/*----------------------------------------------------------------------------*/
 
 
 // define different tasks for downloading and installing mathutils based on OS
