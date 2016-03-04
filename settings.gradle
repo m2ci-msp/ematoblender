@@ -1,0 +1,2 @@
+include ":gradlescripts:setup"
+// todo: add include "gradlescripts:run"
