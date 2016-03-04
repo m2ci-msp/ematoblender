@@ -17,15 +17,48 @@ import org.ajoberstar.grgit.*
 
 apply plugin: 'org.m2ci.msp.findbinary'
 
+ext.parseVersion = { command ->
+
+      def clOutput = new ByteArrayOutputStream()
+
+      exec{
+        commandLine command.tokenize()
+        workingDir rootProject.buildDir
+        standardOutput = clOutput
+      }
+
+      def version = clOutput.toString().tokenize()[1]
+
+      return version
+}
+
+
 // define different tasks for downloading and installing mathutils based on OS
 if (Os.isFamily(Os.FAMILY_WINDOWS)){ // OS is windows
 
   /*--------------------------------------------------------------------------*/
 
-  task findBlender << {
-    def blenderpath = findbinary{ binary "blender.exe" }.path
-    println(blenderpath)
-    println(System.getenv('PATH'))
+  task findBlender {
+
+    def outputFile = file("$rootProject.buildDir/configuration/blender.json")
+    outputs.file outputFile
+
+    doLast{
+      outputFile.parentFile.mkdirs()
+
+      def blenderpath = findbinary{ binary "blender" }.path
+
+      def blenderVersion = (parseVersion("$blenderpath -v")).toDouble()
+      def builder = new groovy.json.JsonBuilder()
+
+      def json = builder.blender{
+          path "$blenderpath"
+          version "$blenderVersion"
+      }
+
+      outputFile.text = builder.toPrettyString()
+    }
+
   }
 
   /*--------------------------------------------------------------------------*/
@@ -58,11 +91,11 @@ if (Os.isFamily(Os.FAMILY_WINDOWS)){ // OS is windows
   /*--------------------------------------------------------------------------*/
 
   task installMathUtils { // use pip to install Blender-mathutils
-    
+
     dependsOn cloneMathUtils
-    
+
     doLast{
-        
+
       // get all relevant blender whls
       def tree = fileTree("$rootProject.buildDir/mathutils").include("blender_mathutils-*.whl")
       def fileName = tree.findResult { currentFile ->
@@ -90,10 +123,26 @@ else{ //OS is Unix/Mac
 
   /*--------------------------------------------------------------------------*/
 
-  task findBlender << {
-    def blenderpath = findbinary{ binary "blender" }.path
-    println(blenderpath)
-    println(System.getenv('PATH'))
+  task findBlender {
+
+    def outputFile = file("$rootProject.buildDir/configuration/blender.json")
+    outputs.file outputFile
+
+    doLast{
+      outputFile.parentFile.mkdirs()
+
+      def blenderpath = findbinary{ binary "blender" }.path
+
+      def blenderVersion = (parseVersion("$blenderpath -v")).toDouble()
+      def builder = new groovy.json.JsonBuilder()
+
+      def json = builder.blender{
+          path "$blenderpath"
+          version "$blenderVersion"
+      }
+
+      outputFile.text = builder.toPrettyString()
+    }
   }
 
   /*--------------------------------------------------------------------------*/
@@ -125,5 +174,6 @@ else{ //OS is Unix/Mac
 } // end OS check
 
 task setup() {
+  dependsOn findBlender
   dependsOn installMathUtils
 }
