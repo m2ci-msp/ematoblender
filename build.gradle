@@ -1,17 +1,24 @@
 buildscript {
   repositories {
     mavenCentral()
+    jcenter()
+    maven {
+      url  "http://dl.bintray.com/m2ci-msp/maven"
+    }
   }
   dependencies {
         classpath 'org.ajoberstar:gradle-git:1.4.2'
         classpath 'de.undercouch:gradle-download-task:1.0'
+        classpath 'org.m2ci.msp:gradle-findbinary-plugin:0.2'
   }
 }
+apply plugin: 'org.m2ci.msp.findbinary'
+
 
 /*
 Tasks in this build script: (TODOS)
-1. Check that Blender is installed
-    a. Find the location of the exec
+1. Check that Blender is installed (ONGOING)
+    a. Find the location of the exec (ONGOING)
     b. Add the exec to the path so Blender can be used in CL
     c. Use CL to check version
     d. Parse version string and notify user if this is/is not acceptable
@@ -28,6 +35,13 @@ Tasks in this build script: (TODOS)
 
 import org.ajoberstar.grgit.*
 import org.apache.tools.ant.taskdefs.condition.Os
+
+
+task findBlender << {
+    def blenderpath = findbinary{ binary "blender.exe" }.path
+    println(blenderpath)
+}
+
 
 // define different tasks for downloading and installing mathutils based on OS
 if (Os.isFamily(Os.FAMILY_WINDOWS)){ // OS is windows
@@ -56,18 +70,16 @@ if (Os.isFamily(Os.FAMILY_WINDOWS)){ // OS is windows
         
     }
     
-    task installMathUtils(type: Exec){ // use pip to install Blender-mathutils
+    task installMathUtils(type: Exec) << { // use pip to install Blender-mathutils
         dependsOn cloneMathUtils
         workingDir = 'build/mathutils'
         
         // get all relevant blender whls
         FileTree tree = fileTree('build/mathutils').include("blender_mathutils-*.whl")
         def names = tree.filter {it.isFile() }.files.name
-
         // pip install the first one
+        assert names.size() >= 1
         commandLine = sprintf("pip install %s", names[0]).tokenize()
-        
-        
     }
 }
 else{ //OS is Unix/Mac
