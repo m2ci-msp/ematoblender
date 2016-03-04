@@ -68,9 +68,4 @@ else{ //OS is Unix/Mac
     }
 }    
 
-task cloneEmaToBlenderRepo{ // get the Ematoblender repo from Github
-    outputs.dir file('src')
-    doLast{
-        Grgit.clone(dir: file('src'), uri: 'https://github.com/m2ci-msp/ematoblender.git')
-    }
-}
+
