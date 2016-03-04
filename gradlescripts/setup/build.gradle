@@ -133,7 +133,8 @@ else{ //OS is Unix/Mac
 
       def blenderpath = findbinary{ binary "blender" }.path
 
-      def blenderVersion = (parseVersion("$blenderpath -v")).toDouble()
+      def blenderVersionString = parseCL("$blenderpath -v")
+      def blenderVersion =blenderVersionString.tokenize()[1]
       def builder = new groovy.json.JsonBuilder()
 
       def json = builder.blender{
@@ -187,22 +188,34 @@ ext.parseCL = {param -> // get the output from the  CL call
   return outputAsString
 }
 
+ext.parseVerString = { verstring, boundstring ->  // return true if verstring > boundstring
+  def verlist = verstring.tokenize('.').take(2)
+  def boundlist = boundstring.tokenize('.').take(2)
+   return verlist[0] > boundlist[0] || (verlist[0] == boundlist[0] & verlist[1] >= boundlist[1])
+  }
+
+
 task checkPython() {
   println("Checking python installation")
   def pyStr = parseCL("python --version")
   def pyVer = pyStr.tokenize()[1]
   println("Python version is $pyVer")
-  def pyFloat = pyVer.split('.')
-  //assert pyFloat[0] >= 3 & pyFloat[1] >= 1
-  //println("Python version float is $pyFloat")
+  assert parseVerString(pyVer, versionsnumbers.python.failBelow)
+  if parseVerString(pyVer, versionsnumbers.python.warnBelow){
+    println("WARNING - OLD PYTHON VERSION")
+  }
 }
 
 task checkPip() {
   dependsOn checkPython
   println("Checking Pip installation")
   def pipStr = parseCL("pip -V")
-  def pipVer = pipStr.tokenize()[1] //ongoing
+  def pipVer = pipStr.tokenize()[1] 
   println("Pip version is $pipVer")
+  assert parseVerStirng(pipVer, versionsnumbers.pip.failBelow)
+  if parseVerString(pipVer, versionsnumbers.pip.warnBelow){
+    println("WARNING - OLD PIP VERSION")
+  }
 }
 
 task checkNumpy() {
