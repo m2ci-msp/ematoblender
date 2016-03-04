@@ -12,3 +12,8 @@ numpy{
   warnBelow = "1.9"
   failBelow = "1.0"
 }
+
+pip{
+  warnBelow = "8.0.1"
+  failBelow = "8.0.0"
+}
