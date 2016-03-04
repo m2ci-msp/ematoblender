@@ -33,7 +33,7 @@ if (Os.isFamily(Os.FAMILY_WINDOWS)){ // OS is windows
   task downloadMathUtils{
 
     doLast{
-      def tree = fileTree('external').include("blender_mathutils-*.whl")
+      def tree = fileTree(rootProject.file('external')).include("blender_mathutils-*.whl")
       if (tree.isEmpty()){
         println("\n\n----------------NOTICE-----------------------")
         println("Please manually download an appropriate version of mathutils into ./external")
@@ -49,7 +49,7 @@ if (Os.isFamily(Os.FAMILY_WINDOWS)){ // OS is windows
   task cloneMathUtils(type:Copy){ // copies the mathutils file into the right directory for building
 
     dependsOn downloadMathUtils
-    from('external/')
+    from(rootProject.file('external/'))
     into( "$rootProject.buildDir/mathutils")
     include( 'blender_mathutils*.whl')
 
