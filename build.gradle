@@ -10,6 +10,8 @@ buildscript {
 
 import org.ajoberstar.grgit.*
 import org.apache.tools.ant.taskdefs.condition.Os
+
+// define different tasks for downloading and installing mathutils based on OS
 if (Os.isFamily(Os.FAMILY_WINDOWS)){ // OS is windows
     task downloadMathUtils{
         doFirst{
