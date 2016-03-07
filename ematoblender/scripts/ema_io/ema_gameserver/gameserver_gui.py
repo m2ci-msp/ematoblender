@@ -87,8 +87,48 @@ class Application(tk.Frame):
         lbl.pack()
 
         # saving locations
+        self.tsvfilelocation = tk.StringVar()
+        self.savetsv = tk.BooleanVar()
+        self.wavfilelocation = tk.StringVar()
+        self.savewav = tk.BooleanVar()
+
         saveframe = tk.Frame(self.leftframe, relief='groove', bd=2)
-        saveframe.pack(fill=tk.X)
+        saveframe.pack(fill=tk.X,)
+
+        def set_tsvdir():
+            self.tsvfilelocation.set(fd.askdirectory())
+
+        def set_wavdir():
+            self.wavfilelocation.set(fd.askdirectory())
+
+        def set_tsvbtn():
+            self.tsvbtn.config(state=tk.ACTIVE if self.savetsv.get() else tk.DISABLED)
+            self.tsvlab.config(state=tk.ACTIVE if self.savetsv.get() else tk.DISABLED)
+
+        def set_wavbtn():
+            self.wavbtn.config(state=tk.ACTIVE if self.savewav.get() else tk.DISABLED)
+            self.wavlab.config(state=tk.ACTIVE if self.savewav.get() else tk.DISABLED)
+
+        tk.Label(saveframe, text="Save received TSV").grid(row=1, column=1)
+        btn = tk.Checkbutton(saveframe, variable=self.savetsv, command=set_tsvbtn)
+        btn.grid(row=1, column=2)
+
+        self.tsvbtn = tk.Button(saveframe, text="Choose location", command=set_tsvdir, state=tk.DISABLED)
+        self.tsvbtn.grid(row=1, column=3)
+        self.tsvlab = tk.Label(saveframe, textvariable=self.tsvfilelocation)
+        self.tsvlab.grid(row=1,column=4)
+
+        tk.Label(saveframe, text="Record audio while streaming").grid(row=2, column=1)
+        btn = tk.Checkbutton(saveframe, variable=self.savewav, command=set_wavbtn)
+        btn.grid(row=2, column=2)
+
+        self.wavbtn = tk.Button(saveframe, text="Choose location", command=set_wavdir, state=tk.DISABLED)
+        self.wavbtn.grid(row=2, column=3)
+        self.wavlab = tk.Label(saveframe, textvariable=self.wavfilelocation)
+        self.wavlab.grid(row=2, column=4)
+
+        # TODO: Choose which audio input
+
 
         # manual server calls
         callsframe = tk.Frame(self.leftframe, relief='groove', bd=2)
@@ -96,7 +136,6 @@ class Application(tk.Frame):
         self.allow_man_calls = tk.BooleanVar()
         manallow = tk.Checkbutton(callsframe, text="Allow manual calls to the data server",
                                   variable=self.allow_man_calls,
-                                  onvalue=1, offvalue=0,
                                   command=self.update_disabled_buttons)
         manallow.pack(fill=tk.X)
 
