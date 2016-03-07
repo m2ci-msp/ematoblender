@@ -147,6 +147,9 @@ class Application(tk.Frame):
         manbtn3.grid(row=2, column=3)
         self.manual_buttons = [manbtn1, manbtn2, manbtn3]
 
+        nt = NetworkTrafficFrame(self.leftframe)
+        nt.pack()
+
     def update_disabled_buttons(self):
         for btn in self.manual_buttons:
             btn.configure(state=tk.NORMAL if self.allow_man_calls.get() == 1 else tk.DISABLED)
@@ -159,21 +162,81 @@ class Application(tk.Frame):
         lbl.pack()
 
         # options for data smoothing/delay
-        smoothframe = tk.Frame(self.rightframe, relief='groove')
-        smoothframe.pack(side=tk.TOP, fill=tk.X)
-        lbl = tk.Label(smoothframe, text='Data filtering options')
-        lbl.pack()
+        smoothframe = tk.Frame(self.rightframe, relief='groove', bd=2)
+        smoothframe.pack()
+        lbl = tk.Label(smoothframe, text='Apply rolling average by:')
+        lbl.grid(row=1, column=1)
+        lbl=tk.Checkbutton(smoothframe, text='ms')
+        lbl.grid(row=2, column=1)
+        e = tk.Entry(smoothframe)
+        e.grid(row=2, column=2)
+        lbl=tk.Checkbutton(smoothframe, text='frames')
+        lbl.grid(row=2, column=3)
+        e = tk.Entry(smoothframe)
+        e.grid(row=2, column=4)
+
 
         # options for head-correction
-        corrframe = tk.Frame(self.rightframe, relief='groove')
+        corrframe = tk.Frame(self.rightframe, relief='groove', bd=2)
         corrframe.pack(side=tk.TOP, fill=tk.X)
-        lbl = tk.Label(corrframe, text='Head-correction options')
-        lbl.pack()
+        self.hcmethod = tk.IntVar()
 
-        # communication lists
-        if self.shownetworking:
-            netmsgframe = tk.Label(self.rightframe, text='Networkmsgframe goes here')#NetworkMessagesFrame()
-            netmsgframe.pack()
+        hc1frame = tk.Frame(corrframe)
+        hc1frame.grid(row=3, column=1)
+        btn= tk.Button(hc1frame, text='Choose file', command=fd.askopenfile)
+        btn.grid(row=1, column=1)
+        btn= tk.Button(hc1frame, text='Choose file', command=fd.askopenfile)
+        btn.grid(row=2, column=1)
+        hc1frame.grid_remove()
+
+        hc2frame = tk.Frame(corrframe)
+        hc2frame.grid(row=3, column=1)
+        btn= tk.Button(hc2frame, text='Choose file', command=fd.askopenfile)
+        btn.grid(row=3, column=1)
+
+        hc1frame.grid_remove()
+
+        hc3frame = tk.Frame(corrframe)
+        hc3frame.grid(row=3, column=1)
+        btn= tk.Button(hc3frame, text='Start streaming', command=fd.askopenfile)
+        btn.grid(row=3, column=2)
+        hc3frame.grid_remove()
+
+        def show_hcmethod():
+            """What to show in the head-correction area based on the chosen head-correction method"""
+            print('Trigger hcmethod', self.hcmethod.get())
+            hc1frame.grid_remove()
+            hc2frame.grid_remove()
+            hc3frame.grid_remove()
+            if self.hcmethod.get() == 1:
+                hc1frame.grid()
+            elif self.hcmethod.get() ==2:
+                hc2frame.grid()
+            else:
+                hc3frame.grid()
+
+        lbl = tk.Label(corrframe, text='Head-correction options')
+        lbl.grid(row=1, column=1)
+        c = tk.Radiobutton(corrframe, text="Pre-calculated", variable=self.hcmethod, value=1, command=show_hcmethod)
+        c.grid(row=2, column=1)
+        c = tk.Radiobutton(corrframe, text="Calculate from TSV file", variable=self.hcmethod, value=2, command=show_hcmethod)
+        c.grid(row=2, column=2)
+        c = tk.Radiobutton(corrframe, text="Record live", variable=self.hcmethod, value=3, command=show_hcmethod)
+        c.grid(row=2, column=3)
+
+
+
+
+        # TODO: Choose to perfoorm head correction
+        # If yes, choose file with matrices
+        # OR choose TSV file with recording
+        # OR choose to do some live streaming
+
+        # SHOW orientation
+
+
+        nt = NetworkTrafficFrame(self.rightframe)
+        nt.pack(expand=False)
 
 
     def createStatusLabel(self):
@@ -183,6 +246,41 @@ class Application(tk.Frame):
         labeltext = 'Example label'
         self.bottomlabel = tk.Label(self.bottomframe, text=labeltext)
         self.bottomlabel.pack(side=tk.RIGHT, fill=tk.X)
+
+
+class NetworkTrafficFrame(tk.Frame):
+    """Class that makes a frame with two side-by-side scrolling lists,
+    Text that shows the content.
+    Whole thing can be hidden on checkbox
+    """
+    def __init__(self, master=None):
+        super().__init__(master)
+        upperframe = tk.Frame(self)
+        upperframe.pack(side=tk.TOP, fill=tk.X)
+        leftframe = tk.Frame(upperframe)
+        leftframe.pack(side=tk.LEFT)
+        self.scrollbarleft = tk.Scrollbar(leftframe, orient='vertical')
+        self.listboxleft = tk.Listbox(leftframe, selectmode='single', yscrollcommand=self.scrollbarleft.set)
+        self.listboxleft.select_set(0)
+        self.scrollbarleft.config(command=self.listboxleft.yview)
+        self.scrollbarleft.pack(side='right', fill=tk.BOTH, expand=True)
+        self.listboxleft.pack()
+
+        rightframe = tk.Frame(upperframe)
+        rightframe.pack(side=tk.LEFT, fill=tk.X)
+        self.scrollbarright = tk.Scrollbar(rightframe, orient='vertical')
+        self.listboxright = tk.Listbox(rightframe, selectmode='single', yscrollcommand=self.scrollbarright.set)
+        self.listboxright.select_set(0)
+        self.scrollbarright.config(command=self.listboxright.yview)
+        self.scrollbarright.pack(side='right', fill=tk.BOTH, expand=True)
+        self.listboxright.pack()
+
+        lowerframe = tk.Frame(self)
+        lowerframe.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+        self.cantext = tk.StringVar().set('lblablajn')
+        canvas = tk.Text(lowerframe, width=leftframe.winfo_width(), text=self.cantext)
+        canvas.pack(side='left', fill=tk.BOTH, expand=True)
+
 
 if __name__ == "__main__":
     main()
