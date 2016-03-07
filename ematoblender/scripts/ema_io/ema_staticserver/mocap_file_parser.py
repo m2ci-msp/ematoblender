@@ -63,6 +63,7 @@ class MocapParent(object):
         self.min_dimensions = 100
         self.mappings = None        # list indicating how the file's values should be reordered to emulate WAVE ordering
 
+        self.latest_timestamp = 0 # timestamp is microseconds
         self.component = Component  # an initial component attribute
 
         self.xml_tree = ET.parse(xml_skeleton_location)  # basic standard XML root
@@ -339,6 +340,7 @@ class BVHParser(MocapParent):
         nextline = self.file.readline()
         if (nextline is not None) and (len(nextline.strip('\n\r\t ')) > 0):  # if there are more motion lines
             self.motion_lines_read += 1
+            self.latest_timestamp += self.frame_time
 
             # update Component/Coil objects from file
             measurements = nextline.rstrip('\n')
