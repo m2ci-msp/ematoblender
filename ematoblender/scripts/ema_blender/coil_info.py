@@ -2,8 +2,8 @@ __author__ = 'Kristy'
 
 import os
 import json
-from scripts.ema_blender import blender_shared_objects as bsh
-from scripts.ema_shared import properties as pps
+from . import blender_shared_objects as bsh
+from ..ema_shared import properties as pps
 
 
 def import_sensor_info_json(jsonfilename='./sensor_info.json'):

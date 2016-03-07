@@ -25,12 +25,12 @@ import time
 
 # My scripts for networking with the EMA (file)
 # client script that connects to EMA server
-from scripts.ema_blender import blender_networking as bn
-from scripts.ema_blender.blender_networking import send_to_gameserver
+from .. import blender_networking as bn
+from ..blender_networking import send_to_gameserver
 
 # external modules relevant to bge, stored separately for convenience
 # below illustrates absolute and relative imports of same directory
-import scripts.ema_blender.ema_bge.bge_standard_gamefns as gf
+from . import bge_standard_gamefns as gf
 from . import bge_camera_control as cc
 from . import bge_menus_overlays as mo
 from . import bge_update_armature as ua
@@ -39,13 +39,13 @@ from . import bge_play_audio as pa
 from . import bge_splines_lines as sl
 from . import bge_static_video as vid
 
-from scripts.ema_blender import coil_info as ci
-from scripts.ema_shared import properties as pps
-from scripts.ema_blender import blender_shared_objects as bsh
-import scripts.ema_blender.coord_transforms as ct
+from .. import coil_info as ci
+from .. import blender_shared_objects as bsh
+from .. import coord_transforms as ct
+from ...ema_shared import properties as pps
 
-from scripts.ema_io.rtc3d_parser import DataFrame
-from scripts.ema_shared.miscellanous import reload_modules_for_testing
+from ...ema_io.rtc3d_parser import DataFrame
+from ...ema_shared.miscellanous import reload_modules_for_testing
 
 ##### global variables #####
 
@@ -64,7 +64,7 @@ key_pace = 20  # number of logic ticks before registering a second keypress
 from queue import deque
 bsh.gs_answers = deque()  # store responses from gameserver (deque to can restrict length if req'd)
 # persistent socket that connects to the gameserver
-from scripts.ema_blender.blender_shared_objects import gs_soc_blocking, gs_soc_nonblocking
+from ..blender_shared_objects import gs_soc_blocking, gs_soc_nonblocking
 #bsh.gs_soc_blocking = None
 #bsh.gs_soc_nonblocking = None
 

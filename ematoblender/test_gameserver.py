@@ -12,8 +12,8 @@ def main():
     testing_active = True  # pretend to make some calls from Blender
 
     if testing_passive:  # for running the gameserver in a thread, to operate normally
-        from scripts.ema_io.ema_gameserver import gameserver as gs
-        from scripts.ema_shared.properties import game_server_cl_args
+        from ematoblender.scripts.ema_io.ema_gameserver import gameserver as gs
+        from ematoblender.scripts.ema_shared.properties import game_server_cl_args
 
         print('About to run the gameserver with arguments in pps file')
         print('CL args are:', game_server_cl_args)
@@ -36,7 +36,7 @@ def main():
         s = bn.setup_socket_to_gameserver(blocking=False)
 
         print('Performing some simple tests.')
-        from scripts.ema_blender.blender_networking import send_to_gameserver
+        from ematoblender.scripts.ema_blender.blender_networking import send_to_gameserver
         print(send_to_gameserver(s, mode='TEST_ALIVE'))
         single_dfs = [send_to_gameserver(s) for i in range(10)]
         for df in single_dfs:
@@ -51,7 +51,7 @@ def main():
         mydf = send_to_gameserver(s, mode="START_STREAM")
         print('start streaming df:', mydf)
 
-        from scripts.ema_io.rtc3d_parser import DataFrame
+        from ematoblender.scripts.ema_io.rtc3d_parser import DataFrame
         while True:
             send_to_gameserver(s, mode='STREAM_DF')
             this_df = b''

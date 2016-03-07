@@ -3,7 +3,7 @@ import bpy
 import mathutils
 import math
 from .bpy_workspace import postfn_gamemaster_reset_decorator
-from scripts.ema_blender import blender_shared_objects as bsh
+from .. import blender_shared_objects as bsh
 
 
 @postfn_gamemaster_reset_decorator

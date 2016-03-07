@@ -25,15 +25,15 @@ from . import bpy_workspace as ws
 from . import bpy_move_objects as mo
 from . import bpy_static_video as vid
 
-from scripts.ema_blender import coil_info as ci
-from scripts.ema_blender import blender_shared_objects as bsh
-from scripts.ema_blender import coord_transforms as ct
-from scripts.ema_blender import blender_networking as bn
+from .. import coil_info as ci
+from .. import blender_shared_objects as bsh
+from .. import coord_transforms as ct
+from .. import blender_networking as bn
 
-from scripts.ema_shared import miscellanous as misc
-from scripts.ema_shared import properties as pps
-from scripts.ema_shared import general_maths as bm
-from scripts.ema_shared.miscellanous import reload_modules_for_testing
+from ...ema_shared import miscellanous as misc
+from ...ema_shared import properties as pps
+from ...ema_shared import general_maths as bm
+from ...ema_shared.miscellanous import reload_modules_for_testing
 
 
 def main():

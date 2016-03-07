@@ -8,12 +8,12 @@ This module describes how to place coils given an incoming dataframe in bpy.
 import bpy
 #from .bpy_workspace import postfn_gamemaster_reset_decorator
 from ..ema_bpy import bpy_link_assets_coils as lac
-from scripts.ema_blender import coil_info as ci
-from scripts.ema_blender import blender_networking as bn
-from scripts.ema_blender import blender_shared_objects as bsh
+from .. import coil_info as ci
+from .. import blender_networking as bn
+from .. import blender_shared_objects as bsh
+from .. import coord_transforms as ct
 
-from scripts.ema_shared import properties as pps
-import scripts.ema_blender.coord_transforms as ct
+from ematoblender.scripts.ema_shared import properties as pps
 
 
 def show_all_coils_in_position(df, active=True, biteplate=True, reference=True):

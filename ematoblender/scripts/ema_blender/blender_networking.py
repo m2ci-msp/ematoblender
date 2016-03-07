@@ -16,10 +16,10 @@ import time
 
 import xml.etree.ElementTree as ET
 from collections import deque
-
-import scripts.ema_blender.blender_shared_objects as bsh
-import scripts.ema_shared.properties as pps
 from subprocess import Popen
+
+from . import blender_shared_objects as bsh
+from ..ema_shared import properties as pps
 
 
 def setup_socket_to_gameserver(port=0, blocking=False):
@@ -312,7 +312,7 @@ def get_one_df():
 
 #unused
 def bge_only_start_stream():
-    from scripts.ema_blender.ema_bge.bge_menus_overlays import bge_display_status_text
+    from ematoblender.scripts.ema_blender.ema_bge.bge_menus_overlays import bge_display_status_text
     send_to_gameserver(bsh.gs_soc_nonblocking, mode='START_STREAM')
     reply1 = recv_from_gameserver(bsh.gs_soc_nonblocking)
     send_to_gameserver(bsh.gs_soc_nonblocking, mode='STATUS')
@@ -321,7 +321,7 @@ def bge_only_start_stream():
 
 #unused
 def bge_only_stop_stream():
-    from scripts.ema_blender.ema_bge.bge_menus_overlays import bge_display_status_text
+    from .ema_bge.bge_menus_overlays import bge_display_status_text
     send_to_gameserver(bsh.gs_soc_nonblocking, mode='STREAM_STOP')
     reply1 = recv_from_gameserver(bsh.gs_soc_nonblocking)
     send_to_gameserver(bsh.gs_soc_nonblocking, mode='STATUS')

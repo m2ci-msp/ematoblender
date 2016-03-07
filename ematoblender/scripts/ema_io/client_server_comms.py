@@ -111,7 +111,7 @@ class ClientConnection(BasicConnection):
         print("Standard socket created", self.s)
 
         #set the port
-        from scripts.ema_shared.properties import waveserver_host, waveserver_port
+        from ematoblender.scripts.ema_shared.properties import waveserver_host, waveserver_port
         self.HOST = waveserver_host
         self.PORT = waveserver_port
 

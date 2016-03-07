@@ -1,7 +1,7 @@
 __author__ = 'Kristy'
 import math
-from scripts.ema_io.ema_gameserver.biteplate_headcorr import BitePlane, ReferencePlane
-import scripts.ema_blender.coil_info as ci
+from .biteplate_headcorr import BitePlane, ReferencePlane
+import ematoblender.scripts.ema_blender.coil_info as ci
 
 
 #######################

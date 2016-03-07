@@ -5,9 +5,9 @@ import math
 import mathutils
 import re, os, copy
 from .bpy_workspace import postfn_gamemaster_reset_decorator, prefn_gamemaster_select_decorator
-from scripts.ema_shared import properties as pps
-from scripts.ema_blender.ema_bpy.bpy_setup_cameras import delete_standard_camera
-import scripts.ema_blender.coil_info as ci
+from .bpy_setup_cameras import delete_standard_camera
+from .. import coil_info as ci
+from ...ema_shared import properties as pps
 
 ##########################################################################
 ##                    GENERAL IMPORT FUNCTIONS
@@ -130,7 +130,7 @@ def add_statusbar_scene():
     bpy.ops.object.select_all(action='DESELECT')
 
     # get the circling camera object, it is on this that the scene is overlaid
-    from scripts.ema_blender.blender_shared_objects import circling_cam
+    from ematoblender.scripts.ema_blender.blender_shared_objects import circling_cam
     camname = circling_cam.name
 
     # add a low-frequency sensor logic brick to the camera

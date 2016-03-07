@@ -1,7 +1,7 @@
 __author__ = 'Kristy'
 
 import mathutils
-from scripts.ema_blender import blender_shared_objects as bsh
+from ematoblender.scripts.ema_blender import blender_shared_objects as bsh
 
 """This file controls manual constraints on objects that are executed every frame.
 For example, if one object must always mirror another, it is controlled here.
