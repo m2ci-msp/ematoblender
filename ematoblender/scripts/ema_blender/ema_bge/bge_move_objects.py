@@ -1,13 +1,14 @@
 __author__ = 'Kristy'
 import mathutils
-from scripts.ema_blender.blender_networking import send_to_gameserver, recv_from_gameserver
-from scripts.ema_blender.blender_shared_objects import ema_active_meshes
-from scripts.ema_blender.ema_bge.bge_menus_overlays import bge_update_overlay_status_decorator
-from scripts.ema_blender.coil_info import find_transform_by_index
-from scripts.ema_blender import  blender_shared_objects as bsh
-from scripts.ema_blender.coord_transforms import PointsTransformationMatrix
-import scripts.ema_shared.properties as pps
-import scripts.ema_blender.coord_transforms as ct
+
+from .bge_menus_overlays import bge_update_overlay_status_decorator
+from ..blender_networking import send_to_gameserver, recv_from_gameserver
+from ..blender_shared_objects import ema_active_meshes
+from ..coil_info import find_transform_by_index
+from .. import  blender_shared_objects as bsh
+from ..coord_transforms import PointsTransformationMatrix
+from .. import coord_transforms as ct
+from ...ema_shared import properties as pps
 
 
 def bge_update_from_df(scene_objs, df, showall=True):

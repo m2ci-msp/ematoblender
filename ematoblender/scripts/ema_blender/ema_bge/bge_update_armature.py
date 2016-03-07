@@ -1,8 +1,8 @@
 __author__ = 'Kristy'
 import bge
-import scripts.ema_blender.coil_info as ci
-import scripts.ema_blender.ema_bge.bge_splines_lines as sl
-import scripts.ema_shared.general_maths as bm
+from .. import coil_info as ci
+from . import bge_splines_lines as sl
+from ...ema_shared import general_maths as bm
 
 ###############################################
 ##   NEW APPROACH - UPDATE ARMATURES WITH IK EMPTIES
@@ -29,11 +29,10 @@ def update_tongue_surface():
     else:
         print("Tongue armature not found in scene. This is problematic.")
 
-
-import scripts.ema_blender.blender_shared_objects as bsh
-import scripts.ema_blender.ema_bge.bge_splines_lines as splines
-import scripts.ema_blender.ema_bge.bge_standard_gamefns as gf
-import scripts.ema_shared.properties as pps
+from . import bge_splines_lines as splines
+from . import bge_standard_gamefns as gf
+from .. import blender_shared_objects as bsh
+from ...ema_shared import properties as pps
 
 
 def update_these_bones(armature_name='Mid-Saggital'):

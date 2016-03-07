@@ -37,7 +37,7 @@ def check_script_access():
 
 print('FAILED MODULE TEST:',check_script_access())
 
-from scripts.ema_blender.ema_bpy import bpy_emareadin as be
+from . import bpy_emareadin as be
 import importlib as imp
 imp.reload(be)
 be.main()

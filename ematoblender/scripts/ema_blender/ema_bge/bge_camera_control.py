@@ -5,9 +5,10 @@ __author__ = 'Kristy'
 import mathutils
 import math
 import bge
-import scripts.ema_blender.ema_bge.bge_splines_lines as sl
-import scripts.ema_blender.ema_bge.bge_menus_overlays as mo
-import scripts.ema_blender.blender_shared_objects as bsh
+from . import bge_splines_lines as sl
+from . import bge_menus_overlays as mo
+from .. import blender_shared_objects as bsh
+from ematoblender.scripts.ema_shared import properties as pps
 
 neutral_position = None # todo: get the basic position
 speed_factor=50
@@ -81,7 +82,6 @@ def bge_circular_camera_control(keys, target_name='CameraFocus', camera_name='Ci
 
 def bge_apply_head_movement(cameraempty='CameraFocus'):
     """Move the camera position relative to the parent empty based on the head-correction matrix"""
-    import scripts.ema_blender.blender_networking as bn
     matlist, *cam_pos = bsh.head_inversion
     print('got matlist', matlist)
     if matlist is not None:
@@ -128,7 +128,7 @@ def bge_point_cam_at_origin(camname="CircularCamera"):
 
 def bge_rotate_with_mouse(camname='CircularCamera'):
     """Rotate with the mouse position, if holding t (track)"""
-    from scripts.ema_blender.ema_bge.bge_standard_gamefns import get_scene_info
+    from .bge_standard_gamefns import get_scene_info
     scn, objs, cont, own, acts = get_scene_info()
     print([x for x in own.sensors])
     mouse = own.sensors["MouseSensor"]
@@ -187,7 +187,6 @@ def use_viewports(vertical=True):
     Choose vertical or horizontal split.
     """
 
-    import scripts.ema_shared.properties as pps
     scn = bge.logic.getCurrentScene()
     cams = [scn.objects.get(cam) for cam in pps.display_cameras]
 

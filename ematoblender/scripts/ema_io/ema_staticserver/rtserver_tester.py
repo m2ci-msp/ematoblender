@@ -7,7 +7,7 @@ Output is printed to stderr.
 """
 
 
-from scripts.ema_io.client_server_comms import ClientConnection
+from ematoblender.scripts.ema_io.client_server_comms import ClientConnection
 import scripts.ema_shared.properties as pps
 import time
 

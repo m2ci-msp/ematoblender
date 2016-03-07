@@ -29,7 +29,7 @@ ema_active_meshes = []
 ema_inferred_meshes = []
 
 # iterator over the lists of tuples above that re-evaluates whenever run
-from scripts.ema_shared.miscellanous import ReeevalIter
+from ..ema_shared.miscellanous import ReeevalIter
 ema_driven_meshes = ReeevalIter('bsh.ema_biteplate_meshes', 'bsh.ema_reference_meshes', 'bsh.ema_active_meshes')
 
 

@@ -14,7 +14,7 @@ def main(level=2):
 
     if level == 0:
         # perform most basic server testing, using one static file only.
-        from scripts.ema_io.ema_staticserver import rtserver as rts
+        from ematoblender.scripts.ema_io.ema_staticserver import rtserver as rts
         st, so = rts.initialise_server(datafile=datafile, loop=loop)
 
         print('Starting first server thread.')
@@ -28,12 +28,12 @@ def main(level=2):
 
     elif level == 1:
         # use the command-line server-switcher
-        from scripts.ema_io.ema_staticserver import rtserver_switcher as rtss
+        from ematoblender.scripts.ema_io.ema_staticserver import rtserver_switcher as rtss
         rtss.main()
 
     else:
         # use the gui switcher
-        from scripts.ema_io.ema_staticserver import rtserver_gui as rtg
+        from ematoblender.scripts.ema_io.ema_staticserver import rtserver_gui as rtg
         rtg.main()
 
 

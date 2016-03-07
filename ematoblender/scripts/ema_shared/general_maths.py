@@ -1,7 +1,6 @@
 __author__ = 'Kristy'
 import math
 import mathutils
-import scripts.ema_blender.coil_info as ci
 
 
 def get_intermediate_coords(k1, k2, k3, n=10):

@@ -4,10 +4,11 @@ __author__ = 'Kristy'
 import bge
 import mathutils
 import math
-import scripts.ema_blender.ema_bge.bge_standard_gamefns as sg
-from scripts.ema_blender.blender_networking import send_to_gameserver, recv_from_gameserver
-import scripts.ema_shared.properties as pps
-import scripts.ema_blender.blender_shared_objects as bsh
+
+from . import bge_standard_gamefns as sg
+from ..blender_networking import send_to_gameserver, recv_from_gameserver
+from .. import blender_shared_objects as bsh
+from ...ema_shared import properties as pps
 
 ##########################################################################
 ##                   STATUS OVERLAY SCENE

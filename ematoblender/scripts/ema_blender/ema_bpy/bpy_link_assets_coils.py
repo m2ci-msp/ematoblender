@@ -3,8 +3,8 @@ import bpy
 from . import bpy_workspace as ws
 import os
 import json
-from scripts.ema_shared import properties as pps
-from scripts.ema_blender import blender_shared_objects as bsh
+from ematoblender.scripts.ema_shared import properties as pps
+from .. import blender_shared_objects as bsh
 
 import scripts.ema_shared.general_maths as bm
 import scripts.ema_blender.coil_info as ci
