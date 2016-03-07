@@ -73,8 +73,10 @@ class Application(tk.Frame):
 
     def update_eof_status(self):
         """Show the status of the file."""
-        self.statustext.config(text="File status: {}".format(self.gs(self.server_obj)))
-        self.after(100, self.update_eof_status)
+        self.statustext.config('File status: {}\nFile time: {}'
+                                   .format(self.server_obj.rt_fns.status,
+                                           self.server_obj.rt_fns.static_data.latest_timestamp))
+        self.after(10, self.update_eof_status)
 
     def createWidgets(self):
         """Create the widgets that display the file list, scrollbar, buttons, labels etc."""
@@ -114,7 +116,9 @@ class Application(tk.Frame):
         self.looptext = tk.Label(fm, text='Looping: {}'.format(self.server_obj.rt_fns.emulator_loop))
         self.looptext.pack(side="top", anchor=tk.W, fill=tk.X, expand=True)
 
-        self.statustext = tk.Label(fm, text='File status: {}'.format(self.server_obj.rt_fns.status))
+        self.statustext = tk.Label(fm, text='File status: {}\nFile time: {}'
+                                   .format(self.server_obj.rt_fns.status,
+                                           self.server_obj.rt_fns.static_data.latest_timestamp))
         self.statustext.after(10, func=self.update_eof_status)
         self.statustext.pack(side='top', anchor=tk.W, fill=tk.X, expand=True)
 
