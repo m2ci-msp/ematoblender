@@ -26,15 +26,15 @@ import pickle
 # used for saving and manipulating incoming data
 import scripts.ema_io.ema_gameserver.wave_recording as wr
 import scripts.ema_io.ema_gameserver.data_manipulation as dm
-from scripts.ema_io.ema_gameserver.biteplate_headcorr import BitePlane, ReferencePlane
+from ematoblender.scripts.ema_io.ema_gameserver.biteplate_headcorr import BitePlane, ReferencePlane
 
 # global properties, coil definitions
-from scripts.ema_shared import properties as pps
+from ematoblender.scripts.ema_shared import properties as pps
 import scripts.ema_blender.coil_info as ci
 
 # connection objects (this server essentially wraps rtc behaviour)
 import scripts.ema_io.ema_gameserver.rtclient as rtc
-from scripts.ema_io.rtc3d_parser import DataFrame
+from ematoblender.scripts.ema_io.rtc3d_parser import DataFrame
 
 
 def main():
@@ -262,7 +262,7 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
     def handle(self):
         """Handle requests sent to the gameserver from Blender."""
         if pps.development_mode:
-            from scripts.ema_shared.miscellanous import reload_modules_for_testing
+            from ematoblender.scripts.ema_shared.miscellanous import reload_modules_for_testing
             reload_modules_for_testing(dm)
 
         ### self.request is the TCP socket connected to the client

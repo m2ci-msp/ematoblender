@@ -5,10 +5,11 @@ On each call the video is updated. One pitfall is that no timestamp control is a
 so when it is restarted the coils will be out of sync. Also if streaming takes a moment to initialise,
 the video plays (almost) immediately, also leading to timing mismatches."""
 
-from scripts.ema_shared.properties import video_override
-
 import bge
 import os
+
+from ...ema_shared.properties import video_override
+
 
 
 def bge_update_videoplane(timestamp_secs, videolocation, planename='UltrasoundPlane'):

@@ -4,11 +4,11 @@ __author__ = 'Kristy'
 # note: you can also draw on images in Blender with
 #bpy.data.images['Image Name'].pixels[0:4] = (Red, Green, Blue, Alpha) #Here "Red, Green, Blue, Alfa" are floating values.
 
-import mathutils
 import bge
-from mathutils import Vector
 import math
-from scripts.ema_shared.general_maths import *
+import mathutils
+from mathutils import Vector
+from ...ema_shared.general_maths import *
 
 
 def draw_line_through_points(*points, color=(1, 0, 0)):

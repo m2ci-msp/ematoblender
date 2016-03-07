@@ -11,7 +11,7 @@ import xml.etree.ElementTree as ET
 import math
 import struct
 import os
-from scripts.ema_io.rtc3d_parser import DataFrame, Component, Coil
+from ematoblender.scripts.ema_io.rtc3d_parser import DataFrame, Component, Coil
 
 xml_skeleton_location = './scripts/ema_io/ema_staticserver/parameter_skeleton.xml'
 

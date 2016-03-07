@@ -79,13 +79,6 @@ path_to_tongue_in_dot_blend = "Scene"
 name_of_tongue_object = "Scene"  # presumes object is in default scene, called 'Scene'
 name_of_tongue_armature = 'tongue_arm'  # name of the tongue armature that is changed to fit a spline
 
-# names of objects on tongue that need to be connected to data input
-# the value is a string that is the name of the empty object.
-# it is connected to a coil empty, as defined by other properties.
-import scripts.ema_blender.blender_shared_objects as bsh
-TT_empty_name = bsh.tongue_top_empty_name(1)
-TM_empty_name = bsh.tongue_top_empty_name(5)
-TB_empty_name = bsh.tongue_top_empty_name(10)
 
 tonguemesh_name = 'tonguemesh'
 cube_scale = 1

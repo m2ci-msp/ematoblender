@@ -18,12 +18,12 @@ from collections import deque
 from collections import defaultdict
 
 from bpy_extras.view3d_utils import location_3d_to_region_2d as loc3d2d
-from scripts.ema_blender.coil_info import find_sensor_index
-from scripts.ema_io.rtc3d_parser import DataFrame
+from ematoblender.scripts.ema_blender.coil_info import find_sensor_index
+from ematoblender.scripts.ema_io.rtc3d_parser import DataFrame
 import scripts.ema_blender.blender_networking as bn
 import scripts.ema_blender.blender_shared_objects as bsh
 import scripts.ema_shared.properties as pps
-from scripts.ema_blender.ema_bpy.bpy_move_objects import apply_properties_transform
+from ematoblender.scripts.ema_blender.ema_bpy.bpy_move_objects import apply_properties_transform
 
 
 def draw_text_on_viewport(mystring):

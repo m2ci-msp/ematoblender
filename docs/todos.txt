@@ -21,6 +21,7 @@ Eg should the setting of the file change a value in the pps file?
 
 Look at streaming ALL the possible information from the WAVE API, not just the location values.
 
+#TODO
 Set TCP_NODELAY on both the client and server side of the RTSERVER, as this may bring speed improvements
 
 FEATURES:

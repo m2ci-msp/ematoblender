@@ -5,8 +5,8 @@ import aud
 import time
 import random
 import math
-import scripts.ema_blender.blender_shared_objects as bsh
-import scripts.ema_shared.properties as pps
+from .. import blender_shared_objects as bsh
+from ...ema_shared import properties as pps
 
 sound_first_exec = True
 

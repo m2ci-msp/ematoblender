@@ -1,12 +1,12 @@
 __author__ = 'Kristy'
 
 import mathutils
-import scripts.ema_io.ema_gameserver.data_manipulation as dm
-from scripts.ema_shared import properties as pps
-from scripts.ema_blender.ema_bpy.bpy_setup_cameras import delete_standard_camera
-import scripts.ema_blender.blender_shared_objects as bsh
-import scripts.ema_blender.coil_info as ci
-import scripts.ema_shared.general_maths as bm
+from . import coil_info as ci
+from . import blender_shared_objects as bsh
+
+import ematoblender.scripts.ema_io.ema_gameserver.data_manipulation as dm
+import ematoblender.scripts.ema_shared.properties as pps
+import ematoblender.scripts.ema_shared.general_maths as bm
 
 class ObjectResizingCS(dm.BitePlane):
     """Class that takes either three points or two points (plus the assumption that Z is up)

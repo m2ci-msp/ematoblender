@@ -4,9 +4,9 @@ import bpy
 from . import bpy_workspace as ws
 
 
-from scripts.ema_shared import properties as pps
-from scripts.ema_shared.miscellanous import get_random_color
-from scripts.ema_blender import blender_shared_objects as bsh
+from ematoblender.scripts.ema_shared import properties as pps
+from ematoblender.scripts.ema_shared.miscellanous import get_random_color
+from ematoblender.scripts.ema_blender import blender_shared_objects as bsh
 
 
 @ws.postfn_gamemaster_reset_decorator

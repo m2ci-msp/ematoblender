@@ -10,8 +10,8 @@ Inspired by:
 
 import bpy
 import os
-from scripts.ema_blender.ema_bpy.bpy_workspace import set_workspace_properties, postfn_gamemaster_reset_decorator
-from scripts.ema_shared import properties as pps
+from .bpy_workspace import set_workspace_properties, postfn_gamemaster_reset_decorator
+from ematoblender.scripts.ema_shared import properties as pps
 
 @postfn_gamemaster_reset_decorator
 def create_video_plane(alpha='ADD', planename='UltrasoundPlane', placeholderfile='./images/black.jpg'):
