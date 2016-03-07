@@ -137,15 +137,14 @@ class Application(tk.Frame):
         manallow = tk.Checkbutton(callsframe, text="Allow manual calls to the data server",
                                   variable=self.allow_man_calls,
                                   command=self.update_disabled_buttons)
-        manallow.pack(fill=tk.X)
+        manallow.grid(row=1, column=1) # TODO: Set overflow
 
-        ipad, expad=3,1
         manbtn1 = tk.Button(callsframe, text='Single', state=tk.DISABLED)
-        manbtn1.pack(side=tk.LEFT, ipadx=ipad, padx=expad)
+        manbtn1.grid(row=2, column=1)
         manbtn2 = tk.Button(callsframe, text='Stream', state=tk.DISABLED)
-        manbtn2.pack(side=tk.LEFT, ipadx=ipad, padx=expad)
+        manbtn2.grid(row=2, column=2)
         manbtn3 = tk.Button(callsframe, text='Status', state=tk.DISABLED)
-        manbtn3.pack(side=tk.LEFT, ipadx=ipad, padx=expad)
+        manbtn3.grid(row=2, column=3)
         self.manual_buttons = [manbtn1, manbtn2, manbtn3]
 
     def update_disabled_buttons(self):
