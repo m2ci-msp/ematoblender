@@ -27,7 +27,7 @@ class Application(tk.Frame):
         tk.Frame.__init__(self, master)
         self.root = master
 
-        self.shownetworking = tk.IntVar()
+        self.shownetworking = tk.BooleanVar()
 
         self.createMenuBar()
 
@@ -51,7 +51,7 @@ class Application(tk.Frame):
 
         # create the Edit menu
         editmenu = tk.Menu(menubar, tearoff=0)
-        editmenu.add_command(label="Show/Hide Networking", command=example_command)
+        editmenu.add_command(label="Show/Hide Networking", command=self.toggle_networking_display)
         editmenu.add_separator()
         editmenu.add_command(label="User Preferences", command=example_command)
         menubar.add_cascade(label="Edit", menu=editmenu)
@@ -64,7 +64,14 @@ class Application(tk.Frame):
 
         self.root.config(menu=menubar)
 
-
+    def toggle_networking_display(self):
+        self.shownetworking = not self.shownetworking
+        if self.shownetworking:
+            self.nt_in.pack()
+            self.nt_out.pack()
+        else:
+            self.nt_in.pack_forget()
+            self.nt_out.pack_forget()
 
     def createTopFrame(self):
         """Put widgets in the top frame"""
@@ -147,8 +154,8 @@ class Application(tk.Frame):
         manbtn3.grid(row=2, column=3)
         self.manual_buttons = [manbtn1, manbtn2, manbtn3]
 
-        nt = NetworkTrafficFrame(self.leftframe)
-        nt.pack()
+        self.nt_in = NetworkTrafficFrame(self.leftframe)
+        self.nt_in.pack()
 
     def update_disabled_buttons(self):
         for btn in self.manual_buttons:
@@ -260,8 +267,8 @@ class Application(tk.Frame):
         # SHOW orientation
 
 
-        nt = NetworkTrafficFrame(self.rightframe)
-        nt.pack(expand=False)
+        self.nt_out = NetworkTrafficFrame(self.rightframe)
+        self.nt_out.pack(expand=False)
 
 
     def createStatusLabel(self):
