@@ -41,10 +41,10 @@ ext{
 
 }
 
-ext.parseCL = {param -> // get the output from the  CL call
+ext.parseCL = {param, wd-> // get the output from the  CL call
   def clOutput = new ByteArrayOutputStream()
   exec{
-    workingDir = rootProject.buildDir
+    workingDir = wd
     commandLine = param.tokenize()
     standardOutput = clOutput
   }
@@ -166,7 +166,7 @@ else{ //OS is Unix/Mac
 
       def blenderpath = findbinary{ binary "blender" }.path
 
-      def blenderVersionString = parseCL("$blenderpath -v")
+      def blenderVersionString = parseCL("$blenderpath -v", "$rootProject.buildDir")
       def blenderVersion =blenderVersionString.tokenize()[1]
       def builder = new groovy.json.JsonBuilder()
 
@@ -215,12 +215,12 @@ task checkPython() {
   // try to search for python3 1 TODO
   def pyStr = null
   try{
-    pyStr = parseCL("python3 --version")
+    pyStr = parseCL("python3 --version", "$rootProject.buildDir")
     pythonNumber = "python3"
   } catch(e){
     println(e)
     println("Command python3 failed")
-    pyStr = parseCL("python --version")
+    pyStr = parseCL("python --version", "$rootProject.buildDir")
     pythonNumber = "python"
   }
   def pyVer = pyStr.tokenize()[1]
@@ -234,7 +234,7 @@ task checkPython() {
 task checkPip() {
   dependsOn checkPython
   println("Checking Pip installation")
-  def pipStr = parseCL("pip -V")
+  def pipStr = parseCL("pip -V", "$rootProject.buildDir")
   def pipVer = pipStr.tokenize()[1] 
   println("Pip version is $pipVer")
   assert parseVerString(pipVer, versionNumbers.pip.failBelow)
@@ -246,7 +246,7 @@ task checkPip() {
 task checkNumpy() {
   dependsOn checkPython
   println("Checking Numpy installation with python command $pythonNumber")
-  def numpyVer = parseCL("$pythonNumber -c \"import numpy;print(numpy.__version__)\"")
+  def numpyVer = parseCL("$pythonNumber -c \"import numpy;print(numpy.__version__)\"", "$rootProject.buildDir")
   assert parseVerString(numpyVer, versionNumbers.numpy.failBelow)
   if (! parseVerString(numpyVer, versionNumbers.numpy.warnBelow)){
     println("WARNING - OLD NUMPY VERSION")
@@ -255,7 +255,33 @@ task checkNumpy() {
 
 /*--------------------------------------------------------------------------*/
 
-task copyNumpy(){}
+task checkNumpyInBlender() {
+  dependsOn checkPython
+  dependsOn checkNumpy
+  
+  doLast{
+    def slurper = new groovy.json.JsonSlurper()
+    def blenderInfo = slurper.parseText(
+      file("$rootProject.buildDir/blender.json").text
+      )
+    def bloc = blenderInfo.blender.path
+    println "Checking whether numpy works in Blender at $bloc"
+    
+    def numpyVer = parseCL("${bloc} --factory-startup  --background --python ./ematoblender/scripts/numpy_version.py", "$rootProject.projectDir")
+    
+    println "Got the output $numpyVer"
+    if ("$numpyVer".contains("FAIL")){   // Numpy could not be found
+      // find the site-lib for Python
+      def libLocation = parseCL("$pythonNumber -c \"import imp; print(imp.find_module('numpy')[1], end='')\"", "$rootProject.projectDir")
+      println "Numpy library is located at: $libLocation"
+      // copy the numpy lib into the modules/numpy dir (now blender can access it)
+      copy{
+        from  file("$libLocation")
+        into "$rootDir/ematoblender/scripts/modules/numpy"
+      }
+    }
+  }
+}
 
 /*--------------------------------------------------------------------------*/
 
@@ -268,9 +294,8 @@ task setBlenderUserPrefs(){
     def slurper = new groovy.json.JsonSlurper()
     def blenderInfo = slurper.parseText(
       file("$rootProject.buildDir/blender.json").text
-    )
-    
-    def bloc = blenderInfo.blender.path //
+    )    
+    def bloc = blenderInfo.blender.path
     println "The blender location is  $bloc"
     exec{   // run the commandline 
       workingDir = file("$rootProject.projectDir")
@@ -284,4 +309,5 @@ task setBlenderUserPrefs(){
 task setup() {
   dependsOn findBlender
   dependsOn installMathUtils
+  dependsOn checkNumpyInBlender
 }
