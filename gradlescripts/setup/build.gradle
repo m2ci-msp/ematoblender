@@ -65,6 +65,52 @@ ext.pythonNumber = null
 
 /*----------------------------------------------------------------------------*/
 
+// define different tasks to make sure that Python tools and packages are working correctly
+
+task checkPython() {
+  println("Checking python installation")
+  // try to search for python3 1 TODO
+  def pyStr = null
+  try{
+    pyStr = parseCL("python3 --version", "$rootProject.buildDir")
+    pythonNumber = "python3"
+  } catch(e){
+    println(e)
+    println("Command python3 failed")
+    pyStr = parseCL("python --version", "$rootProject.buildDir")
+    pythonNumber = "python"
+  }
+  def pyVer = pyStr.tokenize()[1]
+  println("Python version is $pyVer")
+  assert parseVerString(pyVer, versionNumbers.python.failBelow)
+  if (! parseVerString(pyVer, versionNumbers.python.warnBelow)){
+    println("WARNING - OLD PYTHON VERSION")
+}
+}
+
+task checkPip() {
+  dependsOn checkPython
+  println("Checking Pip installation")
+  def pipStr = parseCL("pip -V", "$rootProject.buildDir")
+  def pipVer = pipStr.tokenize()[1] 
+  println("Pip version is $pipVer")
+  assert parseVerString(pipVer, versionNumbers.pip.failBelow)
+  if (! parseVerString(pipVer, versionNumbers.pip.warnBelow)){
+    println("WARNING - OLD PIP VERSION")
+  }
+}
+
+task checkNumpy() {
+  dependsOn checkPython
+  println("Checking Numpy installation with python command $pythonNumber")
+  def numpyVer = parseCL("$pythonNumber -c \"import numpy;print(numpy.__version__)\"", "$rootProject.buildDir")
+  assert parseVerString(numpyVer, versionNumbers.numpy.failBelow)
+  if (! parseVerString(numpyVer, versionNumbers.numpy.warnBelow)){
+    println("WARNING - OLD NUMPY VERSION")
+  }
+}
+
+  /*--------------------------------------------------------------------------*/
 
 // define different tasks for downloading and installing mathutils based on OS
 if (Os.isFamily(Os.FAMILY_WINDOWS)){ // OS is windows
@@ -208,52 +254,10 @@ else{ //OS is Unix/Mac
 
 } // end OS check
 
-/*--------------------------------------------------------------------------*/
 
-task checkPython() {
-  println("Checking python installation")
-  // try to search for python3 1 TODO
-  def pyStr = null
-  try{
-    pyStr = parseCL("python3 --version", "$rootProject.buildDir")
-    pythonNumber = "python3"
-  } catch(e){
-    println(e)
-    println("Command python3 failed")
-    pyStr = parseCL("python --version", "$rootProject.buildDir")
-    pythonNumber = "python"
-  }
-  def pyVer = pyStr.tokenize()[1]
-  println("Python version is $pyVer")
-  assert parseVerString(pyVer, versionNumbers.python.failBelow)
-  if (! parseVerString(pyVer, versionNumbers.python.warnBelow)){
-    println("WARNING - OLD PYTHON VERSION")
-}
-}
-
-task checkPip() {
-  dependsOn checkPython
-  println("Checking Pip installation")
-  def pipStr = parseCL("pip -V", "$rootProject.buildDir")
-  def pipVer = pipStr.tokenize()[1] 
-  println("Pip version is $pipVer")
-  assert parseVerString(pipVer, versionNumbers.pip.failBelow)
-  if (! parseVerString(pipVer, versionNumbers.pip.warnBelow)){
-    println("WARNING - OLD PIP VERSION")
-  }
-}
-
-task checkNumpy() {
-  dependsOn checkPython
-  println("Checking Numpy installation with python command $pythonNumber")
-  def numpyVer = parseCL("$pythonNumber -c \"import numpy;print(numpy.__version__)\"", "$rootProject.buildDir")
-  assert parseVerString(numpyVer, versionNumbers.numpy.failBelow)
-  if (! parseVerString(numpyVer, versionNumbers.numpy.warnBelow)){
-    println("WARNING - OLD NUMPY VERSION")
-  }
-}
 
 /*--------------------------------------------------------------------------*/
+// define tasks that check whether functionality works within Blender
 
 task checkNumpyInBlender() {
   dependsOn findBlender
@@ -270,7 +274,7 @@ task checkNumpyInBlender() {
     def numpyVer = parseCL("${bloc} --factory-startup  --background --python ./ematoblender/scripts/numpy_version.py", "$rootProject.projectDir")
     
     println "Got the output $numpyVer"
-    if ("$numpyVer".contains("FAIL")){   // Numpy could not be found
+    if ("$numpyVer".contains("FAIL")){   // Numpy could not be found; use the local install within Blender by copying the lib
       // find the site-lib for Python
       def libLocation = parseCL("$pythonNumber -c \"import imp; print(imp.find_module('numpy')[1], end='')\"", "$rootProject.projectDir")
       println "Numpy library is located at: $libLocation"
@@ -284,7 +288,7 @@ task checkNumpyInBlender() {
 }
 
 /*--------------------------------------------------------------------------*/
-
+// run a script that backs up the User's User Preferences and sets scripts dir
 
 task setBlenderUserPrefs(){
   dependsOn findBlender
