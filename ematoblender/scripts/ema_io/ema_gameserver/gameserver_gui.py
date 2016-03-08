@@ -132,7 +132,7 @@ class Application(tk.Frame):
 
         # manual server calls
         callsframe = tk.Frame(self.leftframe, relief='groove', bd=2)
-        callsframe.pack(fill=tk.X)
+        callsframe.pack(fill=tk.X, expand=True)
         self.allow_man_calls = tk.BooleanVar()
         manallow = tk.Checkbutton(callsframe, text="Allow manual calls to the data server",
                                   variable=self.allow_man_calls,
@@ -166,14 +166,15 @@ class Application(tk.Frame):
         smoothframe.pack(fill=tk.X, expand=True)
         lbl = tk.Label(smoothframe, text='Apply rolling average by:')
         lbl.grid(row=1, column=1, columnspan=4, sticky=tk.W)
-        lbl=tk.Checkbutton(smoothframe, text='ms')
+        self.smooth_by = tk.IntVar()
+        lbl = tk.Radiobutton(smoothframe, text='ms', variable=self.smooth_by, value=1)
         lbl.grid(row=2, column=1)
-        e = tk.Entry(smoothframe)
-        e.grid(row=2, column=2)
-        lbl=tk.Checkbutton(smoothframe, text='frames')
+        e = tk.Entry(smoothframe, width=4)
+        e.grid(row=2, column=2, padx=4)
+        lbl = tk.Radiobutton(smoothframe, text='frames', variable=self.smooth_by, value=2)
         lbl.grid(row=2, column=3)
-        e = tk.Entry(smoothframe)
-        e.grid(row=2, column=4)
+        e = tk.Entry(smoothframe, width=4, )
+        e.grid(row=2, column=4, padx=4)
 
 
         # options for head-correction
@@ -223,6 +224,30 @@ class Application(tk.Frame):
         c.grid(row=2, column=2)
         c = tk.Radiobutton(corrframe, text="Record live", variable=self.hcmethod, value=3, command=show_hcmethod)
         c.grid(row=2, column=3)
+
+        lbl = tk.Label(corrframe, text='Axis swap options:')
+        lbl.grid(row=4, column=1, columnspan=3, sticky=tk.W)
+        self.reflect_x, self.reflect_y, self.reflect_z = tk.BooleanVar(), tk.BooleanVar(), tk.BooleanVar()
+        check = tk.Checkbutton(corrframe, text='X', variable=self.reflect_x)
+        check.grid(row=5, column=1, sticky=tk.W)
+        check = tk.Checkbutton(corrframe, text='Y', variable=self.reflect_y)
+        check.grid(row=6, column=1, sticky=tk.W)
+        check = tk.Checkbutton(corrframe, text='Z', variable=self.reflect_z)
+        check.grid(row=7, column=1, sticky=tk.W)
+
+        lbl = tk.Label(corrframe, text='Axis order options:')
+        lbl.grid(row=4, column=3, columnspan=3, sticky=tk.W)
+        self.axis_order = tk.IntVar()
+        rad = tk.Radiobutton(corrframe, text='XYZ', variable=self.axis_order, value='XYZ')
+        rad.grid(row=5, column=3, sticky=tk.W)
+        rad = tk.Radiobutton(corrframe, text='YXZ', variable=self.axis_order, value='YXZ')
+        rad.grid(row=6, column=3, sticky=tk.W)
+        rad = tk.Radiobutton(corrframe, text='XZY', variable=self.axis_order, value='XZY')
+        rad.grid(row=7, column=3, sticky=tk.W)
+
+        lbl = tk.Label(corrframe, text='Order: Left-right, Back-front, Up-down')
+        lbl.grid(row=9, column=3, columnspan=3, sticky=tk.W)
+
 
 
 
