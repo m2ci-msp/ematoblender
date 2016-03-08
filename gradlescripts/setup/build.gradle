@@ -73,13 +73,13 @@ if (Os.isFamily(Os.FAMILY_WINDOWS)){ // OS is windows
 
   task findBlender {
 
-    def outputFile = file("$rootProject.buildDir/configuration/blender.json")
+    def outputFile = file("$rootProject.buildDir/blender.json")
     outputs.file outputFile
 
     doLast{
       outputFile.parentFile.mkdirs()
 
-      def blenderpath = findbinary{ binary "blender" }.path
+      def blenderpath = findbinary{ binary "blender.exe" }.path
 
       def blenderVersion = (parseVersion("$blenderpath -v")).toDouble()
       def builder = new groovy.json.JsonBuilder()
@@ -88,7 +88,7 @@ if (Os.isFamily(Os.FAMILY_WINDOWS)){ // OS is windows
           path "$blenderpath"
           version "$blenderVersion"
       }
-
+      println("Outputting blender path to JSON")
       outputFile.text = builder.toPrettyString()
     }
 
@@ -158,7 +158,7 @@ else{ //OS is Unix/Mac
 
   task findBlender {
 
-    def outputFile = file("$rootProject.buildDir/configuration/blender.json")
+    def outputFile = file("$rootProject.buildDir/blender.json")
     outputs.file outputFile
 
     doLast{
@@ -252,6 +252,29 @@ task checkNumpy() {
     println("WARNING - OLD NUMPY VERSION")
   }
 }
+
+/*--------------------------------------------------------------------------*/
+
+task copyNumpy(){}
+
+/*--------------------------------------------------------------------------*/
+
+task setBlenderUserPrefs(){
+  dependsOn findBlender
+  
+  doLast{
+    // parse the JSON file with the path
+    def slurper = new groovy.json.JsonSlurper()
+    def blenderInfo = slurper.parseText(
+      file("$rootProject.buildDir/blender.json").text
+    )
+    println "The blender location is  $blenderInfo.blender.path" 
+  }
+  // run the commandline 
+}
+
+
+/*--------------------------------------------------------------------------*/
 
 task setup() {
   dependsOn findBlender
