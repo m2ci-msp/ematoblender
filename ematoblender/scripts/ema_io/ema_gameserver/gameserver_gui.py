@@ -82,7 +82,7 @@ class Application(tk.Frame):
     def createLeftFrame(self):
         """Put widgets in the left frame"""
         self.leftframe = tk.Frame(self.middleframe, relief='raised', bd=2)
-        self.leftframe.pack(side=tk.LEFT, fill=tk.BOTH)
+        self.leftframe.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         lbl = tk.Label(self.leftframe, text='Incoming data:')
         lbl.pack()
 
@@ -109,7 +109,7 @@ class Application(tk.Frame):
             self.wavbtn.config(state=tk.ACTIVE if self.savewav.get() else tk.DISABLED)
             self.wavlab.config(state=tk.ACTIVE if self.savewav.get() else tk.DISABLED)
 
-        tk.Label(saveframe, text="Save received TSV").grid(row=1, column=1)
+        tk.Label(saveframe, text="Save received TSV").grid(row=1, column=1, sticky=tk.W)
         btn = tk.Checkbutton(saveframe, variable=self.savetsv, command=set_tsvbtn)
         btn.grid(row=1, column=2)
 
@@ -118,7 +118,7 @@ class Application(tk.Frame):
         self.tsvlab = tk.Label(saveframe, textvariable=self.tsvfilelocation)
         self.tsvlab.grid(row=1,column=4)
 
-        tk.Label(saveframe, text="Record audio while streaming").grid(row=2, column=1)
+        tk.Label(saveframe, text="Record audio while streaming").grid(row=2, column=1, sticky=tk.W)
         btn = tk.Checkbutton(saveframe, variable=self.savewav, command=set_wavbtn)
         btn.grid(row=2, column=2)
 
@@ -137,7 +137,7 @@ class Application(tk.Frame):
         manallow = tk.Checkbutton(callsframe, text="Allow manual calls to the data server",
                                   variable=self.allow_man_calls,
                                   command=self.update_disabled_buttons)
-        manallow.grid(row=1, column=1) # TODO: Set overflow
+        manallow.grid(row=1, column=1, columnspan=3)
 
         manbtn1 = tk.Button(callsframe, text='Single', state=tk.DISABLED)
         manbtn1.grid(row=2, column=1)
@@ -157,15 +157,15 @@ class Application(tk.Frame):
     def createRightFrame(self):
         """Put widgets in the right frame"""
         self.rightframe = tk.Frame(self.middleframe, relief='raised', bd=2)
-        self.rightframe.pack(side=tk.LEFT, fill=tk.BOTH)
+        self.rightframe.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         lbl = tk.Label(self.rightframe, text='Outgoing data:')
         lbl.pack()
 
         # options for data smoothing/delay
         smoothframe = tk.Frame(self.rightframe, relief='groove', bd=2)
-        smoothframe.pack()
+        smoothframe.pack(fill=tk.X, expand=True)
         lbl = tk.Label(smoothframe, text='Apply rolling average by:')
-        lbl.grid(row=1, column=1)
+        lbl.grid(row=1, column=1, columnspan=4, sticky=tk.W)
         lbl=tk.Checkbutton(smoothframe, text='ms')
         lbl.grid(row=2, column=1)
         e = tk.Entry(smoothframe)
@@ -194,7 +194,7 @@ class Application(tk.Frame):
         btn= tk.Button(hc2frame, text='Choose file', command=fd.askopenfile)
         btn.grid(row=3, column=1)
 
-        hc1frame.grid_remove()
+        hc2frame.grid_remove()
 
         hc3frame = tk.Frame(corrframe)
         hc3frame.grid(row=3, column=1)
@@ -215,8 +215,8 @@ class Application(tk.Frame):
             else:
                 hc3frame.grid()
 
-        lbl = tk.Label(corrframe, text='Head-correction options')
-        lbl.grid(row=1, column=1)
+        lbl = tk.Label(corrframe, text='Head-correction options:')
+        lbl.grid(row=1, column=1, columnspan=3, sticky=tk.W)
         c = tk.Radiobutton(corrframe, text="Pre-calculated", variable=self.hcmethod, value=1, command=show_hcmethod)
         c.grid(row=2, column=1)
         c = tk.Radiobutton(corrframe, text="Calculate from TSV file", variable=self.hcmethod, value=2, command=show_hcmethod)
