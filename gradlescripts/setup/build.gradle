@@ -259,6 +259,7 @@ task copyNumpy(){}
 
 /*--------------------------------------------------------------------------*/
 
+
 task setBlenderUserPrefs(){
   dependsOn findBlender
   
@@ -268,11 +269,15 @@ task setBlenderUserPrefs(){
     def blenderInfo = slurper.parseText(
       file("$rootProject.buildDir/blender.json").text
     )
-    println "The blender location is  $blenderInfo.blender.path" 
+    
+    def bloc = blenderInfo.blender.path //
+    println "The blender location is  $bloc"
+    exec{   // run the commandline 
+      workingDir = file("$rootProject.projectDir")
+      commandLine = "${bloc} --factory-startup  --background --python ./ematoblender/configure_blender.py".tokenize()
+    }
   }
-  // run the commandline 
 }
-
 
 /*--------------------------------------------------------------------------*/
 
