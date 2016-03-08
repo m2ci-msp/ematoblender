@@ -257,7 +257,7 @@ task checkNumpy() {
 /*--------------------------------------------------------------------------*/
 
 task checkNumpyInBlender() {
-  dependsOn checkPython
+  dependsOn findBlender
   dependsOn checkNumpy
   
   doLast{
@@ -289,6 +289,7 @@ task checkNumpyInBlender() {
 
 task setBlenderUserPrefs(){
   dependsOn findBlender
+  dependsOn checkPython
   
   doLast{
     // parse the JSON file with the path
@@ -311,4 +312,5 @@ task setup() {
   dependsOn findBlender
   dependsOn installMathUtils
   dependsOn checkNumpyInBlender
+  dependsOn setBlenderUserPrefs
 }
