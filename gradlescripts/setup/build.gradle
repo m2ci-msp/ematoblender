@@ -126,6 +126,7 @@ if (Os.isFamily(Os.FAMILY_WINDOWS)){ // OS is windows
   task installMathUtils { // use pip to install Blender-mathutils
 
     dependsOn cloneMathUtils
+    dependsOn checkPip
 
     doLast{
 
@@ -196,7 +197,6 @@ else{ //OS is Unix/Mac
   task installMathUtils(type: Exec){
 
     dependsOn cloneMathUtils
-    dependsOn checkPip
     outputs.dir file("$rootProject.buildDir/mathutils/build")
 
     // use "--prefix=" as workaround for bug on os x
