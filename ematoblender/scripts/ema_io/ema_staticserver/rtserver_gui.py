@@ -156,7 +156,7 @@ class Application(tk.Frame):
         # lines of text with stats:
         var_i = tk.StringVar()
         label = tk.Label(self, textvariable=var_i,)
-        var_i.set("Select the motion-capture file that the server streams from.")
+        var_i.set("Select the motion-capture file that the server streams from:")
         label.pack(side="top", anchor=tk.W, expand=1)
 
         # list of files
@@ -164,7 +164,7 @@ class Application(tk.Frame):
         self.scrollbar = tk.Scrollbar(fm, orient="vertical")
         self.listbox = tk.Listbox(fm, selectmode='single', yscrollcommand=self.scrollbar.set)
         self.scrollbar.config(command=self.listbox.yview)
-        self.scrollbar.pack(side="right", fill=tk.BOTH, expand=True)
+        self.scrollbar.pack(side="right", fill=tk.BOTH, expand=False)
         self.listbox.pack(side="right", fill=tk.BOTH, expand=True)
         self.listbox.config(width=100)
 
@@ -196,22 +196,18 @@ class Application(tk.Frame):
 
         fm.pack(anchor=tk.W, side="top",  fill=tk.BOTH, expand=1)
 
-        fm = tk.Frame(self)
+        btnframe = tk.Frame(self)
         # load file button
-        self.load_file = tk.Button(fm)
-        self.load_file["text"] = "Load file"
-        self.load_file["command"] = self.load_next_file
-        self.load_file.pack(side="left",)
+        self.load_file = tk.Button(btnframe, text="Load file", command=self.load_next_file)
+        self.load_file.grid(row=1, column=1)
 
-        self.loop_button = tk.Button(fm)
-        self.loop_button["text"] = "Toggle looping"
-        self.loop_button["command"] = self.toggle
-        self.loop_button.pack(side="left")
+        self.loop_button = tk.Button(btnframe, text="Toggle looping", command=self.toggle)
+        self.loop_button.grid(row=1, column=2)
 
         # close server button
-        self.QUIT = tk.Button(fm, text="Quit server", fg="red", command=self.quit_all)
-        self.QUIT.pack(padx=10, side="right",)
-        fm.pack(anchor=tk.W, side="bottom",  fill=tk.BOTH, expand=1)
+        self.QUIT = tk.Button(btnframe, text="Quit server", fg="red", command=self.quit_all)
+        self.QUIT.grid(row=1, column=5, columnspan=5, sticky=tk.E, padx=5)
+        btnframe.pack(side='bottom', anchor=tk.E,  fill=tk.BOTH, expand=1)
 
     def add_to_list(self):
         """Opens a dialog to select a file, adds the absolute filepath to the list."""
