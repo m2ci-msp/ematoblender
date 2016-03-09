@@ -7,16 +7,15 @@ GUI for the static RTServer.
 
 import tkinter as tk
 from tkinter import filedialog as fd
+from tkinter import messagebox as mb
 import os, time
 
 import ematoblender.scripts.ema_io.ema_staticserver.rtserver as rts
 import ematoblender.scripts.ema_shared.properties as pps
 
-def main():
-    """Show the GUI, firstly loading the file list based on the properties file, starting the server."""
-    # get the list of files
+
+def extract_files_from_collectionpath(abspath):
     files = []
-    abspath = os.path.abspath(pps.mocap_list_of_files)
     if os.path.isfile(abspath):  # open the abspath of the file list
         with open(abspath, 'r') as f:
             for line in f:
@@ -33,6 +32,15 @@ def main():
                     print('Warning: filepath {} cannot be found, and is not shown in the GUI.'.format(line))
     else:
         print('Warning - the file list {} could not be found.'.format(abspath))
+
+    return files
+
+
+def main():
+    """Show the GUI, firstly loading the file list based on the properties file, starting the server."""
+    # get the list of files
+
+    files = extract_files_from_collectionpath(os.path.abspath(pps.mocap_list_of_files))
 
     # start the server
     server_thread, server = rts.initialise_server(datafile=files[0], loop=True)
@@ -58,6 +66,7 @@ class Application(tk.Frame):
         self.pack()
 
         self.collection_path = os.path.abspath(pps.mocap_list_of_files)  # default collection
+        self.collection_changed = False
         self.file_list = filelist
         self.running = ''
         self.on_load_fn = on_load_fn
@@ -71,6 +80,17 @@ class Application(tk.Frame):
     def setFilelist(self, filelist):
         """Set self.file_list attribute."""
         self.file_list = filelist
+
+    def save_list_changes(self):
+        """Overwrite the self.collection_path file with the current file list"""
+        f = open(self.collection_path, 'w')
+        for p in self.file_list:
+            f.write(p)
+        f.close()
+
+    def prompt_overwrite(self):
+        return mb.askyesno("Save collection?", "Save the collection file, overwriting the old contents?")
+
 
     @staticmethod
     def pretty_print_microseconds(microsecstring):
@@ -93,14 +113,37 @@ class Application(tk.Frame):
         self.after(10, self.update_eof_status)
 
     def change_collection(self):
-        print("Placeholder text: Should prompt save old collection, change the self.collection_path variable, reload files in the list.")
+        if self.collection_changed and self.prompt_overwrite():
+            self.save_list_changes()
+        selectedfile = os.path.abspath(fd.askopenfilename())
+        if os.path.exists(selectedfile):
+            try:
+                file_list = extract_files_from_collectionpath(selectedfile)
+            except:
+                mb.showerror("Error", "An error occurred while reading the collection file.")
+            else:
+                if len(file_list) > 0:
+                    self.file_list = file_list
+                    self.collection_path = selectedfile
+                    self.populate_listbox()
+                else:
+                    mb.showwarning("No files in collection", "Your selected collection doesn't contain any EMA files.")
+
+
+    def populate_listbox(self):
+        """Clear the listbox, insert all the files found in the selected collection"""
+        self.listbox.delete(0, tk.END)
+        for i, fn in enumerate(self.file_list):
+            self.listbox.insert(tk.END, fn)
+        self.listbox.select_set(0)  # sets the first element
+        self.collection_changed = False
 
     def createWidgets(self):
         """Create the widgets that display the file list, scrollbar, buttons, labels etc."""
         # collection choice
         colframe = tk.Frame(self)
         colframe.pack(side=tk.TOP, fill=tk.X, expand=True)
-        lbl = tk.Label(colframe, text='Showing file collection: {:40}'.format(self.collection_path))
+        lbl = tk.Label(colframe, text='Showing collection file: {:40}'.format(self.collection_path))
         lbl.grid(row=1, column=1, sticky=tk.W)
         btn = tk.Button(colframe, text='Switch collection', command=self.change_collection)
         btn.grid(row=1, column=2, sticky=tk.E)
@@ -119,14 +162,13 @@ class Application(tk.Frame):
         self.scrollbar.pack(side="right", fill=tk.BOTH, expand=True)
         self.listbox.pack(side="right", fill=tk.BOTH, expand=True)
         self.listbox.config(width=100)
-        for i, fn in enumerate(self.file_list):
-            self.listbox.insert(tk.END, fn)
-        self.listbox.select_set(0) # sets the first element
-        #self.listbox.pack(side="top",padx=0, fill=tk.BOTH, expand=1)
+
+        self.populate_listbox()
+
         fm.pack(anchor=tk.W, side="top",  fill=tk.BOTH, expand=1)
 
-        fm = tk.Frame(self)
         # + and - buttons
+        fm = tk.Frame(self)
         self.plus = tk.Button(fm, text='Add file to list', command=self.add_to_list)
         self.minus = tk.Button(fm, text='Remove file from list', command=self.remove_from_list)
         self.plus.pack(side="top",fill='x')
@@ -171,6 +213,7 @@ class Application(tk.Frame):
         new_fn = fd.askopenfilename()
         self.listbox.insert(tk.END, new_fn)
         self.file_list.append(new_fn)
+        self.collection_changed = True
 
     def remove_from_list(self):
         """Remove the selected filename from the list."""
@@ -178,9 +221,12 @@ class Application(tk.Frame):
         file_name = self.file_list[file_ind[0]]
         if file_name != self.running:
             self.listbox.delete(file_ind)
+            self.collection_changed = True
 
     def quit_all(self):
         """Close the GUI and quit the server."""
+        if self.collection_changed and self.prompt_overwrite():
+            self.save_list_changes()
         # todo: close server using cleaner methods, currently automatic
         print('Closing server')
         self.server_obj.server_close()
