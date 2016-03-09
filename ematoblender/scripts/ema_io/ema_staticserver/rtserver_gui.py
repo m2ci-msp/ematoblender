@@ -9,12 +9,12 @@ import tkinter as tk
 from tkinter import filedialog as fd
 import os, time
 
+import ematoblender.scripts.ema_io.ema_staticserver.rtserver as rts
+import ematoblender.scripts.ema_shared.properties as pps
 
 def main():
     """Show the GUI, firstly loading the file list based on the properties file, starting the server."""
     # get the list of files
-    import scripts.ema_io.ema_staticserver.rtserver as rts
-    import scripts.ema_shared.properties as pps
     files = []
     abspath = os.path.abspath(pps.mocap_list_of_files)
     if os.path.isfile(abspath):  # open the abspath of the file list
@@ -40,7 +40,7 @@ def main():
 
     # build the gui
     root = tk.Tk()
-    root.geometry("720x360")
+    root.geometry("720x400")
     icon = 'images/ti.ico'
     if os.path.isfile(icon):
         root.wm_iconbitmap(bitmap=icon) # hard coded location, gui must run in same directory
@@ -57,6 +57,7 @@ class Application(tk.Frame):
         self.root = master
         self.pack()
 
+        self.collection_path = os.path.abspath(pps.mocap_list_of_files)  # default collection
         self.file_list = filelist
         self.running = ''
         self.on_load_fn = on_load_fn
@@ -91,8 +92,19 @@ class Application(tk.Frame):
                                            self.pretty_print_microseconds(self.server_obj.rt_fns.static_data.latest_timestamp)))
         self.after(10, self.update_eof_status)
 
+    def change_collection(self):
+        print("Placeholder text: Should prompt save old collection, change the self.collection_path variable, reload files in the list.")
+
     def createWidgets(self):
         """Create the widgets that display the file list, scrollbar, buttons, labels etc."""
+        # collection choice
+        colframe = tk.Frame(self)
+        colframe.pack(side=tk.TOP, fill=tk.X, expand=True)
+        lbl = tk.Label(colframe, text='Showing file collection: {:40}'.format(self.collection_path))
+        lbl.grid(row=1, column=1, sticky=tk.W)
+        btn = tk.Button(colframe, text='Switch collection', command=self.change_collection)
+        btn.grid(row=1, column=2, sticky=tk.E)
+
         # lines of text with stats:
         var_i = tk.StringVar()
         label = tk.Label(self, textvariable=var_i,)
