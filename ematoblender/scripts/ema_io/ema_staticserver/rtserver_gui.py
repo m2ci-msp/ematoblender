@@ -4,7 +4,7 @@ __author__ = 'Kristy'
 GUI for the static RTServer.
 """
 
-# TODO: Future Dev: the rtserverGUI should show the timestamp of the last DF streamed
+
 import tkinter as tk
 from tkinter import filedialog as fd
 import os, time
