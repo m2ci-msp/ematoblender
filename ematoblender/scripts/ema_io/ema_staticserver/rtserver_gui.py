@@ -32,6 +32,7 @@ def extract_files_from_collectionpath(abspath):
                     print('Warning: filepath {} cannot be found, and is not shown in the GUI.'.format(line))
     else:
         print('Warning - the file list {} could not be found.'.format(abspath))
+        return False
 
     return files
 
@@ -116,12 +117,16 @@ class Application(tk.Frame):
         if self.collection_changed and self.prompt_overwrite():
             self.save_list_changes()
         selectedfile = os.path.abspath(fd.askopenfilename())
+        print(selectedfile)
         if os.path.exists(selectedfile):
             try:
                 file_list = extract_files_from_collectionpath(selectedfile)
             except:
                 mb.showerror("Error", "An error occurred while reading the collection file.")
             else:
+                if not file_list:
+                    return # no valid file selected, do nothing
+
                 if len(file_list) > 0:
                     self.file_list = file_list
                     self.collection_path = selectedfile
