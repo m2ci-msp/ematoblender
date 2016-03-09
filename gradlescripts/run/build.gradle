@@ -1,0 +1,19 @@
+/*
+  Script to run the separate elements of the Ematoblender pipeline
+  Basically controls the CL options so it can be run with one command.
+*/
+
+// this depends on whether the user wants to use the WAVE or static file
+task runDataServer(){}
+
+// this must happen in any case
+task runGameServer(){}
+
+// for now it may be best to let the user run Blender themselves
+task runBlenderVis(){}
+
+task run() {
+  // dependencies
+  dependsOn GameServer
+  dependsOn runBlenderVis
+}
