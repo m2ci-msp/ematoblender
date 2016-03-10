@@ -15,10 +15,11 @@ import scripts.ema_io.ema_staticserver.rtserver as rts
 sys.path.insert(0, os.getcwd())
 
 
-def main():
+def main(collection=None):
     """Run the script in the console."""
     # open the file of filenames
-    abspath = os.path.abspath(pps.mocap_list_of_files)
+    abspath = os.path.abspath('../'+pps.mocap_list_of_files) if collection is None \
+        else os.path.abspath(os.path.normpath(os.getcwd()+os.sep + collection))
     print('reading mocap file list from', abspath)
     with open(abspath, 'r') as f:
         files = [fi.rstrip('\t\r\n') for fi in f.readlines()]
@@ -35,9 +36,7 @@ def main():
                   .format(rts.FakeRTRequestHandler.datafile, rts.FakeRTRequestHandler.loop))
             time.sleep(5)
         except KeyboardInterrupt as e:
-            print('\nChoose a file to stream from the list by its number,\n'
-                  'LOOP to toggle looping,\n '
-                  'or nothing to quit.:')
+            print('\nChoose a file to stream from the list by number,\nLOOP to toggle looping,\nor nothing to quit.:')
             for i, fn in enumerate(files):
                 print(i, '\t', fn)
             next_index = input('Next file index:')
