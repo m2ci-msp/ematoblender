@@ -1,19 +1,39 @@
 /*
   Script to run the separate elements of the Ematoblender pipeline
   Basically controls the CL options so it can be run with one command.
+  - runGameServerStatic and runGameServerLive take CL args RE showing the GUI,
+  - runGameServerLive takes a CL arg to set the PORT number for the articulograph
+  - runGameServerStatic takes the collection to show, if not the default
+  
 */
 
 // this depends on whether the user wants to use the WAVE or static file
-task runDataServer(){}
+task runDataServer(type:Exec){
+  python ematoblender/dataserver.py -g // begins with the default collection
+}
 
 // this must happen in any case
-task runGameServer(){}
+task runGameServerStatic(){
+  python ematoblender/gameserver.py // TODO: Make CL arg for the server HOST PORT; CL option to use gui?
+}
+
+task runGameServerLive(){
+  python ematoblender/gameserver.py // CL option to use GUI?
+}
 
 // for now it may be best to let the user run Blender themselves
 task runBlenderVis(){}
 
-task run() {
-  // dependencies
-  dependsOn GameServer
-  dependsOn runBlenderVis
+/*----------------------------------------------------------------------------*/
+// tasks that are executed
+
+task runFromWave(){
+  dependsOn runGameServerLive // run with customport
 }
+
+
+task runFromStatic(){
+  dependsOn runDataServer
+  dependsOn runGameServerStatic
+}
+
