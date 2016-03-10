@@ -16,6 +16,7 @@ from ...ema_shared import properties as pps
 
 def extract_files_from_collectionpath(abspath):
     files = []
+    print("Attempting to open the file collection", abspath)
     if os.path.isfile(abspath):  # open the abspath of the file list
         with open(abspath, 'r') as f:
             for line in f:
@@ -42,7 +43,10 @@ def main(collection=None):
     # get the list of files
     collectionpath = os.path.abspath(os.path.normpath(
         # default collection (in properties) if collection is not given
-        '../'+pps.mocap_list_of_files if collection is None else os.getcwd()+os.sep+collection)
+        pps.mocap_list_of_files
+        # TODO: Warn that the pps.mocap_list_of_files is evaluated relative to CWD
+        if collection is None
+        else os.getcwd()+os.sep+collection)
     )
     files = extract_files_from_collectionpath(collectionpath)
     assert files is not False  # there must be valid files in the collection
