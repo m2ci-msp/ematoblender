@@ -99,7 +99,8 @@ class NonBlockingStreamReader():
                             # write a dataframe, with an audio sample number included
                             self.print_fo.write(DataFrame(rawdf=rmsg)
                                                 .to_tsv(relative_timestamp_to=self.starting_timestamp,
-                                                        closest_sound_sample=self.wave_sampnum_deque))
+                                                        closest_sound_sample=self.wave_sampnum_deque
+                                                        if self.wave_sampnum_deque is not None else [0]))
                 else:
                     self._q5.put(line)
             else:
@@ -226,7 +227,7 @@ def get_status(*args):
     return replies.readline()
 
 
-def test_communication(conn, *args):
+def test_communication(conn, replies, *args):
     # set the version to ensure correct protocol used, test connection
     conn.send_packed("Version 1.0", 1)
     time.sleep(0.1)
@@ -244,7 +245,7 @@ def get_parameters(conn, *args):
     return reply
 
 
-def get_one_df(conn, *args):
+def get_one_df(conn, replies, *args):
     """Wait until a df is queued and return it. Return None if the end of the data file was reached."""
     prev_df = copy.copy(replies.latest_df)
     conn.send_packed("sendcurrentframe", 1)
@@ -310,33 +311,6 @@ def test_all_commands(conn, replies):
         print("This is a streaming timestamp", a.components[0].timestamp,
               'and a location', a.components[0].coils[0].abs_loc)
         time.sleep(0.01)
-
-
-    # conn.send_packed("sendparameters", 1)
-    #
-    # conn.send_packed("sendcurrentframe 3d", 1)
-    # time.sleep(0.1)
-    # print('####',replies.latest_df.components[0].coils[0].abs_loc)
-    #
-    # time.sleep(0.1)
-    # conn.send_packed("sendcurrentframe", 1)
-    # time.sleep(0.1)
-    # print('####',replies.latest_df.components[0].coils[0].abs_loc)
-    # conn.send_packed("sendcurrentframe", 1)
-    # time.sleep(0.1)
-    # print('####',replies.latest_df.components[0].coils[0].abs_loc)
-    # conn.send_packed("sendcurrentframe", 1)
-    # for i in range(5):
-    # #     print(replies.readdata())
-    #
-    # conn.send_packed("sendparameters", 1)
-    # time.sleep(1)
-    #
-    # conn.send_packed("streamframes frequency:30 3d", 1)
-    # time.sleep(2)
-    # conn.send_packed("streamframes stop", 1)
-    #
-    # return replies
 
 
 
