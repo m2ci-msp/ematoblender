@@ -36,6 +36,10 @@ class Application(tk.Frame):
         self.createMiddleFrame()
         self.createStatusLabel()
 
+    def quit_all(self):
+        self.root.destroy()
+        #  other things needed to quit (eg saving)
+
     def createMenuBar(self):
         """Create a manubar with pulldown menus"""
         # create a menubar
@@ -46,7 +50,7 @@ class Application(tk.Frame):
         filemenu.add_command(label="Clear Cache", command=example_command)
         filemenu.add_command(label="Pause Sending/Receiving", command=example_command)
         filemenu.add_separator()
-        filemenu.add_command(label="Exit", command=self.quit)
+        filemenu.add_command(label="Exit", command=self.quit_all)
         menubar.add_cascade(label="File", menu=filemenu)
 
         # create the Edit menu
@@ -76,9 +80,17 @@ class Application(tk.Frame):
     def createTopFrame(self):
         """Put widgets in the top frame"""
         self.topframe = tk.Frame(self.root, relief='raised', bd=2)
-        self.topframe.pack(fill=tk.X)
-        lbl = tk.Label(self.topframe, text='This is the top frame\n\nIt will have useful buttons for all environments')
-        lbl.pack()
+        self.topframe.pack(side=tk.TOP, fill=tk.X, expand=True)
+        lbl = tk.Label(self.topframe,justify=tk.LEFT,
+                       text='''This gameserver is the control centre for the Ematoblender package.
+It controls when data is requested from the data server, manipulates these data,
+and passes them into Blender (or any other application that requests them).'''
+        )
+        lbl.pack(side=tk.LEFT)
+        frame = tk.Frame(self.topframe)
+        frame.pack(side=tk.RIGHT)
+        btn = tk.Button(frame, text='Stop Server\nand Quit', fg='red', anchor=tk.E, command=self.quit_all)
+        btn.pack(side=tk.RIGHT)
 
     def createMiddleFrame(self):
         self.middleframe = tk.Frame(self.root)
