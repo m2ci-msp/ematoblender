@@ -72,6 +72,23 @@ class Application(tk.Frame):
         for btn in self.manual_buttons:
             btn.configure(state=tk.NORMAL if self.allow_man_calls.get() == 1 else tk.DISABLED)
 
+    def eval_smoothing(self, *args):
+        """Convert the output of the smoothing options section into something that can be used in GS."""
+        if self.smooth_by.get() == 1: # smooth by ms
+            self.msentry.config(state=tk.NORMAL)
+            self.frameentry.config(state=tk.DISABLED)
+            if self.msentry.get().isnumeric():
+                self.servobj.cla.frames_smoothed = self.servobj.n_frames_smoothed(ms=float(self.msentry.get()))
+            else:  # entry is not numeric
+                self.msentry.delete(0, tk.END) # delete any non-numeric things
+        else: # smooth by frames
+            self.msentry.config(state=tk.DISABLED)
+            self.frameentry.config(state=tk.NORMAL)
+            if self.frameentry.get().isdigit(): # must be an integer
+                self.servobj.cla.frames_smoothed = self.servobj.n_frames_smoothed(frames=int(self.frameentry.get()))
+            else:
+                self.frameentry.delete(0, tk.END)
+
     def createMenuBar(self):
         """Create a manubar with pulldown menus"""
         # create a menubar
@@ -218,14 +235,17 @@ and passes them into Blender (or any other application that requests them).'''
         lbl = tk.Label(smoothframe, text='Apply rolling average by:')
         lbl.grid(row=1, column=1, columnspan=4, sticky=tk.W)
         self.smooth_by = tk.IntVar()
-        lbl = tk.Radiobutton(smoothframe, text='ms', variable=self.smooth_by, value=1)
+        self.smooth_int = tk.StringVar()
+        lbl = tk.Radiobutton(smoothframe, text='ms', variable=self.smooth_by, value=1, command=self.eval_smoothing)
         lbl.grid(row=2, column=1)
-        e = tk.Entry(smoothframe, width=4)
-        e.grid(row=2, column=2, padx=4)
-        lbl = tk.Radiobutton(smoothframe, text='frames', variable=self.smooth_by, value=2)
+        self.msentry = tk.Entry(smoothframe, width=4,)
+        self.msentry.bind("<Key>", self.eval_smoothing)
+        self.msentry.grid(row=2, column=2, padx=4)
+        lbl = tk.Radiobutton(smoothframe, text='frames', variable=self.smooth_by, value=2, command=self.eval_smoothing)
         lbl.grid(row=2, column=3)
-        e = tk.Entry(smoothframe, width=4, )
-        e.grid(row=2, column=4, padx=4)
+        self.frameentry = tk.Entry(smoothframe, width=4,)
+        self.frameentry.bind("<Key>", self.eval_smoothing)
+        self.frameentry.grid(row=2, column=4, padx=4)
 
 
         # options for head-correction
