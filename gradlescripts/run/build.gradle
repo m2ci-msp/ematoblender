@@ -8,32 +8,44 @@
 */
 
 // this depends on whether the user wants to use the WAVE or static file
-task runDataServer(type:Exec){
-  python ematoblender/dataserver.py -g // begins with the default collection
+task runDataServer(){
+  doLast{
+    println "Starting a ProcessBuilder for the data server."
+    ProcessBuilder builder = new ProcessBuilder("python ./ematoblender/dataserver.py -g".split(' '))
+    Process p = builder.start()
+    }
 }
-
 // this must happen in any case
 task runGameServerStatic(){
-  python ematoblender/gameserver.py // TODO: Make CL arg for the server HOST PORT; CL option to use gui?
+  doLast{
+    println "Starting a ProcessBuilder for the static gameserver"
+    ProcessBuilder builder = new ProcessBuilder("python ./ematoblender/gameserver.py".split(' '))
+    Process g = builder.start()
+    //  TODO: Add CL option to use GUI when fully-functional
+  }
 }
 
 task runGameServerLive(){
-  python ematoblender/gameserver.py // CL option to use GUI?
+  doLast{
+    println "Starting a ProcessBuilder for the live gamserver"
+    ProcessBuilder builder = new ProcessBuilder("python ./ematoblender/gameserver.py --host $host --port $port".split(' '))
+    Process g = builder.start()
+    //  TODO: Add CL option to use GUI when fully-functional
+  }
 }
-
-// for now it may be best to let the user run Blender themselves
-task runBlenderVis(){}
 
 /*----------------------------------------------------------------------------*/
 // tasks that are executed
 
+task run(dependsOn: [runDataServer,runGameServerStatic]){
+  doLast{
+    println "Running the static data server and gameserver"
+  }
+}
+
 task runFromWave(){
-  dependsOn runGameServerLive // run with customport
+  dependsOn runGameServerLive
+  doLast{
+    println "Running the gameserver for live streaming on $host $port"
+  }
 }
-
-
-task runFromStatic(){
-  dependsOn runDataServer
-  dependsOn runGameServerStatic
-}
-
