@@ -9,7 +9,7 @@ and how it is recorded and saved.
 from threading import Thread, Event
 from collections import deque
 
-from ematoblender.scripts.ema_shared.properties import wave_writing_chunk_size
+from ...ema_shared.properties import wave_writing_chunk_size
 
 recording = None
 stop_recording = Event()
