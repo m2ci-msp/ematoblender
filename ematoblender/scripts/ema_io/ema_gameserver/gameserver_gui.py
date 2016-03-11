@@ -148,13 +148,13 @@ and passes them into Blender (or any other application that requests them).'''
         def set_tsvbtn():
             self.tsvbtn.config(state=tk.ACTIVE if self.savetsv.get() else tk.DISABLED)
             self.tsvlab.config(state=tk.ACTIVE if self.savetsv.get() else tk.DISABLED)
-            self.servobj.repl.print_tsv = self.savetsv
+            self.servobj.repl.print_tsv = self.savetsv.get()
             self.servobj.cla.print = self.savetsv.get()
 
         def set_wavbtn():
             self.wavbtn.config(state=tk.ACTIVE if self.savewav.get() else tk.DISABLED)
             self.wavlab.config(state=tk.ACTIVE if self.savewav.get() else tk.DISABLED)
-            self.servobj.cla.print = self.savewav.get()
+            self.servobj.cla.wav = self.savewav.get()
 
         tk.Label(saveframe, text="Save received TSV").grid(row=1, column=1, sticky=tk.W)
         btn = tk.Checkbutton(saveframe, variable=self.savetsv, command=set_tsvbtn)
@@ -174,6 +174,10 @@ and passes them into Blender (or any other application that requests them).'''
         self.wavbtn.grid(row=2, column=3)
         self.wavlab = tk.Label(saveframe, textvariable=self.wavfilelocation)
         self.wavlab.grid(row=2, column=4)
+
+        self.savetsv.set(False)
+        self.savewav.set(False)
+        self.servobj.cla.print, self.servobj.cla.wav = self.savetsv.get(), self.savewav.get()
 
         # TODO: Choose which audio input
 

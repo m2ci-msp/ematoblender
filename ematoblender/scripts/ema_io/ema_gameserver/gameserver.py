@@ -113,6 +113,7 @@ class GameServer(socketserver.UDPServer):
         """Use rtclient functions to initialise streaming, start printing/wave recording too if needed."""
         newest_df = rtc.start_streaming(self.conn, self.repl)
 
+        print('starting streaming with arguments', self.cla.wav, self.cla.print)
         timestring = time.strftime('%Y%m%d-%H.%M.%S')
         if self.cla.wav and not block_wav:
             self.wave_name = self.output_prefix(self.cla.wavdir) + timestring+'.wav'
