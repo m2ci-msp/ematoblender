@@ -40,6 +40,19 @@ class Application(tk.Frame):
         self.root.destroy()
         #  other things needed to quit (eg saving)
 
+    def toggle_networking_display(self):
+        self.shownetworking = not self.shownetworking
+        if self.shownetworking:
+            self.nt_in.pack()
+            self.nt_out.pack()
+        else:
+            self.nt_in.pack_forget()
+            self.nt_out.pack_forget()
+
+    def update_disabled_buttons(self):
+        for btn in self.manual_buttons:
+            btn.configure(state=tk.NORMAL if self.allow_man_calls.get() == 1 else tk.DISABLED)
+
     def createMenuBar(self):
         """Create a manubar with pulldown menus"""
         # create a menubar
@@ -67,15 +80,6 @@ class Application(tk.Frame):
         menubar.add_cascade(label="Help", menu=helpmenu)
 
         self.root.config(menu=menubar)
-
-    def toggle_networking_display(self):
-        self.shownetworking = not self.shownetworking
-        if self.shownetworking:
-            self.nt_in.pack()
-            self.nt_out.pack()
-        else:
-            self.nt_in.pack_forget()
-            self.nt_out.pack_forget()
 
     def createTopFrame(self):
         """Put widgets in the top frame"""
@@ -168,10 +172,6 @@ and passes them into Blender (or any other application that requests them).'''
 
         self.nt_in = NetworkTrafficFrame(self.leftframe)
         self.nt_in.pack()
-
-    def update_disabled_buttons(self):
-        for btn in self.manual_buttons:
-            btn.configure(state=tk.NORMAL if self.allow_man_calls.get() == 1 else tk.DISABLED)
 
     def createRightFrame(self):
         """Put widgets in the right frame"""
@@ -281,7 +281,6 @@ and passes them into Blender (or any other application that requests them).'''
 
         self.nt_out = NetworkTrafficFrame(self.rightframe)
         self.nt_out.pack(expand=False)
-
 
     def createStatusLabel(self):
         """Put a label with some configurable text along the bottom"""
