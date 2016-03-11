@@ -1,6 +1,8 @@
 echo off
 :: This is a batch file to run the core Ematoblender elements 
-:: It is simply an alternative to running gradlew run.
-
-echo Running the Windows run script for Ematoblender
+:: It runs the GUIs for the static server and the gameserver
+echo Running the Windows run script for Ematoblender Static
+pause
+:: Run static data
 gradlew run
+pause

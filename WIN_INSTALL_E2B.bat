@@ -4,3 +4,4 @@ echo off
 
 echo Running the Windows buildscript for Ematoblender
 gradlew setup
+pause
