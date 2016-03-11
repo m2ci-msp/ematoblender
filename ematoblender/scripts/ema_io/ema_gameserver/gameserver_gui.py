@@ -5,16 +5,29 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog as fd
 
+from .gameserver import GameServer
+from . import rtclient as rtc
+from ...ema_shared import properties as pps
+
 
 def main():
+    # start the server
+    global server
+    server = GameServer(pps.gameserver_host, pps.gameserver_port)
+
+    # start the GUI
     root = tk.Tk()
     root.geometry("900x500")
     root.title("Ematoblender Gameserver")
     icon = 'images/ti.ico'
     if os.path.isfile(icon):
         root.wm_iconbitmap(bitmap=icon)
-    app = Application(master=root)
+    app = Application(master=root, servobj=server)
     app.mainloop()
+
+    server.serve_forever()
+
+    print('Application and server were shutdown.')
 
 
 def example_command():
@@ -23,11 +36,15 @@ def example_command():
 
 class Application(tk.Frame):
     """ GUI class for the gameserver application. """
-    def __init__(self, master=None):
+    def __init__(self, master=None, servobj=None):
         tk.Frame.__init__(self, master)
         self.root = master
 
         self.shownetworking = tk.BooleanVar()
+        self.streaming = False
+        self.streamtext = tk.StringVar()
+        self.streamtext.set("Start streaming")
+        self.servobj = servobj
 
         self.createMenuBar()
 
@@ -36,9 +53,11 @@ class Application(tk.Frame):
         self.createMiddleFrame()
         self.createStatusLabel()
 
+
     def quit_all(self):
         self.root.destroy()
         #  other things needed to quit (eg saving)
+        self.servobj.shutdown_server_threads()
 
     def toggle_networking_display(self):
         self.shownetworking = not self.shownetworking
@@ -120,17 +139,22 @@ and passes them into Blender (or any other application that requests them).'''
 
         def set_tsvdir():
             self.tsvfilelocation.set(fd.askdirectory())
+            self.servobj.cla.printdir = self.tsvfilelocation.get()
 
         def set_wavdir():
             self.wavfilelocation.set(fd.askdirectory())
+            self.servobj.cla.wavdir = self.wavfilelocation.get()
 
         def set_tsvbtn():
             self.tsvbtn.config(state=tk.ACTIVE if self.savetsv.get() else tk.DISABLED)
             self.tsvlab.config(state=tk.ACTIVE if self.savetsv.get() else tk.DISABLED)
+            self.servobj.repl.print_tsv = self.savetsv
+            self.servobj.cla.print = self.savetsv.get()
 
         def set_wavbtn():
             self.wavbtn.config(state=tk.ACTIVE if self.savewav.get() else tk.DISABLED)
             self.wavlab.config(state=tk.ACTIVE if self.savewav.get() else tk.DISABLED)
+            self.servobj.cla.print = self.savewav.get()
 
         tk.Label(saveframe, text="Save received TSV").grid(row=1, column=1, sticky=tk.W)
         btn = tk.Checkbutton(saveframe, variable=self.savetsv, command=set_tsvbtn)
@@ -140,6 +164,7 @@ and passes them into Blender (or any other application that requests them).'''
         self.tsvbtn.grid(row=1, column=3)
         self.tsvlab = tk.Label(saveframe, textvariable=self.tsvfilelocation)
         self.tsvlab.grid(row=1,column=4)
+
 
         tk.Label(saveframe, text="Record audio while streaming").grid(row=2, column=1, sticky=tk.W)
         btn = tk.Checkbutton(saveframe, variable=self.savewav, command=set_wavbtn)
@@ -162,11 +187,14 @@ and passes them into Blender (or any other application that requests them).'''
                                   command=self.update_disabled_buttons)
         manallow.grid(row=1, column=1, columnspan=3)
 
-        manbtn1 = tk.Button(callsframe, text='Single', state=tk.DISABLED)
+        manbtn1 = tk.Button(callsframe, text='Single', state=tk.DISABLED,
+                            command=lambda: rtc.get_one_df(self.servobj.conn, self.servobj.repl))
         manbtn1.grid(row=2, column=1)
-        manbtn2 = tk.Button(callsframe, text='Stream', state=tk.DISABLED)
+        manbtn2 = tk.Button(callsframe, textvariable=self.streamtext, state=tk.DISABLED,
+                            command=self.start_stop_streaming)
         manbtn2.grid(row=2, column=2)
-        manbtn3 = tk.Button(callsframe, text='Status', state=tk.DISABLED)
+        manbtn3 = tk.Button(callsframe, text='Status', state=tk.DISABLED,
+                            command=lambda: rtc.test_communication(self.servobj.conn, self.servobj.repl))
         manbtn3.grid(row=2, column=3)
         self.manual_buttons = [manbtn1, manbtn2, manbtn3]
 
@@ -289,6 +317,20 @@ and passes them into Blender (or any other application that requests them).'''
         labeltext = 'Example label'
         self.bottomlabel = tk.Label(self.bottomframe, text=labeltext)
         self.bottomlabel.pack(side=tk.RIGHT, fill=tk.X)
+
+    def start_stop_streaming(self):
+        """Toggle streaming, and text on button"""
+        if self.streaming:
+            self.servobj.gs_stop_streaming()
+            self.streamtext.set("Start streaming")
+            self.streaming = False
+
+        else:
+            self.servobj.gs_start_streaming()
+            self.streamtext.set("Stop streaming")
+            self.streaming = True
+
+
 
 
 class NetworkTrafficFrame(tk.Frame):
