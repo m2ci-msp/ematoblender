@@ -6,8 +6,8 @@ Depends on the rtc3d_parser module to unwrap the binary packages.
 """
 
 # communication with the server, parsing the objects to and from Coil/DataFrame etc
-from ematoblender.scripts.ema_io.rtc3d_parser import BasicProtocol, DataFrame
-from ematoblender.scripts.ema_io.client_server_comms import ClientConnection
+from ..rtc3d_parser import BasicProtocol, DataFrame
+from ..client_server_comms import ClientConnection
 
 # threading of replies
 from threading import Thread
@@ -189,11 +189,11 @@ class UnexpectedEndOfStream(Exception):
     pass
 
 
-def init_connection(retain_last=5, print_to=None, wave_to=None):
+def init_connection(retain_last=5, print_to=None, wave_to=None, wavehost=None, waveport=None):
     """Start the connection, set up objects to handle the soon-to-be-incoming data."""
     # create the connection object to handle communication
     global connection, replies
-    connection = ClientConnection(BasicProtocol)
+    connection = ClientConnection(BasicProtocol, customhost=wavehost, customport=waveport)
     # replies object listens for replies and places in queues based on type
     replies = NonBlockingStreamReader(connection, last_x=retain_last)
     print(replies._b)
