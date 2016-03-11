@@ -11,7 +11,16 @@ data/*
 *.bak
 __init__.py
 *__pycache__
+*pyc
 code_examples/*
+ematoblender/code_examples/*
 blender_objects/
 test_sounds/
 testing/
+*.blend1
+*.html
+build
+mesh
+temp/*
+.idea/
+survey_objects/
