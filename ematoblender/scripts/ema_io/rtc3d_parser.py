@@ -89,12 +89,22 @@ class BasicProtocol(object):
         return "{}".format(self.df)
 
 
-class DataFrame(BasicProtocol):
-    """Contains one data frame transmission.
+class DataFrame(object):
+    """
+    Class that represents one data frame transmission.
+    This is wrapped and unwrapped by the BasicProtocol class.
+
     """
     # TODO: Frameid not being added to streaming data
 
     def __init__(self, rawdf=None, components=None, fromlist=None):
+        """
+        Initialise a data frame instance.
+        Either rawdf or fromlist parameters must contain data:
+        If rawdf is a bytestring then this is parsed,
+        else if fromlist contains a list of DataFrame objects then the average of these values is calculated.
+        """
+
         #print('***** Making df')
         self.smoothed = False
         if components is not None: # initialised to write
