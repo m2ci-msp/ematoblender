@@ -38,6 +38,8 @@ class BasicProtocol(object):
     """
 
     HEADER_LEN = 8
+    PACKET_STRUCT = '> I I {}s'
+    HEADER_STRUCT = '> I I'
 
     @staticmethod
     def unpack_wrapper(message):
@@ -46,15 +48,18 @@ class BasicProtocol(object):
             return None
         else:
             #print("input message was {}".format(message))
-            return struct.unpack('> I I {}s'.format(str(len(message)-BasicProtocol.HEADER_LEN)), message)
+            return struct.unpack(BasicProtocol.PACKET_STRUCT.format(
+                str(len(message)-BasicProtocol.HEADER_LEN)), message)
 
     @classmethod
     def pack_wrapper(cls, command, atype=1):
         """ Wrap data with the header for general-purpose data packets with ASCII message,
-        Returns the byte-packed packet."""
+        Returns the byte-packed packet.
+        """
         if type(command) != bytes:
             command = bytes(command, 'ascii')
-        return struct.pack('> I I {}s'.format(str(len(command))), len(command)+BasicProtocol.HEADER_LEN, atype, command)
+        return struct.pack(BasicProtocol.PACKET_STRUCT.format(
+            str(len(command))), len(command)+BasicProtocol.HEADER_LEN, atype, command)
 
     @classmethod
     def get_size_type(cls, mybytes):
@@ -62,7 +67,7 @@ class BasicProtocol(object):
         if mybytes is None or len(mybytes) == 0:
             return 0, 0
         else:
-            return struct.unpack('> I I', mybytes[:BasicProtocol.HEADER_LEN])
+            return struct.unpack(BasicProtocol.HEADER_STRUCT, mybytes[:BasicProtocol.HEADER_LEN])
 
     def __init__(self, rawdf=None):
         """
