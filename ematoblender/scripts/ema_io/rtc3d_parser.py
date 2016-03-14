@@ -70,19 +70,17 @@ class BasicProtocol(object):
         If rawdf is a bytestring, then it is handled according to the message type.
         Else hold an empty BasicProtocol instance.
         """
-        self.rtype = 0  # begin as error type before filling
+        self.packet_type = 0  # begin as error type before filling
         self.df = ''
-        self.size = 0
+        self.body_size = 0
 
         if rawdf is not None:
-            self.size, self.rtype, rmsg = self.unpack_wrapper(rawdf)
-          #  print("Got ", self.size, self.rtype, rmsg)
-
-            if self.rtype in [0, 1, 2, 4]:
+            self.body_size, self.packet_type, rmsg = self.unpack_wrapper(rawdf)
+            if self.packet_type in [0, 1, 2, 4]:
                 self.df = str(rmsg, 'ascii')
-            elif self.rtype == 5:
+            elif self.packet_type == 5:
                 self.df = rmsg
-            elif self.rtype == 3:
+            elif self.packet_type == 3:
                 self.df = DataFrame(rawdf=rmsg)
             else:
                 pass
