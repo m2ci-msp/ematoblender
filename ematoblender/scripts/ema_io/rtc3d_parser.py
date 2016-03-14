@@ -93,6 +93,12 @@ class BasicProtocol(object):
     def __str__(self):
         return "{}".format(self.df)
 
+    def get_data_frame(self):
+        return self.df
+
+    def get_packet_type(self):
+        return self.packet_type
+
 
 class DataFrame(object):
     """
