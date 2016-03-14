@@ -25,8 +25,18 @@ from ematoblender.scripts.ema_shared.general_maths import average_quaternions
 
 
 class BasicProtocol(object):
-    """ The Basic Protocol for the wrapping of messages, according to Version 1.0 of the RTC3D Protocol.
-    Methods here firstly unwrap the general packets (outermost wrapper)"""
+    """
+    The Basic Protocol for the wrapping of messages, according to Version 1.0 of the RTC3D Protocol.
+    This class contains static methods to pack and unpack the outermost wrapper
+    for header (which contains the size and and type(integer) of the message).
+    The remainder is the message body.
+    Instances have the attributes:
+     - rtype (reply type, as defined in RTC3D protocol,
+        0=error, 1=success string, 2=XML, 3=dataframe, 4=no data, 5=C3D file)
+    - df (data frame object (bytes if C3D file, DataFrame class if body is packed bytes)
+    - size (integer, length of the message body)
+    """
+
     HEADER_LEN = 8
 
     @staticmethod
@@ -55,10 +65,12 @@ class BasicProtocol(object):
             return struct.unpack('> I I', mybytes[:BasicProtocol.HEADER_LEN])
 
     def __init__(self, rawdf=None):
-        """Initialise a data packet according to the RTC3D protocol.
-        If rawdf is None, unpacks the bytestring. Else hold an empty packet object.
         """
-        self.rtype = 0  # begin as error before filling
+        Initialise a data packet according to the RTC3D protocol.
+        If rawdf is a bytestring, then it is handled according to the message type.
+        Else hold an empty BasicProtocol instance.
+        """
+        self.rtype = 0  # begin as error type before filling
         self.df = ''
         self.size = 0
 
