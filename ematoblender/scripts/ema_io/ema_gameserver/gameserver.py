@@ -109,6 +109,25 @@ class GameServer(socketserver.UDPServer):
             p_conn, p_repl = rtc.connection, rtc.replies
         self.conn, self.repl = p_conn, p_repl
 
+    def n_frames_smoothed(self, ms=None, frames=None):
+        """
+        Smoothing takes the form of a rolling average over the last n frames to filter rnadom error.
+        The number of frames is either defined directly (frames)
+        or by the number of ms over which the frames are retained for smoothing.
+        :return int: the number of frames that are retained for smoothing.
+        """
+        # average over a number of milliseconds based on average streaming rate
+        if ms is not None:
+            xmlelem = rtc.get_parameters(self.conn)
+            freqelem = xmlelem.find('//Frequency')
+            frequency = float(freqelem.text)
+            return (frequency * 1/1000 * ms) // 1   # frequency in seconds/1000 * ms desired, lower bound
+        # average over a number of measurements
+        elif frames is not None:
+            return int(frames)
+        else:
+            return 1
+
     def gs_start_streaming(self, block_print=False, block_wav=False):
         """Use rtclient functions to initialise streaming, start printing/wave recording too if needed."""
         newest_df = rtc.start_streaming(self.conn, self.repl)
@@ -352,24 +371,7 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
 
 
 #TODO: Needs attention - can this exist in gameserver and get parameters on __init__?
-def n_frames_smoothed(conn, ms=None, frames=None):
-    """
-    Smoothing takes the form of a rolling average over the last n frames to filter rnadom error.
-    The number of frames is either defined directly (frames)
-    or by the number of ms over which the frames are retained for smoothing.
-    :return int: the number of frames that are retained for smoothing.
-    """
-    # average over a number of milliseconds based on average streaming rate
-    if ms is not None:
-        xmlelem = rtc.get_parameters(conn)
-        freqelem = xmlelem.find('//Frequency')
-        frequency = float(freqelem.text)
-        return (frequency * 1/1000 * ms) // 1   # frequency in seconds/1000 * ms desired, lower bound
-    # average over a number of measurements
-    elif frames is not None:
-        return int(frames)
-    else:
-        return 1
+
 
 
 # command line arguments given when gameserver is initialised (from Blender usually)
