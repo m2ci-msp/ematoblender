@@ -108,47 +108,53 @@ class DataFrame(object):
     """
     # TODO: Frameid not being added to streaming data
 
-    def __init__(self, rawdf=None, components=None, fromlist=None):
+    def __init__(self, components=None, rawdf=None, fromlist=None):
         """
         Initialise a data frame instance.
-        Either rawdf or fromlist parameters must contain data:
+        Either rawdf, components or fromlist parameters must contain data:
         If rawdf is a bytestring then this is parsed,
-        else if fromlist contains a list of DataFrame objects then the average of these values is calculated.
+        else if fromlist contains a list of DataFrame objects then the average of these values is calculated,
+        else if component contains a list of components it is constructed around this list.
+
+        Attributes are:
+        - smoothed: If this dataframe's positional values have already been smoothed/filtered
+        - components: A list containing all the component objects
         """
 
-        #print('***** Making df')
         self.smoothed = False
-        if components is not None: # initialised to write
+
+        if components is not None:  # initialised for writing around pre-existing component objects
             self.components = components
 
-        elif rawdf is not None: # initialised to read
+        elif rawdf is not None:  # initialised for reading from a bytestring
             self.components = self.unpack_df_to_components(rawdf)
 
         elif fromlist is not None:  # initialise from a list of other dataframes, averaging them
             self.smoothed = True
             self.components = [Component()]
+
             allcoils = zip(*[f.give_coils() for f in fromlist])
             for coil_over_alldfs in allcoils:
                 #print('coil_oer alldfs', coil_over_alldfs)
+                
+                # get the average location
                 new_loc = []
                 # iterate over x, y, z for the coil
                 for i in range(3): # average the location readings over the dfs
                     val = sum(thiscoil.abs_loc[i] for thiscoil in coil_over_alldfs)/len(coil_over_alldfs)
                     new_loc.append(val)
-                new_rot = []
-                quaternion_list = [thiscoil.abs_rot for thiscoil in coil_over_alldfs]
-                new_rot  = average_quaternions(quaternion_list)
 
-                # old quaternion averaging procedure: average each individual value
-                #old for i in range(4): # average the quaternion values over the dfs
-                #old    val = sum(thiscoil.abs_rot[i] for thiscoil in coil_over_alldfs)/len(coil_over_alldfs)
-                # old    new_rot.append(val)
+                # get the average rotation
+                quaternion_list = [thiscoil.abs_rot for thiscoil in coil_over_alldfs]
+                new_rot = average_quaternions(quaternion_list)
+
+                # pack these values into the first component
                 self.components[0].coils.append(Coil(loc_dict=list(new_rot)+new_loc))
                 self.components[0].timestamp = fromlist[-1].components[0].timestamp
 
         else:
-            pass # just make a really rudimentary frame with nothing
-            #raise ValueError
+            raise ValueError('Either components, a bytestring or dataframes must be given as input to DataFrame class')
+
     def __str__(self):
         return " dataframe with components: \n{}".format([[y.__dict__ for y in x.coils] for x in self.components])
 
