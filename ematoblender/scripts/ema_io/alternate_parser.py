@@ -138,54 +138,11 @@ class MessageBuilder(object):
             smoothedcoils = [CoilBuilder.average(cs) for cs in zip(*[d.give_coils() for d in dflist])]
 
             for n, s in zip(newcoils, smoothedcoils):
-                n = s # use list mutability to set new values to soothed
-
-            #
-            # for k, v in dflist[-1].__dict__.items():
-            #     vals = [getattr(d, k) for d in dflist]
-            #
-            #     # set all the values to that of the last dataframe
-            #     # simple average for float
-            #     if type(v) == float:
-            #         sv = sum(vals)/n
-            #
-            #     # last value for strings or int
-            #     if type(v) == str or type(v) == int or type(v) == bool:
-            #         sv = vals[-1]
-            #
-            #     # components
-            #     else:
-            #         print('Averaging valuse', vals)
-            #         sv = v.__class__.average(vals)
-            #
-            #     setattr(meanobj, k, sv)
-            #
-            # setattr(meanobj, 'smoothed', True)
-
-            # for df in dflist:
-            #     for k, v in df.__dict__.items():
-            #         # get current attribute val
-            #         a = getattr(meanobj, k, 0)
-            #         # increment if float, overwrite if int
-            #         if type(v) == float:
-            #             setattr(meanobj, k, a + v/n)
-            #         elif isinstance(v, ComponentBase):
-            #             ComponentBase.increment_one_nth(a, v, n)
-            #         else:
-            #             setattr(meanobj, k, v)
+                n = s  # use list mutability to set new values to soothed
             return meanobj
         else:
             raise KeyError("The DataFrame objects you are trying to average have a different structure")
 
-
-# def average(*input):
-#     """Average the objects given. Must be of the same type"""
-#     n = len(input)
-#     t = type(input[0])
-#     if all(type(i) == t for i in input):
-#         return sum(input)/n
-#     else:
-#         raise ValueError('Cannot average values of different types')
 
 class JSONBuilder(MessageBuilder):
 
@@ -286,22 +243,6 @@ class DataFrame(Message):
         except AttributeError:
             ts = None
         return ts
-
-#
-#     @classmethod
-#     def average_components(cls, objs):
-#         """Used when smoothing the data over several frames"""
-#         print('averaging', objs)
-#         print([o.give_coils for o in objs])
-#         output = ComponentList() #type,fn, ts
-#         output.__dict__ = copy.deepcopy(objs[-1].__dict__)
-#         for components in zip(*objs):
-#             print('Now handling component', components)
-#             print([c.give_coils() for c in components])
-#             output.append(Component(CoilList(CoilList.average(a) for a in zip(*[c.give_coils() for c in components])))
-#                                                             #[comp1[c1, c2], comp2[c1, c2]]
-# #        thisobj.coils = CoilList(CoilList.average(a) for a in zip(o.give_coils() for o in objs))
-#         return output
 
 
 class AsciiMessage(Message):
