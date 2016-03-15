@@ -42,11 +42,6 @@ class RTC3DPacketParser(BasePacketParser):
     This class contains static methods to pack and unpack the outermost wrapper
     for header (which contains the size and and type(integer) of the message).
     The remainder is the message body.
-    Instances have the attributes:
-     - rtype (reply type, as defined in RTC3D protocol,
-        0=error, 1=success string, 2=XML, 3=dataframe, 4=no data, 5=C3D file)
-    - df (data frame object (bytes if C3D file, DataFrame class if body is packed bytes)
-    - size (integer, length of the message body)
     """
 
     PACKET_STRUCT = '> I I {}s'
@@ -103,7 +98,7 @@ class RTC3DPacketParser(BasePacketParser):
 
 
 class MessageBuilder(object):
-    """Give a bytestring to this class if it is a DataFrame reply"""
+    """Give a bytestring to build the relevant message object (either DataFrame or AsciiMessage)"""
 
     ASCII_CODES = [0, 1, 2, 4]
     DATAFRAME_CODES = [3]
@@ -112,8 +107,7 @@ class MessageBuilder(object):
 
     @classmethod
     def unpack_all(cls, mbytes, mtype):
-        """Return a dataframe for the given bytestring"""
-        print('unpacking  type',  mtype)
+        """Return a message instance for the given bytestring"""
         if mtype in cls.ASCII_CODES:
             return AsciiMessage(mbytes, mtype)
 
@@ -126,7 +120,7 @@ class MessageBuilder(object):
 
     @staticmethod
     def pack_all(messageobj):
-        """Return a bytestring for the given dataframe"""
+        """Return a bytestring for the given message"""
         raise NotImplementedError
 
 
@@ -144,36 +138,32 @@ class JSONBuilder(MessageBuilder):
 
 
 class Message(object):
+    """
+    Data Frame base class.
+    """
     GET_BUILDER_CLASS = MessageBuilder
-    """
-    Data Frame base object with relevant methods
-    Component count is defined
-    """
     pass
 
 
 class DataFrame(Message):
+    """Class representing dataframe objects.
+    Has attributes:
+    - components
+    """
     message_type = 3
     GET_INNER_BUILDER = lambda: ComponentBuilder
 
     def __init__(self, mbytes):
-        """Data Frame object"""
-        self.rawmsg = mbytes
+        """Initialise Data Frame object from bytestring."""
         self.components = self.__class__.GET_INNER_BUILDER().unpack(mbytes)
 
     def pack_all(self):
-        """return bytes, type"""
+        """Return (in bytes) component count, then each component's bytestring"""
         return self.__class__.GET_INNER_BUILDER().pack(self.components)
 
     def give_coils(self):
         """Return a list of the coil objects in a dataframe."""
-        output = []
-       # print('this is df.componentsn', self.components)
-        for component in self.components:
-            #print('this is a component', component)
-            for coil in component.coils:
-                output.append(coil)
-        return output
+        return [coil for comp in self.components for coil in comp.coils]
 
     def __str__(self):
         return "Data frame with {} components;".format(len(self.components))+str(self.components[0])
@@ -184,8 +174,9 @@ class DataFrame(Message):
         else:
             return False
 
+
 class AsciiMessage(Message):
-    # note must have message_type attribute
+    """Class representing ASCII message objects"""
 
     def __init__(self, mtype, mbytes):
         self.message_type = mtype
@@ -200,7 +191,7 @@ class AsciiMessage(Message):
 
 class ComponentBuilder(object):
     """Given a bytestring, this class identifies which component it represents,
-    and unpacks this.
+    and unpacks it to the relevant object type.
     """
     HEADER = '> I'
     HEADER_LEN = struct.calcsize(HEADER)
@@ -236,11 +227,12 @@ class ComponentBuilder(object):
         """Return a bytestring for the component"""
         return struct.pack(cls.HEADER, len(components)) \
                + b''.join([struct.pack(cls.EACH_HEADER, c.get_sizeb(), c.COMPONENT_TYPE, c.framenumber, c.timestamp)
-                            + c.pack_data()
-                            for c in components])
+               + c.pack_data()
+               for c in components])
 
 
 class ComponentBase(object):
+    """Base class for component objects"""
     GET_BUILDER_CLASS = lambda: ComponentBuilder
 
     def __init__(self, framenum, timestamp):
@@ -253,6 +245,7 @@ class ComponentBase(object):
 
 
 class ComponentXD(ComponentBase):
+    """Base class for component objects with location"""
     def __init__(self, *args):
         super().__init__(*args)
         self.coils = NotImplemented
@@ -261,10 +254,9 @@ class ComponentXD(ComponentBase):
         return len(self.pack_data())+ struct.calcsize(self.__class__.GET_BUILDER_CLASS().EACH_HEADER)
 
     def pack_data(self):
-        # TODO Pack all the coils
+        """Pack the component header, and the bytestring for each marker/coil"""
         return struct.pack(self.__class__.GET_BUILDER_CLASS().HEADER, len(self.coils)) + \
                b''.join([struct.pack(c.__class__.GET_BUILDER_CLASS().EACH_STRUCT, *c.in_packing_order()) for c in self.coils])
-                # each coil packed
 
 
 class Component3D(ComponentXD):
@@ -307,11 +299,8 @@ class CoilBuilder(object):
     @classmethod
     def unpack(cls, bytestring):
         n, *_ = struct.unpack(cls.HEADER, bytestring[:cls.HEADER_LEN])
-        print('n is', n)
         bytestring = bytestring[cls.HEADER_LEN:]
-        #bycoil = struct.unpack_from(cls.EACH_STRUCT, bytestring)
-        #return cls.COIL_CLASS
-        return [cls.GET_RESULT_CLASS(struct.unpack_from(cls.EACH_STRUCT, bytestring[i*cls.EACH_LEN: (i+1)*cls.EACH_LEN]))
+        return [cls.GET_RESULT_CLASS(struct.unpack(cls.EACH_STRUCT, bytestring[i*cls.EACH_LEN: (i+1)*cls.EACH_LEN]))
                 for i in range(n)]
 
 
@@ -334,7 +323,7 @@ class CoilBase(object):
     """
     def __init__(self, x, y, z):
         self.abs_loc = (x, y, z)
-        # TODO: Initialise other attributes as None here
+        self.abs_rot = None
 
     def __str__(self):
         return "Coil with location {}".format(str(self.abs_loc))
@@ -423,6 +412,10 @@ def main():
     print(type(bytes1), len(bytes1), bytes1)
     print(type(outer_bytes1), len(outer_bytes1), outer_bytes1 )
     assert bytes1 == outer_bytes1
+
+    print('Testing coil returning functions')
+
+    assert object1.give_coils() == object1.components[0].coils
 
     # print('b1 is type', type(b1))
     # o1 = RTC3DPacketParser.unpack_all(b1)
