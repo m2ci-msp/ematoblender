@@ -304,21 +304,6 @@ class ComponentBuilder(object):
         self.coils = coils
 
 
-# class ComponentList(list):
-#
-#     def __init__(self):
-#         super().__init__(self)
-#
-#     def give_coils(self):
-#          return [e.give_coils() for e in self]
-#
-#     def __getattr__(self, item):
-#         if item == "components":
-#             return self
-
-
-
-
 class ComponentBase(object):
     """Base class for component objects"""
     GET_BUILDER_CLASS = lambda: ComponentBuilder
@@ -421,18 +406,6 @@ class CoilBuilder6D(CoilBuilder):
     GET_RESULT_CLASS = lambda x: Coil6D(*x)
 
 
-# class CoilList(list):
-#     """Wrapper for a list of coils."""
-#
-#
-#
-#     def __getattr__(self, item):
-#         if item == 'coils':
-#             return self
-#
-#     def give_coils(self):
-#         return self
-
 class CoilBase(object):
     """
     abs_loc is (x,y,z),
@@ -450,7 +423,6 @@ class CoilBase(object):
             return True
         else:
             return False
-
 
 
 class Coil3D(CoilBase):
