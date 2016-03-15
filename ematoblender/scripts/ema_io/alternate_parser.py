@@ -1,5 +1,3 @@
-__author__ = 'Kristy'
-
 # -*- coding: utf-8 -*-
 __author__ = 'Kristy'
 
@@ -123,6 +121,71 @@ class MessageBuilder(object):
         """Return a bytestring for the given message"""
         raise NotImplementedError
 
+    @staticmethod
+    def average_dataframes(dflist):
+        """Average all of the floating point values in the input dataframes, return a dataframe"""
+        # check if all of the dataframes have the same attribute structure
+        n = len(dflist)
+        if n > 1 and all(dflist[0].check_same_structure(dflist[n]) for n in range(1, n)):
+
+            meanobj = DataFrame('')
+            meanobj.__dict__ = copy.deepcopy(dflist[-1].__dict__)
+            meanobj.smoothed = True
+
+            # update the components' coils, keep them the same
+            newcoils = meanobj.give_coils()
+
+            smoothedcoils = [CoilBuilder.average(cs) for cs in zip(*[d.give_coils() for d in dflist])]
+
+            for n, s in zip(newcoils, smoothedcoils):
+                n = s # use list mutability to set new values to soothed
+
+            #
+            # for k, v in dflist[-1].__dict__.items():
+            #     vals = [getattr(d, k) for d in dflist]
+            #
+            #     # set all the values to that of the last dataframe
+            #     # simple average for float
+            #     if type(v) == float:
+            #         sv = sum(vals)/n
+            #
+            #     # last value for strings or int
+            #     if type(v) == str or type(v) == int or type(v) == bool:
+            #         sv = vals[-1]
+            #
+            #     # components
+            #     else:
+            #         print('Averaging valuse', vals)
+            #         sv = v.__class__.average(vals)
+            #
+            #     setattr(meanobj, k, sv)
+            #
+            # setattr(meanobj, 'smoothed', True)
+
+            # for df in dflist:
+            #     for k, v in df.__dict__.items():
+            #         # get current attribute val
+            #         a = getattr(meanobj, k, 0)
+            #         # increment if float, overwrite if int
+            #         if type(v) == float:
+            #             setattr(meanobj, k, a + v/n)
+            #         elif isinstance(v, ComponentBase):
+            #             ComponentBase.increment_one_nth(a, v, n)
+            #         else:
+            #             setattr(meanobj, k, v)
+            return meanobj
+        else:
+            raise KeyError("The DataFrame objects you are trying to average have a different structure")
+
+
+# def average(*input):
+#     """Average the objects given. Must be of the same type"""
+#     n = len(input)
+#     t = type(input[0])
+#     if all(type(i) == t for i in input):
+#         return sum(input)/n
+#     else:
+#         raise ValueError('Cannot average values of different types')
 
 class JSONBuilder(MessageBuilder):
 
@@ -154,8 +217,14 @@ class DataFrame(Message):
     GET_INNER_BUILDER = lambda: ComponentBuilder
 
     def __init__(self, mbytes):
-        """Initialise Data Frame object from bytestring."""
-        self.components = self.__class__.GET_INNER_BUILDER().unpack(mbytes)
+        """Initialise Data Frame object from bytestring.
+        Make some empty object if no string given.
+        """
+        self.smoothed = None
+
+        if len(mbytes) > 0:
+            self.smoothed = False
+            self.components = self.__class__.GET_INNER_BUILDER().unpack(mbytes)
 
     def pack_all(self):
         """Return (in bytes) component count, then each component's bytestring"""
@@ -163,6 +232,7 @@ class DataFrame(Message):
 
     def give_coils(self):
         """Return a list of the coil objects in a dataframe."""
+        print('returning ALL coils')
         return [coil for comp in self.components for coil in comp.coils]
 
     def __str__(self):
@@ -173,6 +243,65 @@ class DataFrame(Message):
             return True
         else:
             return False
+
+    def check_same_structure(self, other):
+        """Check that there is the same number of coils and they have the same attributes"""
+        if len(self.components) == len(other.components) \
+                and all(c.__dict__.keys() == oc.__dict__.keys() \
+                for n in range(len(self.components)) \
+                for (c, oc) in zip(self.components[n].give_coils(), other.components[n].give_coils())
+                ):
+            print('Objects are the same')
+            return True
+        else:
+            print('Objects are not the same')
+            return False
+
+    def to_tsv(self, relative_timestamp_to=0, closest_sound_sample=[0]):
+        """Return a tab-separated string with the coil data in the wave tsv order"""
+        outstring = ''
+        if len(self.components)== 0 or len(self.give_coils()) == 0:
+            print('No content in the data frame to write.')
+            return ''
+        else:
+            # fields time (based on wave frames), measid, wavid
+            outstring+='{}\t{}\t{}\t'.format(str(int(self.components[0].timestamp)-relative_timestamp_to),
+                                             str(self.components[0].framenumber), str(closest_sound_sample[0]))
+            for i, c in enumerate(self.give_coils()):
+                outstring+='{}\t{}\t'.format('Sensor'+str(i), '55')
+                outstring+='{}\t{}\t{}\t{}\t'\
+                    .format(c.abs_rot[0], c.abs_rot[1], c.abs_rot[2], c.abs_rot[3]) # rotational info
+                outstring+='{}\t{}\t{}\t'\
+                    .format(c.abs_loc[0], c.abs_loc[1], c.abs_loc[2],)
+            outstring+='\n'
+        return outstring
+
+    def give_timestamp_secs(self):
+        """Return the df timestamp in seconds.
+        RTC3D protocol timestamps are in microseconds by default.
+        """
+        try:
+             micro_ts = self.components[0].timestamp
+             ts = micro_ts * 0.000001
+        except AttributeError:
+            ts = None
+        return ts
+
+#
+#     @classmethod
+#     def average_components(cls, objs):
+#         """Used when smoothing the data over several frames"""
+#         print('averaging', objs)
+#         print([o.give_coils for o in objs])
+#         output = ComponentList() #type,fn, ts
+#         output.__dict__ = copy.deepcopy(objs[-1].__dict__)
+#         for components in zip(*objs):
+#             print('Now handling component', components)
+#             print([c.give_coils() for c in components])
+#             output.append(Component(CoilList(CoilList.average(a) for a in zip(*[c.give_coils() for c in components])))
+#                                                             #[comp1[c1, c2], comp2[c1, c2]]
+# #        thisobj.coils = CoilList(CoilList.average(a) for a in zip(o.give_coils() for o in objs))
+#         return output
 
 
 class AsciiMessage(Message):
@@ -230,6 +359,24 @@ class ComponentBuilder(object):
                + c.pack_data()
                for c in components])
 
+    def __init__(self, coils):
+        self.coils = coils
+
+
+# class ComponentList(list):
+#
+#     def __init__(self):
+#         super().__init__(self)
+#
+#     def give_coils(self):
+#          return [e.give_coils() for e in self]
+#
+#     def __getattr__(self, item):
+#         if item == "components":
+#             return self
+
+
+
 
 class ComponentBase(object):
     """Base class for component objects"""
@@ -257,6 +404,9 @@ class ComponentXD(ComponentBase):
         """Pack the component header, and the bytestring for each marker/coil"""
         return struct.pack(self.__class__.GET_BUILDER_CLASS().HEADER, len(self.coils)) + \
                b''.join([struct.pack(c.__class__.GET_BUILDER_CLASS().EACH_STRUCT, *c.in_packing_order()) for c in self.coils])
+
+    def give_coils(self):
+        return self.coils
 
 
 class Component3D(ComponentXD):
@@ -303,6 +453,20 @@ class CoilBuilder(object):
         return [cls.GET_RESULT_CLASS(struct.unpack(cls.EACH_STRUCT, bytestring[i*cls.EACH_LEN: (i+1)*cls.EACH_LEN]))
                 for i in range(n)]
 
+    @staticmethod
+    def average(coilobjs):
+        thiscoil = CoilBase(0, 0, 0)
+        n = len(coilobjs)
+        print('averaging {} objects'.format(n))
+        print('averaging objecs', coilobjs )
+        thiscoil.abs_loc = [sum([o.abs_loc[i]/n for o in coilobjs ] ) for i in range(3) ]
+
+        if thiscoil.abs_rot is not None:
+            thiscoil.abs_rot = average_quaternions(o.abs_rot for o in coilobjs)
+
+        return thiscoil
+
+
 
 class CoilBuilder3D(CoilBuilder):
     EACH_STRUCT = '> 3f I'
@@ -315,6 +479,18 @@ class CoilBuilder6D(CoilBuilder):
     EACH_LEN = struct.calcsize(EACH_STRUCT)
     GET_RESULT_CLASS = lambda x: Coil6D(*x)
 
+
+# class CoilList(list):
+#     """Wrapper for a list of coils."""
+#
+#
+#
+#     def __getattr__(self, item):
+#         if item == 'coils':
+#             return self
+#
+#     def give_coils(self):
+#         return self
 
 class CoilBase(object):
     """
@@ -333,6 +509,7 @@ class CoilBase(object):
             return True
         else:
             return False
+
 
 
 class Coil3D(CoilBase):
@@ -416,6 +593,12 @@ def main():
     print('Testing coil returning functions')
 
     assert object1.give_coils() == object1.components[0].coils
+
+    print('Testing averaging dfs')
+    av = MessageBuilder.average_dataframes([object1, object2])
+    print(av)
+
+    print(av.to_tsv())
 
     # print('b1 is type', type(b1))
     # o1 = RTC3DPacketParser.unpack_all(b1)
