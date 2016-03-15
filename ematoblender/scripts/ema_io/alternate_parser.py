@@ -53,7 +53,7 @@ class RTC3DPacketParser(BasePacketParser):
     HEADER_STRUCT = '> I I'
     HEADER_LEN = struct.calcsize(HEADER_STRUCT)
 
-    GET_DATAFRAME_BUILDER = lambda: MessageBuilder
+    GET_INNER_BUILDER = lambda: MessageBuilder
 
     @classmethod
     def get_size_type(cls, mybytes):
@@ -81,8 +81,8 @@ class RTC3DPacketParser(BasePacketParser):
         """Unpack the entire bytestring, returning the relevant object"""
         size, atype, msgbytes = cls.unpack_outer(mbytes)
         print('s, t, m', size, atype, msgbytes)
-        print(cls.GET_DATAFRAME_BUILDER())
-        return cls.GET_DATAFRAME_BUILDER().unpack_all(msgbytes, atype)
+        print(cls.GET_INNER_BUILDER())
+        return cls.GET_INNER_BUILDER().unpack_all(msgbytes, atype)
 
     @classmethod
     def pack_outer(cls, command, atype):
@@ -108,7 +108,7 @@ class MessageBuilder(object):
     ASCII_CODES = [0, 1, 2, 4]
     DATAFRAME_CODES = [3]
     BINARY_CODE = [5]
-    RESULT = lambda: Message
+    GET_RESULT_CLASS = lambda: Message
 
     @classmethod
     def unpack_all(cls, mbytes, mtype):
@@ -144,7 +144,7 @@ class JSONBuilder(MessageBuilder):
 
 
 class Message(object):
-    BUILDER = MessageBuilder
+    GET_BUILDER_CLASS = MessageBuilder
     """
     Data Frame base object with relevant methods
     Component count is defined
@@ -154,16 +154,16 @@ class Message(object):
 
 class DataFrame(Message):
     message_type = 3
-    GET_COMPONENT_BUILDER = lambda: ComponentBuilder
+    GET_INNER_BUILDER = lambda: ComponentBuilder
 
     def __init__(self, mbytes):
         """Data Frame object"""
         self.rawmsg = mbytes
-        self.components = self.__class__.GET_COMPONENT_BUILDER().unpack(mbytes)
+        self.components = self.__class__.GET_INNER_BUILDER().unpack(mbytes)
 
     def pack_all(self):
         """return bytes, type"""
-        return self.__class__.GET_COMPONENT_BUILDER().pack(self.components)
+        return self.__class__.GET_INNER_BUILDER().pack(self.components)
 
     def give_coils(self):
         """Return a list of the coil objects in a dataframe."""
@@ -241,7 +241,8 @@ class ComponentBuilder(object):
 
 
 class ComponentBase(object):
-    THIS_BUILDER = lambda: ComponentBuilder
+    GET_BUILDER_CLASS = lambda: ComponentBuilder
+
     def __init__(self, framenum, timestamp):
         self.coils = NotImplemented
         self.framenumber = framenum
@@ -257,32 +258,31 @@ class ComponentXD(ComponentBase):
         self.coils = NotImplemented
 
     def get_sizeb(self):
-        return len(self.pack_data())+ struct.calcsize(self.__class__.THIS_BUILDER().EACH_HEADER)
+        return len(self.pack_data())+ struct.calcsize(self.__class__.GET_BUILDER_CLASS().EACH_HEADER)
 
     def pack_data(self):
         # TODO Pack all the coils
-        return struct.pack(self.__class__.BUILDER_OBJ().HEADER, len(self.coils))+ b''.join([struct.pack(c.BUILDER().EACH_STRUCT, *c.in_packing_order()) for c in self.coils])
+        return struct.pack(self.__class__.GET_BUILDER_CLASS().HEADER, len(self.coils)) + \
+               b''.join([struct.pack(c.__class__.GET_BUILDER_CLASS().EACH_STRUCT, *c.in_packing_order()) for c in self.coils])
                 # each coil packed
 
 
 class Component3D(ComponentXD):
-    PART_BUILDER = lambda x: CoilBuilder3D.unpack(x)
-    BUILDER_OBJ = lambda: CoilBuilder3D
+    GET_INNER_BUILDER = lambda: CoilBuilder3D
     COMPONENT_TYPE = 1
 
     def __init__(self, framenum, timestamp, mbytes):
         super().__init__(framenum, timestamp)
-        self.coils = self.__class__.PART_BUILDER(mbytes)
+        self.coils = self.__class__.GET_INNER_BUILDER().unpack(mbytes)
 
 
 class Component6D(ComponentXD):
-    PART_BUILDER = lambda x: CoilBuilder6D.unpack(x)
-    BUILDER_OBJ = lambda: CoilBuilder6D
+    GET_INNER_BUILDER = lambda: CoilBuilder6D
     COMPONENT_TYPE = 4
 
     def __init__(self, framenum, timestamp, mbytes):
         super().__init__(framenum, timestamp)
-        self.coils = self.__class__.PART_BUILDER(mbytes)
+        self.coils = self.__class__.GET_INNER_BUILDER().unpack(mbytes)
 
 
 class ComponentAnalog(ComponentBase):
@@ -301,7 +301,7 @@ class CoilBuilder(object):
     """Given a bytestring representing a coil/marker, make a relevant coil objects."""
     HEADER = '> I'
     HEADER_LEN = struct.calcsize(HEADER)
-    COIL_CLASS = NotImplementedError
+    GET_RESULT_CLASS = NotImplementedError
     EACH_STRUCT = NotImplementedError
 
     @classmethod
@@ -311,20 +311,20 @@ class CoilBuilder(object):
         bytestring = bytestring[cls.HEADER_LEN:]
         #bycoil = struct.unpack_from(cls.EACH_STRUCT, bytestring)
         #return cls.COIL_CLASS
-        return [cls.COIL_CLASS(struct.unpack_from(cls.EACH_STRUCT, bytestring[i*cls.EACH_LEN: (i+1)*cls.EACH_LEN]))
+        return [cls.GET_RESULT_CLASS(struct.unpack_from(cls.EACH_STRUCT, bytestring[i*cls.EACH_LEN: (i+1)*cls.EACH_LEN]))
                 for i in range(n)]
 
 
 class CoilBuilder3D(CoilBuilder):
     EACH_STRUCT = '> 3f I'
     EACH_LEN = struct.calcsize(EACH_STRUCT)
-    COIL_CLASS = lambda x: Coil3D(*x)
+    GET_RESULT_CLASS = lambda x: Coil3D(*x)
 
 
 class CoilBuilder6D(CoilBuilder):
     EACH_STRUCT = '> 7f I'
     EACH_LEN = struct.calcsize(EACH_STRUCT)
-    COIL_CLASS = lambda x: Coil6D(*x)
+    GET_RESULT_CLASS = lambda x: Coil6D(*x)
 
 
 class CoilBase(object):
@@ -347,7 +347,7 @@ class CoilBase(object):
 
 
 class Coil3D(CoilBase):
-    BUILDER = CoilBuilder3D
+    GET_BUILDER_CLASS = lambda: CoilBuilder3D
 
     def __init__(self, x, y, z, reliability):
         super().__init__(x, y, z)
@@ -359,7 +359,7 @@ class Coil3D(CoilBase):
 
 
 class Coil6D(CoilBase):
-    BUILDER = CoilBuilder6D
+    GET_BUILDER_CLASS = lambda: CoilBuilder6D
 
     def __init__(self, q0, qx, qy, qz, x, y, z, error):
         super().__init__(x, y, z)
