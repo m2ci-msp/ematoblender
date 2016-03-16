@@ -4,7 +4,7 @@ __author__ = 'Kristy'
 import socket
 import sys
 
-from .rtc3d_parser import BasicProtocol
+from .rtc3d_parser import RTC3DPacketParser
 
 
 class BasicConnection(object):
@@ -13,7 +13,7 @@ class BasicConnection(object):
 
     def __init__(self, *args):
         # ONLY COMMUNICATIONS PROTOCOL SUPPORTED IS RTC3D
-        self.protocol = BasicProtocol
+        self.protocol = RTC3DPacketParser
 
     ############ SIMPLE SEND AND RECEIVE ###########
     def send_verbatim(self, message):
