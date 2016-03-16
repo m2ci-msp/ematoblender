@@ -24,7 +24,7 @@ import copy
 from ematoblender.scripts.ema_shared.general_maths import average_quaternions
 
 
-class BasicProtocol(object):
+class RTC3DPacketParser(object):
     """
     The Basic Protocol for the wrapping of messages, according to Version 1.0 of the RTC3D Protocol.
     This class contains static methods to pack and unpack the outermost wrapper
@@ -48,8 +48,8 @@ class BasicProtocol(object):
             return None
         else:
             #print("input message was {}".format(message))
-            return struct.unpack(BasicProtocol.PACKET_STRUCT.format(
-                str(len(message)-BasicProtocol.HEADER_LEN)), message)
+            return struct.unpack(RTC3DPacketParser.PACKET_STRUCT.format(
+                str(len(message)-RTC3DPacketParser.HEADER_LEN)), message)
 
     @classmethod
     def pack_wrapper(cls, command, atype=1):
@@ -58,8 +58,8 @@ class BasicProtocol(object):
         """
         if type(command) != bytes:
             command = bytes(command, 'ascii')
-        return struct.pack(BasicProtocol.PACKET_STRUCT.format(
-            str(len(command))), len(command)+BasicProtocol.HEADER_LEN, atype, command)
+        return struct.pack(RTC3DPacketParser.PACKET_STRUCT.format(
+            str(len(command))), len(command)+RTC3DPacketParser.HEADER_LEN, atype, command)
 
     @classmethod
     def get_size_type(cls, mybytes):
@@ -67,13 +67,13 @@ class BasicProtocol(object):
         if mybytes is None or len(mybytes) == 0:
             return 0, 0
         else:
-            return struct.unpack(BasicProtocol.HEADER_STRUCT, mybytes[:BasicProtocol.HEADER_LEN])
+            return struct.unpack(RTC3DPacketParser.HEADER_STRUCT, mybytes[:RTC3DPacketParser.HEADER_LEN])
 
     def __init__(self, rawdf=None):
         """
         Initialise a data packet according to the RTC3D protocol.
         If rawdf is a bytestring, then it is handled according to the message type.
-        Else hold an empty BasicProtocol instance.
+        Else hold an empty RTC3DPacketParser instance.
         """
         self.packet_type = 0  # begin as error type before filling
         self.df = ''
@@ -103,7 +103,7 @@ class BasicProtocol(object):
 class DataFrame(object):
     """
     Class that represents one data frame transmission.
-    This is wrapped and unwrapped by the BasicProtocol class.
+    This is wrapped and unwrapped by the RTC3DPacketParser class.
 
     """
     # TODO: Frameid not being added to streaming data
@@ -131,7 +131,7 @@ class DataFrame(object):
 
         elif fromlist is not None:  # initialise from a list of other dataframes, averaging them
             self.smoothed = True
-            self.components = [Component()]
+            self.components = [Component6D()]
 
             allcoils = zip(*[f.give_coils() for f in fromlist])
             for coil_over_alldfs in allcoils:
@@ -158,7 +158,7 @@ class DataFrame(object):
     def __str__(self):
         return " dataframe with components: \n{}".format([[y.__dict__ for y in x.coils] for x in self.components])
 
-    @staticmethod
+    @staticmethod # covered
     def unpack_df_to_components(mybytes):
        # print("first four bytes are", bytes[:4])
         n_data_components = struct.unpack('>I', mybytes[:4])[0]
@@ -167,11 +167,11 @@ class DataFrame(object):
         pos = 4
         for i in range(n_data_components):  # for each component
             this_size = struct.unpack_from('>I', mybytes, offset = pos)[0]  # get component size
-            components.append(Component(componentbytes=mybytes[pos:pos+this_size]))
+            components.append(Component6D(mbytes=mybytes[pos:pos+this_size]))
             pos += this_size
-        return components # list of Component objects
+        return components # list of Component6D objects
 
-    def pack_components_to_df(self):
+    def pack_components_to_df(self): # covered
         """Pack up to the second-to-top level."""
       #  print("packing {} components".format(len(self.components)))
         body = struct.pack('>I', len(self.components)) # componentcount
@@ -221,7 +221,7 @@ class DataFrame(object):
         #old: return hasattr(self.components[0], 'timestamp', None)
 
 
-class Component(DataFrame):
+class Component6D(DataFrame):
     """ A component on the wave machine. Child objects are Coils.
     Rawcomponentbytes must follow the WAVE RTC3D protocol.
    """
@@ -234,12 +234,12 @@ class Component(DataFrame):
                                 4:'> 7f I', # 6D
                                 5:'> 4I',}  # Events
 
-    def __init__(self,  componentbytes=None, fileparser=None,):
+    def __init__(self,  mbytes=None, fileparser=None,):
         """Make an object representing a component of the Wave (eg the Wave sensors)"""
 
-        if componentbytes is not None:  # initialised from bytes
-            size, self.comp_type, self.frame_number, self.timestamp = struct.unpack(self.COMPONENT_HEADER, componentbytes[:20])
-            self.coils = self.unpack_coils(componentbytes[20:])
+        if mbytes is not None:  # initialised from bytes
+            size, self.comp_type, self.frame_number, self.timestamp = struct.unpack(self.COMPONENT_HEADER, mbytes[:20])
+            self.coils = self.unpack_coils(mbytes[20:])
 
         elif fileparser is not None:      # initialised from marker information (name and channel)
             # 3d or 6d, depends on the number of channels
@@ -252,29 +252,29 @@ class Component(DataFrame):
             print("timestamp:", self.timestamp)
 
             self.coils = self.create_coils(n=fileparser.min_channels, dimensions=fileparser.min_dimensions,
-                                           mappings=fileparser.mappings, marker_channels=fileparser.marker_channels)
+                                           reordering=fileparser.mappings, marker_channels=fileparser.marker_channels)
 
         else:
             self.coils = []
             #raise ValueError            # No values given
 
-    def create_coils(self, dimensions=3, mappings=None, marker_channels=None, n=1):
-        """Build coil objects (called within Component init).
-        Return a list of coil objects with the appropriate mappings."""
+    def create_coils(self, dimensions=3, reordering=None, marker_channels=None, n=1):
+        """Build coil objects (called within Component6D init).
+        Return a list of coil objects with the appropriate reordering."""
         from ematoblender.scripts.ema_io.ema_staticserver.mocap_file_parser import MocapParent
 
         # data frame component type is 3d or 6d, based on the minimum number of channels sent
         self.comp_type = 1 if dimensions < 5 else 4 # dfct, 3D or 6D
 
         # parse the channels into location/rotation (quaternion vals) in the Wave order
-        if mappings is not None:
-            return [Coil(dfct=self.comp_type, mapping=mappings) for x in range(n)]
+        if reordering is not None:
+            return [Coil(dfct=self.comp_type, mapping=reordering) for x in range(n)]
         else:
-            mappings = [MocapParent.order_measurements_as_wave(c, nchannels=dimensions) for c in marker_channels]
-            return [Coil(dfct=self.comp_type, mapping=mappings) for x in range(n)]
+            reordering = [MocapParent.order_measurements_as_wave(c, nchannels=dimensions) for c in marker_channels]
+            return [Coil(dfct=self.comp_type, mapping=reordering) for x in range(n)]
 
     def __str__(self):
-        return "Component object with timestamp {} and coils: {}".format(str(self.give_timestamp_secs()), str(self.coils))
+        return "Component6D object with timestamp {} and coils: {}".format(str(self.give_timestamp_secs()), str(self.coils))
 
     def unpack_coils(self, coilbytes):
         """Make n coil objects, based on the coil data given with this component."""
@@ -303,7 +303,7 @@ class Component(DataFrame):
         return struct.pack(self.COMPONENT_HEADER, *header) + body
 
 
-class Coil(Component):
+class Coil(Component6D):
     '''Contains the measurement data for a component'''
     def __init__(self, loc_dict=None, dfct=4, mapping=None):
         """dfct is the 'data frame component type' as defined by the RTC3D protocol."""
