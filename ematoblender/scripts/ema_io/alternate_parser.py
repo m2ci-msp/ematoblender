@@ -94,6 +94,13 @@ class RTC3DPacketParser(BasePacketParser):
         """Recursively pack the object to a bytestring"""
         return cls.pack_outer(messageobj.pack_all(), messageobj.message_type)
 
+    def __getattr__(self, item):
+        if item == "unpack_wrapper":
+            return self.unpack_outer
+
+        if item == "pack_wrapper":
+            return self.pack_outer
+
 
 class MessageBuilder(object):
     """Give a bytestring to build the relevant message object (either DataFrame or AsciiMessage)"""
@@ -110,7 +117,7 @@ class MessageBuilder(object):
             return AsciiMessage(mbytes, mtype)
 
         elif mtype in cls.DATAFRAME_CODES:
-            return DataFrame(mbytes)
+            return DataFrame(rawdf=mbytes)
 
         else:
             print('Application does not support message type {}'.format(mtype))
@@ -128,7 +135,7 @@ class MessageBuilder(object):
         n = len(dflist)
         if n > 1 and all(dflist[0].check_same_structure(dflist[n]) for n in range(1, n)):
 
-            meanobj = DataFrame('')
+            meanobj = DataFrame()
             meanobj.__dict__ = copy.deepcopy(dflist[-1].__dict__)
             meanobj.smoothed = True
 
@@ -161,7 +168,7 @@ class Message(object):
     """
     Data Frame base class.
     """
-    GET_BUILDER_CLASS = MessageBuilder
+    GET_BUILDER_CLASS = lambda: MessageBuilder
     pass
 
 
@@ -173,15 +180,23 @@ class DataFrame(Message):
     message_type = 3
     GET_INNER_BUILDER = lambda: ComponentBuilder
 
-    def __init__(self, mbytes):
+    def __init__(self, rawdf=None, components=None, fromlist=None):
         """Initialise Data Frame object from bytestring.
         Make some empty object if no string given.
         """
         self.smoothed = None
 
-        if len(mbytes) > 0:
+
+        if rawdf is not None and len(rawdf) > 0:
             self.smoothed = False
-            self.components = self.__class__.GET_INNER_BUILDER().unpack(mbytes)
+            self.components = self.__class__.GET_INNER_BUILDER().unpack(rawdf)
+
+        if components is not None:
+            self.components = components
+
+        if fromlist is not None:
+            self = self.__class__.GET_BUILDER_CLASS().average_dataframes(fromlist)
+
 
     def pack_all(self):
         """Return (in bytes) component count, then each component's bytestring"""
@@ -223,7 +238,7 @@ class DataFrame(Message):
         else:
             # fields time (based on wave frames), measid, wavid
             outstring+='{}\t{}\t{}\t'.format(str(int(self.components[0].timestamp)-relative_timestamp_to),
-                                             str(self.components[0].framenumber), str(closest_sound_sample[0]))
+                                             str(self.components[0].frame_number), str(closest_sound_sample[0]))
             for i, c in enumerate(self.give_coils()):
                 outstring+='{}\t{}\t'.format('Sensor'+str(i), '55')
                 outstring+='{}\t{}\t{}\t{}\t'\
@@ -271,13 +286,13 @@ class ComponentBuilder(object):
     COMPONENT_CLASS_MAP = {1: lambda a, b, c: Component3D(a, b, c),
                            2: lambda: ComponentAnalog,
                            3: lambda: ComponentForce,
-                           4: lambda a, b, c: Component6D(a, b, c),
+                           4: lambda a, b, c: Component6D(framenum=a, timestamp=b, mbytes=c),
                            5: lambda: ComponentEvent,
-                           0: lambda a, b, c: Component6D(a, b, c)}  # 0 is a catchall
+                           0: lambda a, b, c: Component6D(framenum=a, timestamp=b, mbytes=c)}  # 0 is a catchall
 
     @classmethod
     def unpack(cls, mbytes):
-        """Return a Component object for the bytestring"""
+        """Return a Component6D object for the bytestring"""
         components = []
         n, *_ = struct.unpack(cls.HEADER, mbytes[:cls.HEADER_LEN])
         bytesleft = mbytes[cls.HEADER_LEN:]
@@ -296,7 +311,7 @@ class ComponentBuilder(object):
     def pack(cls, components):
         """Return a bytestring for the component"""
         return struct.pack(cls.HEADER, len(components)) \
-               + b''.join([struct.pack(cls.EACH_HEADER, c.get_sizeb(), c.COMPONENT_TYPE, c.framenumber, c.timestamp)
+               + b''.join([struct.pack(cls.EACH_HEADER, c.get_sizeb(), c.COMPONENT_TYPE, c.frame_number, c.timestamp)
                + c.pack_data()
                for c in components])
 
@@ -308,19 +323,31 @@ class ComponentBase(object):
     """Base class for component objects"""
     GET_BUILDER_CLASS = lambda: ComponentBuilder
 
-    def __init__(self, framenum, timestamp):
+    def __init__(self, framenum=None, timestamp=None, fileparser=None):
         self.coils = NotImplemented
-        self.framenumber = framenum
-        self.timestamp = timestamp
+
+        if fileparser is not None:
+            self.extract_attrs_from_fileparser(self, fileparser)
+        else:
+            self.frame_number = framenum
+            self.timestamp = timestamp
 
     def __str__(self):
-        return "Component with {} coils;".format(len(self.coils))+str(self.coils[0])
+        return "Component6D with {} coils;".format(len(self.coils))+str(self.coils[0])
+
+    def extract_attrs_from_fileparser(self, fp):
+        self.frame_number = fp.motion_lines_read
+        if self.timestamp is None:
+            if hasattr(fp, 'latest_timestamp'):  # if timestamp can be directly read from tsv, use this
+                self.timestamp = fp.latest_timestamp
+            else:  # else calculate this from the number of frames read and the time they are streamed at
+                self.timestamp = int(self.frame_number * fp.frame_time)
 
 
 class ComponentXD(ComponentBase):
     """Base class for component objects with location"""
-    def __init__(self, *args):
-        super().__init__(*args)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.coils = NotImplemented
 
     def get_sizeb(self):
@@ -339,8 +366,8 @@ class Component3D(ComponentXD):
     GET_INNER_BUILDER = lambda: CoilBuilder3D
     COMPONENT_TYPE = 1
 
-    def __init__(self, framenum, timestamp, mbytes):
-        super().__init__(framenum, timestamp)
+    def __init__(self, framenum=None, timestamp=None, mbytes=None, fileparser=None):
+        super().__init__(framenum=framenum, timestamp=timestamp, fileparser=fileparser)
         self.coils = self.__class__.GET_INNER_BUILDER().unpack(mbytes)
 
 
@@ -348,8 +375,8 @@ class Component6D(ComponentXD):
     GET_INNER_BUILDER = lambda: CoilBuilder6D
     COMPONENT_TYPE = 4
 
-    def __init__(self, framenum, timestamp, mbytes):
-        super().__init__(framenum, timestamp)
+    def __init__(self, framenum=None, timestamp=None, mbytes=None, fileparser=None):
+        super().__init__(framenum=framenum, timestamp=timestamp, fileparser=fileparser)
         self.coils = self.__class__.GET_INNER_BUILDER().unpack(mbytes)
 
 
@@ -392,7 +419,16 @@ class CoilBuilder(object):
 
         return thiscoil
 
+    def create_coils(self, n=1, dimensions=6, reordering=None, marker_channels=None):
+        raise NotImplementedError
+        coils = []
+        for i in range(n):
+            if dimensions > 3:
+                coils.append(Coil6D(*measurements_in_wave_order))
+            else:
+                coils.append(Coil3D(*measurements_in_wave_order))
 
+        return coils
 
 class CoilBuilder3D(CoilBuilder):
     EACH_STRUCT = '> 3f I'
