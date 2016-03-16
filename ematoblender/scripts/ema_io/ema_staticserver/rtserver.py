@@ -16,7 +16,7 @@ The main function takes command line arguments for starting the server, and runs
 # server functionality
 import socketserver
 
-from ematoblender.scripts.ema_io.client_server_comms import ServerConnection, BasicProtocol
+from ematoblender.scripts.ema_io.client_server_comms import ServerConnection, RTC3DPacketParser
 from ematoblender.scripts.ema_io.ema_staticserver.rtserver_emulate_func import RTServer_Static
 from ematoblender.scripts.ema_shared import properties as pps
 
@@ -114,8 +114,8 @@ class FakeRTRequestHandler(socketserver.BaseRequestHandler):
         Command functionality as rt_fns; pass on the request to this further module.
         """
 
-        # firstly parse request by ServerConnection class (unpacks the packet according to the RTC3D BasicProtocol)
-        conn = ServerConnection(self.request, BasicProtocol)
+        # firstly parse request by ServerConnection class (unpacks the packet according to the RTC3D RTC3DPacketParser)
+        conn = ServerConnection(self.request, RTC3DPacketParser)
         # make this request an attribute of the ThreadedTCPServer and FakeRTRequestHandler for access
         self.server.server_conn = conn
         self.server.rt_fns.conn = conn

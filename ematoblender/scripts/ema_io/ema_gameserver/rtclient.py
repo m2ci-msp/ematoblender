@@ -6,7 +6,7 @@ Depends on the rtc3d_parser module to unwrap the binary packages.
 """
 
 # communication with the server, parsing the objects to and from Coil/DataFrame etc
-from ematoblender.scripts.ema_io.rtc3d_parser import BasicProtocol, DataFrame
+from ematoblender.scripts.ema_io.rtc3d_parser import RTC3DPacketParser, DataFrame
 from ematoblender.scripts.ema_io.client_server_comms import ClientConnection
 
 # threading of replies
@@ -194,7 +194,7 @@ def init_connection(retain_last=5, print_to=None, wave_to=None):
     """Start the connection, set up objects to handle the soon-to-be-incoming data."""
     # create the connection object to handle communication
     global connection, replies
-    connection = ClientConnection(BasicProtocol)
+    connection = ClientConnection(RTC3DPacketParser)
     # replies object listens for replies and places in queues based on type
     replies = NonBlockingStreamReader(connection, last_x=retain_last)
     print(replies._b)
@@ -204,7 +204,7 @@ def init_connection(retain_last=5, print_to=None, wave_to=None):
 
 def init_connection_no_threads():
     """Start a basic connection, return the object."""
-    return ClientConnection(BasicProtocol)
+    return ClientConnection(RTC3DPacketParser)
 
 
 def close_connection_no_threads(conn):
