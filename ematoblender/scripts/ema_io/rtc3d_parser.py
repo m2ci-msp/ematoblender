@@ -51,7 +51,6 @@ class RTC3DPacketParser(BasePacketParser):
     @classmethod
     def get_size_type(cls, mybytes):
         """ Take the first 8 bytes of the message, return integers of size and type."""
-        print('full messagelen is', len(mybytes))
         if mybytes is None or len(mybytes) == 0:
             return 0, 0
         else:
@@ -94,12 +93,13 @@ class RTC3DPacketParser(BasePacketParser):
         """Recursively pack the object to a bytestring"""
         return cls.pack_outer(messageobj.pack_all(), messageobj.message_type)
 
-    def __getattr__(self, item):
-        if item == "unpack_wrapper":
-            return self.unpack_outer
+    @classmethod
+    def unpack_wrapper(cls, *args, **kwargs):
+        return cls.unpack_outer(*args, **kwargs)
 
-        if item == "pack_wrapper":
-            return self.pack_outer
+    @classmethod
+    def pack_wrapper(cls, *args, **kwargs):
+        return cls.pack_outer(*args, **kwargs)
 
 
 class MessageBuilder(object):
@@ -325,15 +325,17 @@ class ComponentBase(object):
 
     def __init__(self, framenum=None, timestamp=None, fileparser=None):
         self.coils = NotImplemented
-
+        self.frame_number = framenum
+        self.timestamp = timestamp
         if fileparser is not None:
-            self.extract_attrs_from_fileparser(self, fileparser)
-        else:
-            self.frame_number = framenum
-            self.timestamp = timestamp
+            self.extract_attrs_from_fileparser(fileparser)
+
 
     def __str__(self):
-        return "Component6D with {} coils;".format(len(self.coils))+str(self.coils[0])
+        if type(self.coils) == list:
+            return "Component6D with {} coils;".format(len(self.coils))+str(self.coils[0])
+        else:
+            return "Not yet filled Component object"
 
     def extract_attrs_from_fileparser(self, fp):
         self.frame_number = fp.motion_lines_read
@@ -342,6 +344,8 @@ class ComponentBase(object):
                 self.timestamp = fp.latest_timestamp
             else:  # else calculate this from the number of frames read and the time they are streamed at
                 self.timestamp = int(self.frame_number * fp.frame_time)
+
+        self.coils = CoilBuilder.create_coils(n=fp.min_channels, dimensions=fp.min_dimensions)
 
 
 class ComponentXD(ComponentBase):
@@ -355,6 +359,9 @@ class ComponentXD(ComponentBase):
 
     def pack_data(self):
         """Pack the component header, and the bytestring for each marker/coil"""
+        print('struct header', self.__class__.GET_BUILDER_CLASS().HEADER)
+        print('len coils', len(self.coils))
+        print('each header', self.coils[0].__class__.GET_BUILDER_CLASS().EACH_STRUCT)
         return struct.pack(self.__class__.GET_BUILDER_CLASS().HEADER, len(self.coils)) + \
                b''.join([struct.pack(c.__class__.GET_BUILDER_CLASS().EACH_STRUCT, *c.in_packing_order()) for c in self.coils])
 
@@ -377,7 +384,8 @@ class Component6D(ComponentXD):
 
     def __init__(self, framenum=None, timestamp=None, mbytes=None, fileparser=None):
         super().__init__(framenum=framenum, timestamp=timestamp, fileparser=fileparser)
-        self.coils = self.__class__.GET_INNER_BUILDER().unpack(mbytes)
+        if mbytes is not None:
+            self.coils = self.__class__.GET_INNER_BUILDER().unpack(mbytes)
 
 
 class ComponentAnalog(ComponentBase):
@@ -419,16 +427,33 @@ class CoilBuilder(object):
 
         return thiscoil
 
-    def create_coils(self, n=1, dimensions=6, reordering=None, marker_channels=None):
-        raise NotImplementedError
+    @staticmethod
+    def create_coils(n=1, dimensions=6, reordering=None, marker_channels=None):
         coils = []
         for i in range(n):
-            if dimensions > 3:
-                coils.append(Coil6D(*measurements_in_wave_order))
-            else:
-                coils.append(Coil3D(*measurements_in_wave_order))
-
+            coils.append(Coil6D(*[0 for i in range(8)]))
         return coils
+
+    @staticmethod
+    def to_floats(strings):
+        """Convert all the things to strings"""
+        def convert(item):
+            if type(item) == str:
+                try:
+                    return float(item)
+                except ValueError:
+                    return 0
+            elif type(item) == int:
+                return float(item)
+            elif type(item) == float:
+                return item
+            elif type(item) == list or type(item) == tuple:
+                return [convert(s) for s in item]
+            else:
+                raise TypeError('Item type unknown')
+
+        return convert(strings)
+
 
 class CoilBuilder3D(CoilBuilder):
     EACH_STRUCT = '> 3f I'
@@ -441,14 +466,29 @@ class CoilBuilder6D(CoilBuilder):
     EACH_LEN = struct.calcsize(EACH_STRUCT)
     GET_RESULT_CLASS = lambda x: Coil6D(*x)
 
+    @staticmethod
+    def build_from_mapping(mapping, measurements):
+        """From a list of mapping to wave order and list of measurements,
+        create a coil obj.
+        """
+        print('Building 6D coil from mapping')
+        x = measurements[mapping.xind]
+        y = measurements[mapping.yind]
+        z = measurements[mapping.yind]
+
+        q0, qx, qy, qz = mapping.convert_to_quat(measurements)
+        return Coil6D(q0, qx, qy, qz, x, y, z, None)
+
+
 
 class CoilBase(object):
     """
     abs_loc is (x,y,z),
     abs_rot is (Q0, Qx, Qy, Qz)
     """
+    GET_BUILDER_CLASS = lambda: CoilBuilder
     def __init__(self, x, y, z):
-        self.abs_loc = (x, y, z)
+        self.abs_loc = self.__class__.GET_BUILDER_CLASS().to_floats((x, y, z))
         self.abs_rot = None
 
     def __str__(self):
@@ -466,8 +506,8 @@ class Coil3D(CoilBase):
 
     def __init__(self, x, y, z, reliability):
         super().__init__(x, y, z)
-        self.abs_loc = (x, y, z)
-        self.reliability = reliability
+        self.abs_loc = self.__class__.GET_BUILDER_CLASS().to_floats((x, y, z))
+        self.reliability = self.__class__.GET_BUILDER_CLASS().to_floats(reliability)
 
     def in_packing_order(self):
         return self.abs_loc + tuple(self.reliability)
@@ -478,11 +518,11 @@ class Coil6D(CoilBase):
 
     def __init__(self, q0, qx, qy, qz, x, y, z, error):
         super().__init__(x, y, z)
-        self.abs_rot = (q0, qx, qy, qz)
-        self.error = error
+        self.abs_rot = self.__class__.GET_BUILDER_CLASS().to_floats((q0, qx, qy, qz))
+        self.error = error if error is not None else 0
 
     def in_packing_order(self):
-        return self.abs_rot + self.abs_loc + tuple([self.error])
+        return self.abs_rot + self.abs_loc + [self.error]
 
 def main():
     # some unit tests
@@ -548,6 +588,7 @@ def main():
     print(av)
 
     print(av.to_tsv())
+
 
     # print('b1 is type', type(b1))
     # o1 = RTC3DPacketParser.unpack_all(b1)
