@@ -99,6 +99,9 @@ class Application(tk.Frame):
         if type(microsecstring) == int:  # if input is integer
             return '{:7.2f}'.format(microsecstring / 1000000)
 
+        if microsecstring is NotImplemented:
+            return '{0: <9}'.format('NA')
+
         elif microsecstring.is_digit():  # if input is string
             if len(microsecstring) < 6:  # string is an integer
                 microsecstring = microsecstring.zfill(6)
