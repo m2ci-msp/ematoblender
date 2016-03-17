@@ -250,8 +250,7 @@ def get_one_df(conn, replies, *args):
     prev_df = copy.copy(replies.latest_df)
     conn.send_packed("sendcurrentframe", 1)
     # wait while the data is received from the server
-    while replies.latest_df == prev_df\
-        or replies.latest_df is None:
+    while replies.latest_df is None or (prev_df is not None and replies.latest_df == prev_df):
         #print('!!!!!!!!!!!!replies.no_data is', replies.no_data)
         if replies.no_data:
             return None
