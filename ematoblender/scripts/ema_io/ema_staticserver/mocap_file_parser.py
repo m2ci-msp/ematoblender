@@ -11,6 +11,7 @@ import xml.etree.ElementTree as ET
 import math
 import struct
 import os
+import json
 from ematoblender.scripts.ema_io.rtc3d_parser import DataFrame, Component6D, CoilBuilder6D
 
 xml_skeleton_location = os.path.abspath(os.path.normpath(os.path.dirname(__file__)+'./parameter_skeleton.xml'))
@@ -36,8 +37,14 @@ class Mapping():
         if angle_type == 'ELEVATION':
             self.quat_inds = [None]
             if mapping_as_list is not None:
-                a, pi, theta, d, self.xind, self.yind, self.zind = mapping_as_list
+                _, pi, theta, d, self.xind, self.yind, self.zind = mapping_as_list
             self.euler_xyz = [theta, 0,  pi]
+
+        if angle_type == 'EULER':
+            self.quat_inds = [None]
+            if mapping_as_list is not None:
+                ex, ey, ez, self.xind, self.yind, self.zind = mapping_as_list
+            self.euler_xyz = [ex, ey, ez]
 
 
 
@@ -59,7 +66,6 @@ class Mapping():
         Return q0, qx, qy, qz.
         """
         print('converting {} to quats'.format(measurementlist))
-        #TODO: Handle the cases where quaternions are not given
         if all(x is not None for x in self.quat_inds) and all([measurementlist[x] is not None for x in self.quat_inds]):
             print(self.make_float_or_zero([measurementlist[i] for i in self.quat_inds]))
             return self.make_float_or_zero([measurementlist[i] for i in self.quat_inds])
@@ -87,7 +93,6 @@ class Mapping():
         return [measurementlist[i] if i is not None else 0 for i in
                 [self.q0ind, self.qxind, self.qyind, self.qzind, self.xind, self.yind, self.zind]]
 
-
     @staticmethod
     def channel_label_to_attrs(label):
         """Semantically parse label names."""
@@ -95,7 +100,8 @@ class Mapping():
 
         # rotation vs location
         if 'rot' in label or 'q' in label: # rotation label
-            location = False; rotation = True
+            location = False
+            rotation = True
         elif 'loc' in label or 'pos' in label or 'mm' in label: # position label
             location = True
             rotation = False
@@ -149,7 +155,7 @@ class Mapping():
         if nchannels >= 6:  # rotation available
             # x, y, z, by intersection of loc/rots and xyz
             labelindices = [[j for j in letter if j in orientation]
-                            for orientation in [rots, locs] for letter in [x,y,z] ] # first orientation is impossible as placeholder for q0
+                            for orientation in [rots, locs] for letter in [x, y, z]] # first orientation is impossible as placeholder for q0
             #print("returning the correct order as:", [labels[li[0]] for li in labelindices])
             # make indices of length 1 else None, increment by one to allow place for q0
 
@@ -177,9 +183,6 @@ class Mapping():
         return changed_indices + filling_none   # return the reordered label indices
 
 
-
-
-
 class MakeMocapParser():
     """Factory Class to make parser objects based on the file extension."""
     def factory(filename):
@@ -192,8 +195,7 @@ class MakeMocapParser():
         if extension == 'pos':
             return POSParser(filename)
         if extension == 'json':
-            pass
-            #return JSONParser(filename)
+            return JSONParser(filename)
         raise ValueError("Bad mocap file type: {}".format(extension))
     factory = staticmethod(factory)
 
@@ -307,7 +309,6 @@ class MocapParent(object):
             raise TypeError
         return timestamp
 
-
     def __str__(self):
         """String rep of the mocap file"""
         return "Mocap file, generic type. This should never have an instance."
@@ -396,6 +397,55 @@ class MocapParent(object):
         return wave_name, video_name
 
 
+class JSONParser(MocapParent):
+    """
+    Class to parse pre-processed JSON files (of the Trier dataset) into DataFrame objects.
+    Do not yet incorporate correspondences.
+    Must be able to be reconstructed into JSON format for the C++ server.
+    """
+
+    def read_header(self):
+        """Read in the JSON file"""
+        print('Reading in JSON file, this may take a while')
+        self.json = json.loads(self.file.read())
+        print(self.json.keys())
+        self.motion_lines_read = 0
+
+        self.marker_names = self.json["channels"].keys()
+        timestamps = self.json["timestamps"]
+
+        self.max_num_frames = len(timestamps)
+        self.frame_times = [t - s for s, t in zip(timestamps, timestamps[1:])]
+        self.frame_time = sum(self.frame_times)/self.max_num_frames
+        self.sampling_rate = 1000000/self.frame_time  # microseconds
+
+        #setup a mapping between EX EY EZ X Y Z to wave
+        self.mappings = Mapping(mapping_as_list=[0, 1, 2, 3, 4, 5], angle_type='EULER')
+        self.min_channels = len(self.marker_names)
+        self.min_dimensions = 6
+        self.component = Component6D(fileparser=self)
+
+    def give_motion_frame(self):
+        """ Return angle, position and timestamp information for a file. """
+        n = self.motion_lines_read
+        measurements_by_coil = []
+        for ch in self.marker_names:  # TODO: Fill from reading header
+            angles = self.json["channels"][ch]['eulerAngles'][n*3:n*3+3]
+            position = self.json["channels"][ch]["position"][n*3:n*3+3]
+            measurements_by_coil.append(angles+position)
+        timestamp = MocapParent.timestamp_to_microsecs(self.json["timestamps"][n])
+        print(measurements_by_coil)
+
+        self.component.coils = [CoilBuilder6D.build_from_mapping(self.mappings, onecoil)
+                                for onecoil in measurements_by_coil]
+
+        self.component.timestamp = timestamp
+        self.latest_timestamp = timestamp
+
+        self.motion_lines_read += 1
+        return 3, DataFrame(components=[self.component]).pack_all(), self.latest_timestamp
+
+
 class BVHParser(MocapParent):
     """
     Class to parse .bvh motion capture files (Biovision Hierarchical Data).
@@ -429,7 +479,7 @@ class BVHParser(MocapParent):
                 self.marker_names.append(name)
 
             # capture channel information sequentially (should correspond to joint information)
-            elif line.strip('\t\n ').startswith('CHANNELS'): # get the marker's channels
+            elif line.strip('\t\n ').startswith('CHANNELS'):  # get the marker's channels
                 channelline = strippedline.split(' ')
                 num_channels = int(channelline[1])
                 if num_channels != len(channelline[2:]):
@@ -473,12 +523,7 @@ class BVHParser(MocapParent):
 
             print("about to alter component", str(self.component)[:50])
             self.component.coils = [CoilBuilder6D.build_from_mapping(self.mappings, coilvals)
-                                for coilvals in measurements_by_coil]
-
-            # for i, coil in enumerate(self.component.coils):
-            #   #  print("giving a coil a measurement,", measurements_by_coil[i])
-            #     coil.set_args_to_vars(measurements_by_coil[i])
-            # # wrap Component6D in Wave protocol to data packet level and return
+                                    for coilvals in measurements_by_coil]
 
             return 3, DataFrame(components=[self.component]).pack_all(), None
 
@@ -540,19 +585,17 @@ class TSVParser(MocapParent):
         last_timestamp = MocapParent.timestamp_to_microsecs(firstline[self.timestamp_index])
 
         # read the rest of the lines
-        for line in f.readlines():
-            self.max_num_frames += 1
-            splitline = line.strip('\n\r').split('\t')
-            timestamp = MocapParent.timestamp_to_microsecs(splitline[self.timestamp_index])  #now microseconds
-            self.frame_times.append(timestamp-last_timestamp)  # list of differences in microseconds
-            last_timestamp = timestamp
+        timestamps = [MocapParent.timestamp_to_microsecs(
+                                                        line.strip('\n\r').split('\t')[self.timestamp_index]
+                                                        ) for line in self.file.readlines()]
+        self.max_num_frames = len(timestamps)
+        self.frame_times = [t - s for s, t in zip(timestamps, timestamps[1:])]
 
         self.frame_time = sum(self.frame_times)/self.max_num_frames  # now in microseconds
         # TODO: This overestimates the frame time slightly because if a measurement is missing this is unseen at this point
 
         print('frame time is ', self.frame_time, 'microseconds')
         print('max_num_frames is', self.max_num_frames)
-
 
         f.seek(self.pre_motion_position, 0)
 
@@ -581,19 +624,12 @@ class TSVParser(MocapParent):
             # print('@@@', self.fields_per_sensor,len(measurements_by_coil[0]))
             # get the timestamp, convert to ms if seconds
             timestamp = meta[self.timestamp_index]
-            timestamp = MocapParent.timestamp_to_microsecs(timestamp)# timestamp now in microseconds
+            timestamp = MocapParent.timestamp_to_microsecs(timestamp)  # timestamp now in microseconds
 
             print("about to alter component", str(self.component)[:50])
             print('measurements_by_coil:', measurements_by_coil)
             self.component.coils = [CoilBuilder6D.build_from_mapping(self.mappings, coilvals)
                                     for coilvals in measurements_by_coil]
-
-
-            #old
-            # for coilvals, coilobj in zip(measurements_by_coil, self.component.coils):
-            #     floatvals = MocapParent.make_float_or_zero(coilvals)
-            #     # note that coilvals is  id, status, x, y, z, q0, qx, qy, qz
-            #     coilobj.set_args_to_vars(floatvals, mapping=self.mappings)  # self.mapping sorts these to coil order
 
             self.component.timestamp = timestamp # TODO: Are there any other fields that are missing? Eg should I send WavID?
             self.latest_timestamp = timestamp
@@ -623,7 +659,7 @@ class POSParser(MocapParent):
         # based on standard Euler rotation with order XYZ, if ph
         self.mappings = Mapping(mapping_as_list=[None, 3, 4, None, 0, 1, 2], angle_type='ELEVATION')
 
-        self.component = Component6D(fileparser=self) # build the first component within the mocap object
+        self.component = Component6D(fileparser=self)  # build the first component within the mocap object
 
     def read_header(self):
         """Read the version, channel info and sampling rate from the ASCII header."""
@@ -673,7 +709,6 @@ class POSParser(MocapParent):
             self.component.timestamp, self.latest_timestamp = timestamp, timestamp
             print('BVH latest timestamp:', self.latest_timestamp)
 
-
             # 7f is floats for: x, y, z, phi, theta, rms, extra
             measurements_by_coil = struct.iter_unpack('< 7f', self.file.read(self.bytes_in_frame))
             # for m in measurements_by_coil:
@@ -699,13 +734,22 @@ class POSParser(MocapParent):
 if __name__ == "__main__":
     print("running main")
 
+    if True:  # test JSON parser
+        from ematoblender.scripts.ema_io.rtc3d_parser import JSONBuilder
+        p = JSONParser('F:\\trier_data\\json\\aligned.json')
+        for i in range(5):
+            status, dfbytes, ts = p.give_motion_frame()
+            df = DataFrame(rawdf=dfbytes)
+            print(df.to_tsv())
+
+            print(JSONBuilder.pack_wrapper(df, [1,2,3,4], [0, 1, 2,3]))
+
     if True:  # test POS parser
         p = POSParser('./data/Example4.pos')
         for i in range(10):
-            mf, *_= p.give_motion_frame()
+            mf, *_ = p.give_motion_frame()
             print('Motion frame from POSParser', mf)
         print('ET parameter string for POS Parser', ET.tostring(p.xml_tree.getroot()))
-
 
     if True:  # test TSV parser
         c = TSVParser('./data/Example3.tsv')
