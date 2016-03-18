@@ -232,7 +232,7 @@ class DataFrame(Message):
     def to_tsv(self, relative_timestamp_to=0, closest_sound_sample=[0]):
         """Return a tab-separated string with the coil data in the wave tsv order"""
         outstring = ''
-        if len(self.components)== 0 or len(self.give_coils()) == 0:
+        if len(self.components) == 0 or len(self.give_coils()) == 0:
             print('No content in the data frame to write.')
             return ''
         else:
@@ -474,7 +474,7 @@ class CoilBuilder6D(CoilBuilder):
         print('Building 6D coil from mapping')
         x = measurements[mapping.xind]
         y = measurements[mapping.yind]
-        z = measurements[mapping.yind]
+        z = measurements[mapping.zind]
 
         q0, qx, qy, qz = mapping.convert_to_quat(measurements)
         return Coil6D(q0, qx, qy, qz, x, y, z, None)
