@@ -23,6 +23,7 @@ Functions to handle the RT server protocol are described in the PDF and coded in
 
 # decode bytes -> ascii -> unicode
 import copy
+import json
 from ematoblender.scripts.ema_shared.general_maths import average_quaternions
 
 
@@ -159,9 +160,21 @@ class JSONBuilder(MessageBuilder):
         pass
 
     @staticmethod
-    def pack_wrapper(dataframe):
-        """Return a JSON string for the dataframe"""
-        pass
+    def pack_wrapper(dataframe, vertexindices, coilindices):
+        """Return a JSON string for the dataframe
+        dataframe must be a DataFrame object with coil locations
+        vertexindices must be a list with len=x indicating the mesh vertex that the coil at i sits on
+        coilindices must be a list with len=x indicating which coils are to be transmitted (eg just tongue ones)
+        """
+        mydict = {}
+        assert len(vertexindices) == len(coilindices)
+        mydict["sourceIndices"] = vertexindices
+        mydict["timeStamp"] = dataframe.components[0].timestamp / 1000000
+        chosencoils = [dataframe.components[0].coils[i] for i in coilindices]
+        print('chosen coils are', chosencoils)
+        mydict['targetPoints'] = [loc for c in chosencoils for loc in c.abs_loc]
+
+        return json.dumps(mydict)
 
 
 class Message(object):
