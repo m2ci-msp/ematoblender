@@ -6,8 +6,8 @@ Depends on the rtc3d_parser module to unwrap the binary packages.
 """
 
 # communication with the server, parsing the objects to and from Coil/DataFrame etc
-from ..rtc3d_parser import BasicProtocol, DataFrame
-from ..client_server_comms import ClientConnection
+from ematoblender.scripts.ema_io.rtc3d_parser import RTC3DPacketParser, DataFrame
+from ematoblender.scripts.ema_io.client_server_comms import ClientConnection
 
 # threading of replies
 from threading import Thread
@@ -194,7 +194,7 @@ def init_connection(retain_last=5, print_to=None, wave_to=None, wavehost=None, w
     """Start the connection, set up objects to handle the soon-to-be-incoming data."""
     # create the connection object to handle communication
     global connection, replies
-    connection = ClientConnection(BasicProtocol, customhost=wavehost, customport=waveport)
+    connection = ClientConnection(RTC3DPacketParser)
     # replies object listens for replies and places in queues based on type
     replies = NonBlockingStreamReader(connection, last_x=retain_last)
     print(replies._b)
@@ -204,7 +204,7 @@ def init_connection(retain_last=5, print_to=None, wave_to=None, wavehost=None, w
 
 def init_connection_no_threads():
     """Start a basic connection, return the object."""
-    return ClientConnection(BasicProtocol)
+    return ClientConnection(RTC3DPacketParser)
 
 
 def close_connection_no_threads(conn):
@@ -250,8 +250,7 @@ def get_one_df(conn, replies, *args):
     prev_df = copy.copy(replies.latest_df)
     conn.send_packed("sendcurrentframe", 1)
     # wait while the data is received from the server
-    while replies.latest_df == prev_df\
-        or replies.latest_df is None:
+    while replies.latest_df is None or (prev_df is not None and replies.latest_df == prev_df):
         #print('!!!!!!!!!!!!replies.no_data is', replies.no_data)
         if replies.no_data:
             return None

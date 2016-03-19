@@ -27,7 +27,7 @@ def setup_socket_to_gameserver(port=0, blocking=False):
     Assigned to a random port number.
     if not blocking, sets timeout to 0.2 seconds.
     """
-    BLENDERHOST, BLENDERPORT = pps.gameserver_host, port
+    BLENDERHOST, BLENDERPORT = pps.gameserver_host, pps.gameserver_port if port == 0 else port
 
     # Create a socket (SOCK_DGRAM is a UDP socket)
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
