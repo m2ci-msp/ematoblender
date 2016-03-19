@@ -218,7 +218,6 @@ class MocapParent(object):
     - latest_timestamp (the most recently read timestamp, in microseconds)
 
     SAMPLING RATE ATTRIBUTES
-    - sampling_rate (frames per second sampled)
     - frame_time (number of microseconds per frame)
     - frame_times (list of time difference between frames in seconds)
 
@@ -272,7 +271,6 @@ class MocapParent(object):
         self.latest_timestamp = NotImplemented
 
         # populated in subclasses from the header/pre-reading
-        self.sampling_rate = NotImplemented
         self.frame_time = NotImplemented
         self.frame_times = NotImplemented
 
@@ -291,6 +289,12 @@ class MocapParent(object):
         #  process the file header
         self.read_header()
         self.update_xml_initial()
+
+    def get_sampling_rate(self):
+        if self.frame_time is NotImplemented:
+            return None
+        else:
+            return 1000000/self.frame_time  # microseconds
 
     @staticmethod
     def timestamp_to_microsecs(timestamp):
@@ -334,8 +338,8 @@ class MocapParent(object):
         self.xml_tree.find("General").find("Multimodal").find("VideoFileAbsLoc").text = self.video_name
 
         # set the Frequency (whether 3D or 6d the frequency is set for both
-        self.xml_tree.find("./The_3D/Frequency").text = str(self.sampling_rate)
-        self.xml_tree.find("./The_6D/Frequency").text = str(self.sampling_rate)
+        self.xml_tree.find("./The_3D/Frequency").text = str(self.get_sampling_rate())
+        self.xml_tree.find("./The_6D/Frequency").text = str(self.get_sampling_rate())
 
         # # TODO: Optional improvement: Show marker name information in XML based on header? As yet unused.
         # # set the marker names from the header
@@ -417,7 +421,6 @@ class JSONParser(MocapParent):
         self.max_num_frames = len(timestamps)
         self.frame_times = [t - s for s, t in zip(timestamps, timestamps[1:])]
         self.frame_time = sum(self.frame_times)/self.max_num_frames
-        self.sampling_rate = 1000000/self.frame_time  # microseconds
 
         #setup a mapping between EX EY EZ X Y Z to wave
         self.mappings = Mapping(mapping_as_list=[0, 1, 2, 3, 4, 5], angle_type='EULER')
@@ -683,8 +686,8 @@ class POSParser(MocapParent):
             self.min_channels = int(str(self.file.readline(), encoding='utf-8').split('=')[-1])
             self.bytes_in_frame = self.min_channels * 7 * 4  # channels * 4bytes * 7 readings
 
-            self.sampling_rate = int(str(self.file.readline(), encoding='utf-8').split('=')[-1])
-            self.frame_time = 1/self.sampling_rate * 1000000  # microseconds
+            sampling_rate = int(str(self.file.readline(), encoding='utf-8').split('=')[-1])
+            self.frame_time = 1/sampling_rate * 1000000  # microseconds
 
             # extra fields in V003
             header_extra_fields = self.file.read(self.pre_motion_position-self.file.tell())

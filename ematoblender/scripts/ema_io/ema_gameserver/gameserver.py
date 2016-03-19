@@ -22,6 +22,7 @@ import os
 # used for serialising and sending
 import socketserver
 import pickle
+import xml.etree.ElementTree as et
 
 # used for saving and manipulating incoming data
 from . import wave_recording as wr
@@ -119,8 +120,10 @@ class GameServer(socketserver.UDPServer):
         """
         # average over a number of milliseconds based on average streaming rate
         if ms is not None:
-            xmlelem = rtc.get_parameters(self.conn)
-            freqelem = xmlelem.find('//Frequency')
+            xmlelem = et.fromstring(rtc.get_parameters(self.conn))
+            print(type(xmlelem))
+            freqelem = xmlelem.find('.//Frequency')
+            print(freqelem)
             frequency = float(freqelem.text)
             return (frequency * 1/1000 * ms) // 1   # frequency in seconds/1000 * ms desired, lower bound
         # average over a number of measurements

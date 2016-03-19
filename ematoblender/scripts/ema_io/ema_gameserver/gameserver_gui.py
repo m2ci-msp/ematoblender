@@ -74,6 +74,7 @@ class Application(tk.Frame):
 
     def eval_smoothing(self, *args):
         """Convert the output of the smoothing options section into something that can be used in GS."""
+        print('Key or button pressed in smoothing frame.')
         if self.smooth_by.get() == 1: # smooth by ms
             self.msentry.config(state=tk.NORMAL)
             self.frameentry.config(state=tk.DISABLED)
@@ -238,12 +239,12 @@ and passes them into Blender (or any other application that requests them).'''
         self.smooth_int = tk.StringVar()
         lbl = tk.Radiobutton(smoothframe, text='ms', variable=self.smooth_by, value=1, command=self.eval_smoothing)
         lbl.grid(row=2, column=1)
-        self.msentry = tk.Entry(smoothframe, width=4,)
+        self.msentry = tk.Entry(smoothframe, width=4, state=tk.DISABLED)
         self.msentry.bind("<Key>", self.eval_smoothing)
         self.msentry.grid(row=2, column=2, padx=4)
         lbl = tk.Radiobutton(smoothframe, text='frames', variable=self.smooth_by, value=2, command=self.eval_smoothing)
         lbl.grid(row=2, column=3)
-        self.frameentry = tk.Entry(smoothframe, width=4,)
+        self.frameentry = tk.Entry(smoothframe, width=4, state=tk.DISABLED)
         self.frameentry.bind("<Key>", self.eval_smoothing)
         self.frameentry.grid(row=2, column=4, padx=4)
 
