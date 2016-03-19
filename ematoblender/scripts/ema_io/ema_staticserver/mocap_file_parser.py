@@ -11,9 +11,9 @@ import xml.etree.ElementTree as ET
 import math
 import struct
 import os
-from ematoblender.scripts.ema_io.rtc3d_parser import DataFrame, Component, Coil
+from ..rtc3d_parser import DataFrame, Component, Coil
 
-xml_skeleton_location = './scripts/ema_io/ema_staticserver/parameter_skeleton.xml'
+xml_skeleton_location = os.path.abspath(os.path.dirname(__file__)+'/parameter_skeleton.xml')
 
 
 class MakeMocapParser():

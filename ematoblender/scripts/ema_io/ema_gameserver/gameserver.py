@@ -29,12 +29,12 @@ from . import data_manipulation as dm
 from .biteplate_headcorr import BitePlane, ReferencePlane
 
 # global properties, coil definitions
-from ematoblender.scripts.ema_shared import properties as pps
-import scripts.ema_blender.coil_info as ci
+from ...ema_shared import properties as pps
+from ...ema_blender import coil_info as ci
 
 # connection objects (this server essentially wraps rtc behaviour)
-import scripts.ema_io.ema_gameserver.rtclient as rtc
-from ematoblender.scripts.ema_io.rtc3d_parser import DataFrame
+from . import rtclient as rtc
+from ..rtc3d_parser import DataFrame
 
 
 
@@ -104,7 +104,8 @@ class GameServer(socketserver.UDPServer):
 
         # import or start the client connection
         if rtc.connection is None or rtc.replies is None:
-            p_conn, p_repl = rtc.init_connection()  # TODO: retain_last to be given in ms here, change further down.
+            p_conn, p_repl = rtc.init_connection(wavehost=cl_args.host, waveport=cl_args.port)
+            # TODO: retain_last to be given in ms here, change further down / 10.3.16: Not sure if this still relevant
         else:
             p_conn, p_repl = rtc.connection, rtc.replies
         self.conn, self.repl = p_conn, p_repl
@@ -406,8 +407,13 @@ parser.add_argument('-bpcs',
 parser.add_argument('-rscs',
                     help='filename of the reference CS to be used if already recorded.')
 
+parser.add_argument_group('dataserver_addr', 'Network location of the articulograph/dataserver')
+parser.add_argument('--host', help='HOST of the articulograph/dataserver')
+parser.add_argument('--port', help='PORT of the articulograph/dataserver', type=int)
 
-# default CL arguments if not run as subprocess
+parser.add_argument('-g', '--gui', help='Use the GUI', action='store_true')
+
+# default CL arguments outside of main in case this is run internally somewhere
 cl_args = parser.parse_args(pps.game_server_cl_args)
 
 if __name__ == "__main__":

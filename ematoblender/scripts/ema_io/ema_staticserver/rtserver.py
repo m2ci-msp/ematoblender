@@ -16,9 +16,9 @@ The main function takes command line arguments for starting the server, and runs
 # server functionality
 import socketserver
 
-from ematoblender.scripts.ema_io.client_server_comms import ServerConnection, BasicProtocol
-from ematoblender.scripts.ema_io.ema_staticserver.rtserver_emulate_func import RTServer_Static
-from ematoblender.scripts.ema_shared import properties as pps
+from .rtserver_emulate_func import RTServer_Static
+from ..client_server_comms import ServerConnection, BasicProtocol
+from ...ema_shared import properties as pps
 
 # for debugging
 import sys
@@ -126,25 +126,25 @@ class FakeRTRequestHandler(socketserver.BaseRequestHandler):
 
             #receive and unwrap the data
             data = conn.receive_verbatim()
-            print("\n\nRequest received: ", data, file=sys.stderr)
+            #print("\n\nRequest received: ", data, file=sys.stderr)
 
             # disconnect messages
             if data == b'' or data is None:
                 #reply = "Disconnecting."
                 #conn.send_packed(reply, 1)
-                print("Blank message received.", file=sys.stderr)
+                #print("Blank message received.", file=sys.stderr)
                 self.server.rt_fns.bye()
                 break #prev. break  # no data received (possible timeout), disconnect socket
 
             # server decodes request method
             size, atype, text, *otherargs = conn.protocol.unpack_wrapper(data)
-            print("Message received: ", size, atype, text, file=sys.stderr)
+            #print("Message received: ", size, atype, text, file=sys.stderr)
             text = text.decode('UTF-8').rstrip(' \t\n\r\0').lstrip('_')
 
             # text is a command string, now sever responds
             command = text.lower().split(' ')
             fn_name, *commargs = command
-            print("Command issued is: ", fn_name, commargs, file=sys.stderr)
+            #print("Command issued is: ", fn_name, commargs, file=sys.stderr)
 
             ############ handle messages of wrong type ##########
             if not self.server.rt_fns.validate_message_type(atype):
@@ -158,14 +158,14 @@ class FakeRTRequestHandler(socketserver.BaseRequestHandler):
                 continue
 
             # command is defined
-            print("Using method:", str(method), 'commargs:', commargs, file=sys.stderr)
+            #print("Using method:", str(method), 'commargs:', commargs, file=sys.stderr)
 
             try:
                 # start a thread to handle the command
                 command_thread = threading.Thread(target=method, args=commargs)
                 command_thread.daemon = True
                 command_thread.start()  # as threaded server, these are now executed in thread. rt_fns sends reply.
-                print('command {} executed on thread {}'.format(command, command_thread.name), file=sys.stderr)
+                #print('command {} executed on thread {}'.format(command, command_thread.name), file=sys.stderr)
                 conn.send_packed('OK-'+text, 1)  # should follow method response
 
             except Exception as e:

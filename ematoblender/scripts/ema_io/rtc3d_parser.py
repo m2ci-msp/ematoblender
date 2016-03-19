@@ -21,7 +21,7 @@ Functions to handle the RT server protocol are described in the PDF and coded in
 # decode bytes -> ascii -> unicode
 import struct
 import copy
-from ematoblender.scripts.ema_shared.general_maths import average_quaternions
+from ..ema_shared.general_maths import average_quaternions
 
 
 class BasicProtocol(object):
@@ -224,7 +224,7 @@ class Component(DataFrame):
     def create_coils(self, dimensions=3, mappings=None, marker_channels=None, n=1):
         """Build coil objects (called within Component init).
         Return a list of coil objects with the appropriate mappings."""
-        from ematoblender.scripts.ema_io.ema_staticserver.mocap_file_parser import MocapParent
+        from .ema_staticserver.mocap_file_parser import MocapParent
 
         # data frame component type is 3d or 6d, based on the minimum number of channels sent
         self.comp_type = 1 if dimensions < 5 else 4 # dfct, 3D or 6D
