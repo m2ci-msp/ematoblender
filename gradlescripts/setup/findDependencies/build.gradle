@@ -1,0 +1,161 @@
+buildscript {
+  repositories {
+    jcenter()
+    maven {
+      url  "http://dl.bintray.com/m2ci-msp/maven"
+    }
+  }
+  dependencies {
+    classpath 'org.m2ci.msp:gradle-findbinary-plugin:0.2'
+  }
+}
+
+apply plugin: 'org.m2ci.msp.findbinary'
+
+/*----------------------------------------------------------------------------*/
+
+ext{
+  commandLine = new CommandLine()
+}
+
+/*----------------------------------------------------------------------------*/
+
+task findBlender {
+
+  def outputFile = file("$rootProject.buildDir/blender.json")
+//  outputs.file outputFile
+
+  doLast{
+    outputFile.parentFile.mkdirs()
+
+    def blenderpath = findbinary{ binary "blender" }.path
+
+    def blenderVersion = commandLine.parseVersion("$blenderpath -v", "Blender")
+    def builder = new groovy.json.JsonBuilder()
+
+    def json = builder.blender{
+      path "$blenderpath"
+      version "$blenderVersion"
+    }
+
+    outputFile.text = builder.toPrettyString()
+
+  }
+
+}
+
+/*--------------------------------------------------------------------------*/
+
+task findPython {
+
+  def outputFile = file("$rootProject.buildDir/python.json")
+//  outputs.file outputFile
+
+  doLast{
+    outputFile.parentFile.mkdirs()
+
+    def pythonPath = null
+
+    try{
+      pythonPath = findbinary{ binary "python3" }.path
+    }
+    catch(e) {
+      pythonPath = findbinary{ binary "python" }.path
+    }
+
+    def pythonVersion = commandLine.parseVersion("$pythonPath --version", "Python")
+    def builder = new groovy.json.JsonBuilder()
+
+    def json = builder.python{
+      path "$pythonPath"
+      version "$pythonVersion"
+    }
+
+    outputFile.text = builder.toPrettyString()
+
+  }
+
+}
+
+/*--------------------------------------------------------------------------*/
+
+task findNumpy {
+
+  def outputFile = file("$rootProject.buildDir/numpy.json")
+  def inputFile = file("$rootProject.buildDir/python.json")
+
+  dependsOn findPython
+//  outputs.file outputFile
+  inputs.file inputFile
+
+  doLast{
+    outputFile.parentFile.mkdirs()
+
+    def slurper = new groovy.json.JsonSlurper()
+    def pythonData = slurper.parseText(
+      file(inputFile).text
+    )
+
+    def numpyVersion =
+      commandLine.getOutput("$pythonData.python.path $rootProject.projectDir/ematoblender/scripts/numpy_version.py")
+
+    def numpyLocation =
+      commandLine.getOutput("$pythonData.python.path $rootProject.projectDir/ematoblender/scripts/numpy_location.py")
+
+    def builder = new groovy.json.JsonBuilder()
+
+    def json = builder.numpy{
+      version "$numpyVersion"
+      location "$numpyLocation"
+    }
+
+    outputFile.text = builder.toPrettyString()
+
+  }
+
+
+}
+
+/*--------------------------------------------------------------------------*/
+
+task findPip {
+
+  def outputFile = file("$rootProject.buildDir/pip.json")
+//  outputs.file outputFile
+
+  doLast{
+
+    outputFile.parentFile.mkdirs()
+
+    def pipPath = null
+
+    try{
+      pipPath = findbinary{ binary "pip3" }.path
+    }
+    catch(e) {
+      pipPath = findbinary{ binary "pip" }.path
+    }
+
+    def pipVersion = commandLine.parseVersion("$pipPath -V", "pip")
+    def builder = new groovy.json.JsonBuilder()
+
+    def json = builder.pip{
+      path "$pipPath"
+      version "$pipVersion"
+    }
+
+    outputFile.text = builder.toPrettyString()
+
+  }
+
+}
+
+
+/*--------------------------------------------------------------------------*/
+
+task findDependencies() {
+  dependsOn findBlender
+  dependsOn findPython
+  dependsOn findNumpy
+  dependsOn findPip
+}
