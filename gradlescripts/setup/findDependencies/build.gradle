@@ -6,7 +6,7 @@ buildscript {
     }
   }
   dependencies {
-    classpath 'org.m2ci.msp:gradle-findbinary-plugin:0.2'
+    classpath 'org.m2ci.msp:gradle-findbinary-plugin:0.3'
   }
 }
 
@@ -23,18 +23,29 @@ ext{
 task findBlender {
 
   def outputFile = file("$rootProject.buildDir/blender.json")
-//  outputs.file outputFile
+  outputs.file outputFile
 
   doLast{
     outputFile.parentFile.mkdirs()
 
-    def blenderpath = findbinary{ binary "blender" }.path
+    def blenderPath = null
+    def blenderVersion = null
 
-    def blenderVersion = commandLine.parseVersion("$blenderpath -v", "Blender")
+    try{
+
+      blenderPath = findbinary{ binary "blender" }.path
+
+      blenderVersion = commandLine.parseVersion("$blenderPath -v", "Blender")
+
+    }
+    catch(e){
+      throw new GradleException("Can not find blender.")
+    }
+
     def builder = new groovy.json.JsonBuilder()
 
     def json = builder.blender{
-      path "$blenderpath"
+      path "$blenderPath"
       version "$blenderVersion"
     }
 
@@ -49,21 +60,29 @@ task findBlender {
 task findPython {
 
   def outputFile = file("$rootProject.buildDir/python.json")
-//  outputs.file outputFile
+  outputs.file outputFile
 
   doLast{
     outputFile.parentFile.mkdirs()
 
     def pythonPath = null
+    def pythonVersion = null
 
     try{
-      pythonPath = findbinary{ binary "python3" }.path
+      try{
+        pythonPath = findbinary{ binary "python3" }.path
+      }
+      catch(e) {
+        pythonPath = findbinary{ binary "python" }.path
+      }
+
+      pythonVersion = commandLine.parseVersion("$pythonPath --version", "Python")
+
     }
-    catch(e) {
-      pythonPath = findbinary{ binary "python" }.path
+    catch(e){
+      throw new GradleException("Can not find python.")
     }
 
-    def pythonVersion = commandLine.parseVersion("$pythonPath --version", "Python")
     def builder = new groovy.json.JsonBuilder()
 
     def json = builder.python{
@@ -85,7 +104,8 @@ task findNumpy {
   def inputFile = file("$rootProject.buildDir/python.json")
 
   dependsOn findPython
-//  outputs.file outputFile
+
+  outputs.file outputFile
   inputs.file inputFile
 
   doLast{
@@ -96,11 +116,19 @@ task findNumpy {
       file(inputFile).text
     )
 
-    def numpyVersion =
-      commandLine.getOutput("$pythonData.python.path $rootProject.projectDir/ematoblender/scripts/numpy_version.py")
+    def numpyVersion = null
+    def numpyLocation = null
 
-    def numpyLocation =
-      commandLine.getOutput("$pythonData.python.path $rootProject.projectDir/ematoblender/scripts/numpy_location.py")
+    try{
+
+      numpyVersion = commandLine.getOutput("$pythonData.python.path $rootProject.projectDir/ematoblender/scripts/numpy_version.py")
+
+      numpyLocation = commandLine.getOutput("$pythonData.python.path $rootProject.projectDir/ematoblender/scripts/numpy_location.py")
+
+    }
+    catch(e){
+      throw new GradleException("Can not find numpy.")
+    }
 
     def builder = new groovy.json.JsonBuilder()
 
@@ -121,22 +149,31 @@ task findNumpy {
 task findPip {
 
   def outputFile = file("$rootProject.buildDir/pip.json")
-//  outputs.file outputFile
+  outputs.file outputFile
 
   doLast{
 
     outputFile.parentFile.mkdirs()
 
     def pipPath = null
+    def pipVersion = null
 
     try{
-      pipPath = findbinary{ binary "pip3" }.path
+
+      try{
+        pipPath = findbinary{ binary "pip3" }.path
+      }
+      catch(e) {
+        pipPath = findbinary{ binary "pip" }.path
+      }
+
+      pipVersion = commandLine.parseVersion("$pipPath -V", "pip")
+
     }
     catch(e) {
-      pipPath = findbinary{ binary "pip" }.path
+      throw new GradleException("Can not find pip.")
     }
 
-    def pipVersion = commandLine.parseVersion("$pipPath -V", "pip")
     def builder = new groovy.json.JsonBuilder()
 
     def json = builder.pip{
@@ -149,7 +186,6 @@ task findPip {
   }
 
 }
-
 
 /*--------------------------------------------------------------------------*/
 
