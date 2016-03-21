@@ -22,19 +22,22 @@ import os
 # used for serialising and sending
 import socketserver
 import pickle
+import xml.etree.ElementTree as et
 
 # used for saving and manipulating incoming data
-import scripts.ema_io.ema_gameserver.wave_recording as wr
-import scripts.ema_io.ema_gameserver.data_manipulation as dm
-from ematoblender.scripts.ema_io.ema_gameserver.biteplate_headcorr import BitePlane, ReferencePlane
+from . import wave_recording as wr
+from . import data_manipulation as dm
+from .biteplate_headcorr import BitePlane, ReferencePlane
 
 # global properties, coil definitions
-from ematoblender.scripts.ema_shared import properties as pps
-import scripts.ema_blender.coil_info as ci
+from ...ema_shared import properties as pps
+from ...ema_blender import coil_info as ci
 
 # connection objects (this server essentially wraps rtc behaviour)
-import scripts.ema_io.ema_gameserver.rtclient as rtc
-from ematoblender.scripts.ema_io.rtc3d_parser import DataFrame
+from . import rtclient as rtc
+from ..rtc3d_parser import DataFrame
+
+
 
 
 def main():
@@ -49,9 +52,8 @@ def main():
 
     # create the file that the streamed data will be printed to
     global printfile_location, wavfile_location
-    printfile_location = os.path.normpath(os.path.split(__file__)[0]+cl_args.printdir+os.path.sep+'EMA_')
-    wavfile_location = os.path.normpath(os.path.split(__file__)[0]+cl_args.wavdir + os.path.sep+'EMA_')
-
+    printfile_location = GameServer.output_prefix(cl_args.printdir)
+    wavfile_location = GameServer.output_prefix(cl_args.wavdir)
     print('the printfile location is', printfile_location, 'the wavfile location is', wavfile_location)
 
     global server
@@ -81,11 +83,19 @@ class GameServer(socketserver.UDPServer):
     Used for smoothing measurements, performing other corrections before coordinates are sent to game loop.
     Game server, inherits from socketserver, handling is defined in MyUDPHandler.
     """
+    @staticmethod
+    def output_prefix(relloc):
+        """Based on the given option generate a file prefix to write TSV or WAV to"""
+        if not os.path.isabs(relloc):
+            return os.path.normpath(os.getcwd()+ os.sep + relloc + os.sep + 'EMA_')
+        else:
+            return relloc + os.sep + 'EMA_'
 
     def __init__(self, HOST, PORT):
         # Create the server, binding to localhost on port 9999
         print('Now creating the gameserver with command line arguments:', cl_args)
         super().__init__((HOST, PORT), MyUDPHandler)
+        self.cla = cl_args
 
         self.last_cam_trans = None  # storage needed for handler
         self.cam_pos = None
@@ -94,24 +104,47 @@ class GameServer(socketserver.UDPServer):
         self.rp_in_gs = None
 
         # import or start the client connection
-        if rtc.connection is None and rtc.replies is None:
-            p_conn, p_repl = rtc.init_connection()  # TODO: retain_last to be given in ms here, change further down.
+        if rtc.connection is None or rtc.replies is None:
+            p_conn, p_repl = rtc.init_connection(wavehost=cl_args.host, waveport=cl_args.port)
+            # TODO: retain_last to be given in ms here, change further down / 10.3.16: Not sure if this still relevant
         else:
             p_conn, p_repl = rtc.connection, rtc.replies
         self.conn, self.repl = p_conn, p_repl
+
+    def n_frames_smoothed(self, ms=None, frames=None):
+        """
+        Smoothing takes the form of a rolling average over the last n frames to filter rnadom error.
+        The number of frames is either defined directly (frames)
+        or by the number of ms over which the frames are retained for smoothing.
+        :return int: the number of frames that are retained for smoothing.
+        """
+        # average over a number of milliseconds based on average streaming rate
+        if ms is not None:
+            xmlelem = et.fromstring(rtc.get_parameters(self.conn))
+            print(type(xmlelem))
+            freqelem = xmlelem.find('.//Frequency')
+            print(freqelem)
+            frequency = float(freqelem.text)
+            return (frequency * 1/1000 * ms) // 1   # frequency in seconds/1000 * ms desired, lower bound
+        # average over a number of measurements
+        elif frames is not None:
+            return int(frames)
+        else:
+            return 1
 
     def gs_start_streaming(self, block_print=False, block_wav=False):
         """Use rtclient functions to initialise streaming, start printing/wave recording too if needed."""
         newest_df = rtc.start_streaming(self.conn, self.repl)
 
+        print('starting streaming with arguments', self.cla.wav, self.cla.print)
         timestring = time.strftime('%Y%m%d-%H.%M.%S')
-        if cl_args.wav and not block_wav:
-            self.wave_name = wavfile_location+timestring+'.wav'
+        if self.cla.wav and not block_wav:
+            self.wave_name = self.output_prefix(self.cla.wavdir) + timestring+'.wav'
             # get the latest audio sample number to this value:
             self.repl.wave_sampnum_deque = wr.start_sound_recording(self.wave_name) # give the wave sample id deque to the client
 
-        if cl_args.print and not block_print:
-            self.tsv_name = printfile_location+timestring + '.tsv'
+        if self.cla.print and not block_print:
+            self.tsv_name = self.output_prefix(self.cla.printdir) + timestring + '.tsv'
             print('tsv goes here:', self.tsv_name)
             self.repl.starting_timestamp=None
             self.repl.print_fo = open(self.tsv_name, 'w')  # open the print file in stream-reader
@@ -138,10 +171,10 @@ class GameServer(socketserver.UDPServer):
         """If available, unpickle biteplate reps from these locations."""
         bp, rf = None, None
         if os.path.isfile(bp_fn):
-            print('loading the biteplate from', cl_args.bpcs)
+            print('loading the biteplate from', self.cla.bpcs)
             bp = pickle.load(open(bp_fn, 'rb'))
         if os.path.isfile(rs_fn):
-            print('loading ref file from ', cl_args.rscs)
+            print('loading ref file from ', self.cla.rscs)
             rf =  pickle.load(open(rs_fn, 'rb'))
         # no biteplate recording perfomed earlier, none desired
         return bp, rf
@@ -228,7 +261,7 @@ class GameServer(socketserver.UDPServer):
             pickle.dump(rp_in_gs, open(os.path.normpath(os.getcwd() + os.path.sep + pps.refspace_cs_storage), 'wb'))
             # now rp_in_gs and bp_in_gs can be used to add attributes to the dataframes
 
-            server.repl.print_tsv = cl_args.print
+            server.repl.print_tsv = self.cla.print
             print('correcting matrices are:', rp_in_gs.give_local_to_global_mat(), bp_in_rs.give_global_to_local_mat())
             if os.name == 'nt':
                 import ctypes
@@ -243,6 +276,11 @@ class GameServer(socketserver.UDPServer):
         else:  # presses cancel recording biteplate do nothing.
             return None, None
 
+    def shutdown_server_threads(self):
+        """Shut down this particular socketserver, as well as the conn and replies connections from rtclient"""
+        rtc.close_connection(self.conn)
+        os._exit(1)  #exit() works
+
 
 # create the request handler
 class MyUDPHandler(socketserver.BaseRequestHandler):
@@ -253,11 +291,6 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
     wave_name = None
     recording = wr.recording
     stop_recording = wr.stop_recording
-
-    def shutdown_server_threads(self):
-        """Shut down this particular socketserver, as well as the conn and replies connections from rtclient"""
-        rtc.close_connection(rtc.connection)
-        os._exit(1)  #exit() works
 
     def handle(self):
         """Handle requests sent to the gameserver from Blender."""
@@ -276,7 +309,7 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
         # catch the data to be sent
         # quantitative data - return rolling average
         if self.data == b'SINGLE_DF':
-            newest_df = rtc.get_one_df(self.server.conn)
+            newest_df = rtc.get_one_df(self.server.conn, self.server.repl)
             data_to_send = newest_df  # returns unsmoothed data
 
         elif self.data == b'START_STREAM':
@@ -312,12 +345,12 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
             data_to_send = b'NO DATA REQUESTED.'
 
         # head-correct the data to be sent
-        if type(data_to_send) == DataFrame and cl_args.headcorrect:
+        if type(data_to_send) == DataFrame and self.server.cla.headcorrect:
             print('performing head-correction on this dataframe with', self.server.bp_in_rs)
             print('performing head correction on this df', data_to_send)
             data_to_send, self.server.last_cam_trans, self.server.cam_pos = dm.head_corr_bp_correct(data_to_send,
-                                                                                                    self.server.bp_in_rs if self.server.bp_in_rs is not None else pickle.load(open(cl_args.bpcs), 'rb'),
-                                                                                                    self.server.rp_in_gs if self.server.rp_in_gs is not None else pickle.load(open(cl_args.rscs), 'rb'))
+                                                                                                    self.server.bp_in_rs if self.server.bp_in_rs is not None else pickle.load(open(self.server.cla.bpcs), 'rb'),
+                                                                                                    self.server.rp_in_gs if self.server.rp_in_gs is not None else pickle.load(open(self.server.cla.rscs), 'rb'))
 
         # serialise the data to be sent
         pd = pickle.dumps(data_to_send)
@@ -342,24 +375,7 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
 
 
 #TODO: Needs attention - can this exist in gameserver and get parameters on __init__?
-def n_frames_smoothed(conn, ms=None, frames=None):
-    """
-    Smoothing takes the form of a rolling average over the last n frames to filter rnadom error.
-    The number of frames is either defined directly (frames)
-    or by the number of ms over which the frames are retained for smoothing.
-    :return int: the number of frames that are retained for smoothing.
-    """
-    # average over a number of milliseconds based on average streaming rate
-    if ms is not None:
-        xmlelem = rtc.get_parameters(conn)
-        freqelem = xmlelem.find('//Frequency')
-        frequency = float(freqelem.text)
-        return (frequency * 1/1000 * ms) // 1   # frequency in seconds/1000 * ms desired, lower bound
-    # average over a number of measurements
-    elif frames is not None:
-        return int(frames)
-    else:
-        return 1
+
 
 
 # command line arguments given when gameserver is initialised (from Blender usually)
@@ -394,8 +410,13 @@ parser.add_argument('-bpcs',
 parser.add_argument('-rscs',
                     help='filename of the reference CS to be used if already recorded.')
 
+parser.add_argument_group('dataserver_addr', 'Network location of the articulograph/dataserver')
+parser.add_argument('--host', help='HOST of the articulograph/dataserver')
+parser.add_argument('--port', help='PORT of the articulograph/dataserver', type=int)
 
-# default CL arguments if not run as subprocess
+parser.add_argument('-g', '--gui', help='Use the GUI', action='store_true')
+
+# default CL arguments outside of main in case this is run internally somewhere
 cl_args = parser.parse_args(pps.game_server_cl_args)
 
 if __name__ == "__main__":

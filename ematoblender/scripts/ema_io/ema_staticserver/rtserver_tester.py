@@ -8,7 +8,8 @@ Output is printed to stderr.
 
 
 from ematoblender.scripts.ema_io.client_server_comms import ClientConnection
-import scripts.ema_shared.properties as pps
+from ematoblender.scripts.ema_io.rtc3d_parser import DataFrame
+import ematoblender.scripts.ema_shared.properties as pps
 import time
 
 # from RT Client

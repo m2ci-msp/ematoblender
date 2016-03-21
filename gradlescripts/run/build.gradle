@@ -1,0 +1,51 @@
+/*
+  Script to run the separate elements of the Ematoblender pipeline
+  Basically controls the CL options so it can be run with one command.
+  - runGameServerStatic and runGameServerLive take CL args RE showing the GUI,
+  - runGameServerLive takes a CL arg to set the PORT number for the articulograph
+  - runGameServerStatic takes the collection to show, if not the default
+  
+*/
+
+// this depends on whether the user wants to use the WAVE or static file
+task runDataServer(){
+  doLast{
+    println "Starting a ProcessBuilder for the data server."
+    ProcessBuilder builder = new ProcessBuilder("python ./ematoblender/dataserver.py -g".split(' '))
+    Process p = builder.start()
+    }
+}
+// this must happen in any case
+task runGameServerStatic(){
+  doLast{
+    println "Starting a ProcessBuilder for the static gameserver"
+    ProcessBuilder builder = new ProcessBuilder("python ./ematoblender/gameserver.py".split(' '))
+    Process g = builder.start()
+    //  TODO: Add CL option to use GUI when fully-functional
+  }
+}
+
+task runGameServerLive(){
+  doLast{
+    println "Starting a ProcessBuilder for the live gamserver"
+    ProcessBuilder builder = new ProcessBuilder("python ./ematoblender/gameserver.py --host $host --port $port".split(' '))
+    Process g = builder.start()
+    //  TODO: Add CL option to use GUI when fully-functional
+  }
+}
+
+/*----------------------------------------------------------------------------*/
+// tasks that are executed
+
+task run(dependsOn: [runDataServer,runGameServerStatic]){
+  doLast{
+    println "Running the static data server and gameserver"
+  }
+}
+
+task runFromWave(){
+  dependsOn runGameServerLive
+  doLast{
+    println "Running the gameserver for live streaming on $host $port"
+  }
+}

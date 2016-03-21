@@ -6,7 +6,7 @@ Depends on the rtc3d_parser module to unwrap the binary packages.
 """
 
 # communication with the server, parsing the objects to and from Coil/DataFrame etc
-from ematoblender.scripts.ema_io.rtc3d_parser import BasicProtocol, DataFrame
+from ematoblender.scripts.ema_io.rtc3d_parser import RTC3DPacketParser, DataFrame
 from ematoblender.scripts.ema_io.client_server_comms import ClientConnection
 
 # threading of replies
@@ -99,7 +99,8 @@ class NonBlockingStreamReader():
                             # write a dataframe, with an audio sample number included
                             self.print_fo.write(DataFrame(rawdf=rmsg)
                                                 .to_tsv(relative_timestamp_to=self.starting_timestamp,
-                                                        closest_sound_sample=self.wave_sampnum_deque))
+                                                        closest_sound_sample=self.wave_sampnum_deque
+                                                        if self.wave_sampnum_deque is not None else [0]))
                 else:
                     self._q5.put(line)
             else:
@@ -189,11 +190,11 @@ class UnexpectedEndOfStream(Exception):
     pass
 
 
-def init_connection(retain_last=5, print_to=None, wave_to=None):
+def init_connection(retain_last=5, print_to=None, wave_to=None, wavehost=None, waveport=None):
     """Start the connection, set up objects to handle the soon-to-be-incoming data."""
     # create the connection object to handle communication
     global connection, replies
-    connection = ClientConnection(BasicProtocol)
+    connection = ClientConnection(RTC3DPacketParser)
     # replies object listens for replies and places in queues based on type
     replies = NonBlockingStreamReader(connection, last_x=retain_last)
     print(replies._b)
@@ -203,7 +204,7 @@ def init_connection(retain_last=5, print_to=None, wave_to=None):
 
 def init_connection_no_threads():
     """Start a basic connection, return the object."""
-    return ClientConnection(BasicProtocol)
+    return ClientConnection(RTC3DPacketParser)
 
 
 def close_connection_no_threads(conn):
@@ -226,7 +227,7 @@ def get_status(*args):
     return replies.readline()
 
 
-def test_communication(conn, *args):
+def test_communication(conn, replies, *args):
     # set the version to ensure correct protocol used, test connection
     conn.send_packed("Version 1.0", 1)
     time.sleep(0.1)
@@ -244,13 +245,12 @@ def get_parameters(conn, *args):
     return reply
 
 
-def get_one_df(conn, *args):
+def get_one_df(conn, replies, *args):
     """Wait until a df is queued and return it. Return None if the end of the data file was reached."""
     prev_df = copy.copy(replies.latest_df)
     conn.send_packed("sendcurrentframe", 1)
     # wait while the data is received from the server
-    while replies.latest_df == prev_df\
-        or replies.latest_df is None:
+    while replies.latest_df is None or (prev_df is not None and replies.latest_df == prev_df):
         #print('!!!!!!!!!!!!replies.no_data is', replies.no_data)
         if replies.no_data:
             return None
@@ -310,33 +310,6 @@ def test_all_commands(conn, replies):
         print("This is a streaming timestamp", a.components[0].timestamp,
               'and a location', a.components[0].coils[0].abs_loc)
         time.sleep(0.01)
-
-
-    # conn.send_packed("sendparameters", 1)
-    #
-    # conn.send_packed("sendcurrentframe 3d", 1)
-    # time.sleep(0.1)
-    # print('####',replies.latest_df.components[0].coils[0].abs_loc)
-    #
-    # time.sleep(0.1)
-    # conn.send_packed("sendcurrentframe", 1)
-    # time.sleep(0.1)
-    # print('####',replies.latest_df.components[0].coils[0].abs_loc)
-    # conn.send_packed("sendcurrentframe", 1)
-    # time.sleep(0.1)
-    # print('####',replies.latest_df.components[0].coils[0].abs_loc)
-    # conn.send_packed("sendcurrentframe", 1)
-    # for i in range(5):
-    # #     print(replies.readdata())
-    #
-    # conn.send_packed("sendparameters", 1)
-    # time.sleep(1)
-    #
-    # conn.send_packed("streamframes frequency:30 3d", 1)
-    # time.sleep(2)
-    # conn.send_packed("streamframes stop", 1)
-    #
-    # return replies
 
 
 

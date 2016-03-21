@@ -4,7 +4,7 @@ __author__ = 'Kristy'
 import socket
 import sys
 
-from .rtc3d_parser import BasicProtocol
+from .rtc3d_parser import RTC3DPacketParser
 
 
 class BasicConnection(object):
@@ -13,7 +13,7 @@ class BasicConnection(object):
 
     def __init__(self, *args):
         # ONLY COMMUNICATIONS PROTOCOL SUPPORTED IS RTC3D
-        self.protocol = BasicProtocol
+        self.protocol = RTC3DPacketParser
 
     ############ SIMPLE SEND AND RECEIVE ###########
     def send_verbatim(self, message):
@@ -99,7 +99,7 @@ class ClientConnection(BasicConnection):
     """ Connection object through which commands are sent.
     Inherit methods from BasicConnection"""
 
-    def __init__(self, myprotocol):
+    def __init__(self, myprotocol, customhost=None, customport=None):
         """ Create a socket, save server params, using AF_INET SOCK_STREAM socket. """
         # set the protocol and basic communication behaviour
         super().__init__(myprotocol)
@@ -111,9 +111,9 @@ class ClientConnection(BasicConnection):
         print("Standard socket created", self.s)
 
         #set the port
-        from ematoblender.scripts.ema_shared.properties import waveserver_host, waveserver_port
-        self.HOST = waveserver_host
-        self.PORT = waveserver_port
+        from ..ema_shared.properties import waveserver_host, waveserver_port
+        self.HOST = waveserver_host if customhost is None else customhost
+        self.PORT = waveserver_port if customport is None else customport
 
         # set the TIME_WAIT so that the socket can be reused
         self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
