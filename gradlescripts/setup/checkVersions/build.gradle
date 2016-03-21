@@ -1,0 +1,45 @@
+/*----------------------------------------------------------------------------*/
+
+ext{
+  compareVersions = new CompareVersions()
+
+  versionNumbers = (new ConfigSlurper()).parse(
+    file("$rootDir/buildconfig/versionNumbers.groovy").text
+  )
+}
+
+/*--------------------------------------------------------------------------*/
+
+
+task checkVersions() {
+
+  dependsOn ":gradlescripts:setup:findDependencies:findDependencies"
+
+  doLast{
+
+    ["blender", "python", "numpy", "pip"].each{ dependency ->
+
+      def inputFile = file("$rootProject.buildDir/${dependency}.json")
+
+      def slurper = new groovy.json.JsonSlurper()
+      def data = slurper.parseText(
+        file(inputFile).text
+      )
+
+      def dependencyVersion = data."$dependency".version
+
+      if(compareVersions.isSmaller(dependencyVersion, versionNumbers."$dependency".warnBelow)) {
+        println "WARNING: Old $dependency version"
+      }
+
+      if(compareVersions.isSmaller(dependencyVersion, versionNumbers."$dependency".failBelow)) {
+        throw new GradleException("$dependency too old.")
+      }
+
+
+
+    } // end each
+
+  } // end doLast
+
+}
