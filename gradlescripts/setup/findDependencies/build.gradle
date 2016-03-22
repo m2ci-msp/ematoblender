@@ -131,7 +131,12 @@ task findNumpy {
 
     }
     catch(e){
-      throw new GradleException("Can not find numpy.")
+      throw new GradleException("Can not find numpy.\n"+
+      "Please ensure that numpy is installed before you continue.\n"+
+      "If you are on Linux, you can use sudo apt-get install python3-numpy\n"+
+      "If you are on Windows, try downloading a binary.\n"+
+      "See: http://docs.scipy.org/doc/numpy-1.10.1/user/install.html"
+      )
     }
 
     def builder = new groovy.json.JsonBuilder()
