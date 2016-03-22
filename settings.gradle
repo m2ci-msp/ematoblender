@@ -1,2 +1,3 @@
-include ":gradlescripts:setup"
+include ":gradlescripts:setup:findDependencies"
+include ":gradlescripts:setup:checkVersions"
 include ":gradlescripts:run"
