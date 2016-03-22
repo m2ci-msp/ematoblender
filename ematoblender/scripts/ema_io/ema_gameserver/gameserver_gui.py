@@ -233,7 +233,7 @@ and passes them into Blender (or any other application that requests them).'''
         # options for data smoothing/delay
         smoothframe = tk.Frame(self.rightframe, relief='groove', bd=2)
         smoothframe.pack(fill=tk.X, expand=True)
-        lbl = tk.Label(smoothframe, text='Apply rolling average by:')
+        lbl = tk.Label(smoothframe, text='Apply rolling average by:') # todo - ensure is really applied
         lbl.grid(row=1, column=1, columnspan=4, sticky=tk.W)
         self.smooth_by = tk.IntVar()
         self.smooth_int = tk.StringVar()
@@ -256,23 +256,26 @@ and passes them into Blender (or any other application that requests them).'''
 
         hc1frame = tk.Frame(corrframe)
         hc1frame.grid(row=3, column=1)
-        btn= tk.Button(hc1frame, text='Choose file', command=fd.askopenfile)
+        btn= tk.Button(hc1frame, text='Choose file', command=fd.askopenfile) # todo - set clarg
         btn.grid(row=1, column=1)
-        btn= tk.Button(hc1frame, text='Choose file', command=fd.askopenfile)
-        btn.grid(row=2, column=1)
         hc1frame.grid_remove()
 
         hc2frame = tk.Frame(corrframe)
         hc2frame.grid(row=3, column=1)
-        btn= tk.Button(hc2frame, text='Choose file', command=fd.askopenfile)
+        btn= tk.Button(hc2frame, text='Choose file', command=fd.askopenfile) # todo - set clarg
         btn.grid(row=3, column=1)
 
         hc2frame.grid_remove()
 
         hc3frame = tk.Frame(corrframe)
         hc3frame.grid(row=3, column=1)
-        btn= tk.Button(hc3frame, text='Start streaming', command=fd.askopenfile)
+        btn= tk.Button(hc3frame, text='Start streaming', command=fd.askopenfile) # todo - set fn
         btn.grid(row=3, column=2)
+        lbl = tk.Label(hc3frame, text='Secs:') 
+        lbl.grid(row=3, column=4, columnspan=3)
+        secentry = tk.Entry(hc3frame, width=4,) # todo - grab value
+        secentry.grid(row=3, column=7)
+        
         hc3frame.grid_remove()
 
         def show_hcmethod():
@@ -288,7 +291,7 @@ and passes them into Blender (or any other application that requests them).'''
             else:
                 hc3frame.grid()
 
-        lbl = tk.Label(corrframe, text='Head-correction options:')
+        lbl = tk.Label(corrframe, text='Head-correction options:') # todo - add checkbox to switch on/off
         lbl.grid(row=1, column=1, columnspan=3, sticky=tk.W)
         c = tk.Radiobutton(corrframe, text="Pre-calculated", variable=self.hcmethod, value=1, command=show_hcmethod)
         c.grid(row=2, column=1)
