@@ -155,6 +155,58 @@ task findNumpy {
 
 /*--------------------------------------------------------------------------*/
 
+task findTk {
+
+  def outputFile = file("$rootProject.buildDir/tk.json")
+  def inputFile = file("$rootProject.buildDir/python.json")
+
+  dependsOn findPython
+
+  outputs.file outputFile
+  inputs.file inputFile
+
+  doLast{
+    outputFile.parentFile.mkdirs()
+
+    def slurper = new groovy.json.JsonSlurper()
+    def pythonData = slurper.parseText(
+      file(inputFile).text
+    )
+
+    def tkVersion = null
+    
+
+    try{
+
+      tkVersion = commandLine.getOutput("$pythonData.python.path $rootProject.projectDir/ematoblender/scripts/tkinter_version.py")
+	  println("$tkVersion")
+      if( tkVersion.contains("FAIL") ) {
+        throw new GradleException()
+      }
+
+    }
+    catch(e){
+      throw new GradleException("Can not find tkinter.\n"+
+      "Please ensure that tk is installed before you continue.\n"+
+      "If you are on Linux, look for the python3-tk package\n"
+      )
+    }
+
+    def builder = new groovy.json.JsonBuilder()
+
+    def json = builder.tk{
+      success "$tkVersion"
+    }
+
+    outputFile.text = builder.toPrettyString()
+
+  }
+
+
+}
+
+/*--------------------------------------------------------------------------*/
+
 task findPip {
 
   def outputFile = file("$rootProject.buildDir/pip.json")
@@ -207,10 +259,12 @@ task findDependencies() {
   dependsOn findPython
   dependsOn findPip
   dependsOn findNumpy
+  dependsOn findTk
   
 }
 
 findPython.shouldRunAfter findBlender
 findPip.shouldRunAfter findPython
+findTk.shouldRunAfter findPip
 findNumpy.shouldRunAfter findPip
 
