@@ -2,6 +2,199 @@ __author__ = 'Kristy'
 
 # my code based on Alexander Hewer's
 import mathutils
+import os
+
+from . import data_manipulation as dm
+from ..rtc3d_parser import DataFrame
+from ...ema_shared import properties as pps
+from ...ema_blender import coil_info as ci
+
+
+class HeadCorrector(object):
+    """Container class for various bite-plane and reference plane objs
+    Handles loading head-corrector objects,
+    Recording head-corrector objects from a TSV
+    Recording head-corrector objects from live data
+    Pickling the objects etc.
+    
+    self.load handles the acquisition of the data
+    self.save handles saving the data
+    """
+    recordsecs = 10
+    
+    def __init__(self):
+            
+        self.biteplane = NotImplemented
+        self.refplane = NotImplemented # coordinate system around reference sensors in global space
+        self.inputmode = NotImplemented
+        
+        self.active_indices = NotImplemented
+        self.reference_indices = NotImplemented
+        self.biteplate_indices = NotImplemented
+        
+        self.get_coil_role_indices()
+        
+    # todo: given dataframe, headcorrect only
+    
+    # todo: given dataframe, biteplate correct only
+    
+    # todo: given dataframe, biteplate and headcorrect
+    
+    def get_coil_role_indices(self):
+        self.active_indices, self.biteplate_indices, self.reference_indices = \
+        ci.get_sensor_indices_by_role()
+    
+    def load_from_tsv_file(self, tsv_name):
+        tsv_name = os.path.normpath(os.getcwd() + os.sep + tsv_name) \
+        if not os.path.isabs(tsv_name) else tsv_name
+        if os.path.isfile(tsv_name):
+            from ..ema_staticserver.mocap_file_parser  import TSVParser
+            bytesdfs = TSVParser(tsv_name).give_all_motion_frames()
+            dfs = [DataFrame(rawdf=b) for b in bytesdfs]
+            print("about to process:", dfs[0])
+            if len(dfs) > 1:
+                av = self.process_frames_pre_calc(dfs)
+                self.calc_COBs_from_df(av)
+            else:
+                raise ValueError("There is not enough data in the TSV file for a head-correction.")
+
+        else:
+            print('The TSV file could not be loaded')
+            raise FileNotFoundError(tsv_name)
+            
+    def load_live(self, serverobj, seconds=5):
+        """Using the server object, """
+        response = self.inform_recording_start()
+        
+        # if response is to abort:
+        if not response == 1:
+            print("Live streaming aborted.")
+        
+        # if streaming ready, stream biteplate recording for 5 seconds
+        else:
+            dfs = self.record_for_seconds(serverobj, secs=self.__class__.recordsecs)
+            av = self.process_frames_pre_calc(dfs)
+            self.calc_COBs_from_df(av)
+            
+            self.inform_recording_end()
+            
+    @staticmethod
+    def inform_recording_start():
+        """launch a dialog on Windows to pause until biteplate-recording is ready"""
+        #TODO: Is system used on other OS? If so, inform appropriately.
+        if os.name == 'nt':
+            import ctypes
+            ready = ctypes.windll.user32.MessageBoxA(0, b"Click OK when ready to start biteplate recording.\nHold still with sensors attached.",b"Biteplate recording", 1)
+        elif os.name == 'posix':
+            print('TODO: Launch a unix-style dialog to pause while changing rtserver to biteplate recording')
+            ready = 1
+        else:
+            ready = 1
+        return ready
+        
+    @staticmethod
+    def inform_recording_end():
+        """TODO: Inform the user about the recordings, 
+        instruct them to prepare the tongue sensors.
+        """
+        print('NOW PREPARE FOR NORMAL STREAMING')
+        if os.name == 'nt':
+            import ctypes
+            notification = ctypes.windll.user32.MessageBoxA(0,
+            b"Set up your wave/server for streaming of active sensor data",
+            b"Biteplate recording finished", 0)
+        
+        
+    def record_for_seconds(gameserverobj, secs=None):
+        """Ask the gameserverobj to stream secs of data.
+        If secs==None, then the time value from the pps file is used.
+        """
+        gameserberobj.repl._stop_b = True  # stop the normal behaviour of the data queue
+            
+        print('About to stream utilising the replies queue:', 
+        gameserverobj.repl._b.is_alive())
+
+        # start streaming, get either secs or (in properties) defined seconds of streaming data
+        gameserverobj.gs_start_streaming()      
+        print('started streaming')
+        time.sleep(pps.head_correction_time if secs is None else secs)
+
+        # stop streaming
+        gameserverobj.gs_stop_streaming()
+        print('stopped streaming')
+        time.sleep(1)
+
+        # access all the streamed data, empty the queue, saved elements in replies
+        print('qsize is ',gameserverobj.repl._q34.qsize())
+        all_streamed = []
+        while not server.repl._q34.empty():
+            streamed_df = DataFrame(rawdf=gameserverobj.repl._q34.get()[2])
+            print('this streamed df was', streamed_df)
+            all_streamed.append(streamed_df)
+            
+        # reset internal settings
+        gameserverobj.repl.latest_df = None
+        gameserverobj.repl.last_x_dfs.clear()
+        gameserverobj.repl._stop_b = False  # restart the normal behaviour of streamed data
+        
+        #print('\n\nstreamed data looks like', all_streamed[:1])
+        return all_streamed # a list of dataframe objects streamed
+            
+    def process_frames_pre_calc(self, list_of_dfs):
+        """Remove the first and last ms of the list
+        Then remove outliers from the list
+        Then average the remaining frames, returning an average object.
+        """
+        last_frames = dm.remove_first_ms_of_list(list_of_dfs,
+                       ms=1 if pps.head_correction_exclude_first_ms is None
+                       else pps.head_correction_exclude_first_ms)
+        no_outliers= dm.remove_outliers(last_frames)
+        print("no_outliers is", no_outliers[-1])
+        print("averaguing", DataFrame(fromlist=no_outliers))
+
+        return DataFrame(fromlist=no_outliers)
+    
+    def load_pickled_from_file(self, pickledfile):
+        """If available, unpickle biteplate reps from these locations."""
+        if os.path.isfile(pickledfile):
+            print('loading the pickled biteplate from', pickledfile)
+            pobj = pickle.load(open(bp_fn, 'rb'))
+            self.__dict__= pobj.__dict__
+        else:
+            raise FileNotFoundError
+
+    def save_changes_of_base(self):
+        """Save the Biteplane and Referenceplane Changes of Base to pickled files."""
+        pickle.dump(bp_in_rs, open(os.path.normpath(__file__ + "../../../" + os.path.sep + pps.biteplate_cs_storage), 'wb'))
+        pickle.dump(rp_in_gs, open(os.path.normpath(__file__ + "../../../" + os.path.sep + pps.refspace_cs_storage), 'wb')) 
+
+    def give_bp_rs(self):
+        """Return the biteplane obj and the refplane object"""
+        return self.biteplane, self.refplane
+        
+    def __str__(self):
+        return 'correcting matrices are\n'+ \
+        str(self.refplane.give_local_to_global_mat()) + "\n" + \
+        str(self.biteplane.give_global_to_local_mat())
+                
+    def calc_COBs_from_df(self, df):
+        """Calculate the changes of base off one average dataframe"""
+        
+        # isolate the coil objects
+        refcoils = [df.give_coils()[i] for i in self.reference_indices]
+        bpcoils = [df.give_coils()[i] for i in self.biteplate_indices]
+        
+        lind, rind, find = [ci.find_sensor_index(n) for n in ['BP1', 'BP2', 'BP3']]  #todo: check order
+        
+        # create a coordinate-system based on reference sensors (fully-defined here)
+        self.refplane = ReferencePlane(*[x.abs_loc for x in refcoils[:3]])
+
+        # transform the bpcoils into the FOR of the refplane
+        for c in bpcoils:
+            c.ref_loc = self.refplane.project_to_lcs(c.abs_loc)  
+            
+        # create an origin-less biteplane FOR in reference space
+        self.biteplane = BitePlane(*[df.give_coils()[x].ref_loc for x in [lind, rind, find]])
 
 
 class BitePlane(object):
@@ -155,12 +348,20 @@ class ScalingPlane(BitePlane):
                             mathutils.Vector(leftcoords)) / 2)  # make the origin of the referenceplane system the centre
 
 
-if __name__ == "__main__":
+def main():
     bp = BitePlane((3.732703,-79.734947,-222.91179),(-36.90427,32.382603,-166.20944), (-55.746994,22.703554,-168.1194))
     print(bp.project_to_global((0,0,0)))
     bpm = bp.give_local_to_global_mat()
     print(bpm)
     print(mathutils.Vector((0,0,0))* bpm)
+    tsv_name = "/home/kristy/local/repos/ematoblender/data/Example3.tsv"
+    fromtsv = HeadCorrector()
+    fromtsv.load_from_tsv_file(tsv_name)
+    print(fromtsv)
+
+
+if __name__ == "__main__":
+    main()
 
 
     #rf = ReferencePlane((88.924011,46.925743,-132.47382),(-18.506304,-0.313194,-160.08165),(-25.692158,9.625629,-165.58427))
