@@ -14,7 +14,7 @@ class CommandLine{
       outputString = error.toString()
     }
 
-    return outputString.tokenize()[0]
+    return outputString
 
   }
 

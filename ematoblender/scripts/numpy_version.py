@@ -1,5 +1,5 @@
 try:
     import numpy
-    print(numpy.__version__)
+    print(numpy.__version__, end="")
 except ImportError:
-    print('IMPORT_FAIL')
+    print('IMPORT_FAIL', end="")
