@@ -194,8 +194,9 @@ task findPip {
 /*--------------------------------------------------------------------------*/
 
 task findDependencies() {
-  dependsOn findBlender
   dependsOn findPython
-  dependsOn findNumpy
   dependsOn findPip
+  dependsOn findBlender
+  dependsOn findNumpy
+  
 }
