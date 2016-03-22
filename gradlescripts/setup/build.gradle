@@ -17,155 +17,15 @@ import org.ajoberstar.grgit.*
 
 apply plugin: 'org.m2ci.msp.findbinary'
 
-/*----------------------------------------------------------------------------*/
-
-ext{
-  parseVersion = { command ->
-
-      def clOutput = new ByteArrayOutputStream()
-
-      exec{
-        commandLine command.tokenize()
-        workingDir rootProject.buildDir
-        standardOutput = clOutput
-      }
-
-      def version = clOutput.toString().tokenize()[1]
-
-      return version
-  }
-
-  versionNumbers = (new ConfigSlurper()).parse(
-    file("$rootDir/buildconfig/versionNumbers.groovy").text
-  )
-}
-
-ext.parseCL = {param, wd-> // get the output from the  CL call
-  def clOutput = new ByteArrayOutputStream()
-  exec{
-    workingDir = wd
-    commandLine = param.tokenize()
-    standardOutput = clOutput
-    errorOutput = clOutput
-  }
-  def outputAsString = clOutput.toString()
-  println "Result of call was: ${outputAsString}"
-  return outputAsString
-}
-
-ext.parseVerString = { verstring, boundstring ->  // return true if verstring > boundstring
-  println("Comparing versions $verstring and $boundstring")
-  def verlist = verstring.tokenize('.').take(2)
-  def boundlist = boundstring.tokenize('.').take(2)
-   return verlist[0] > boundlist[0] || (verlist[0] == boundlist[0] & verlist[1] >= boundlist[1])
-  }
-
-
-ext.pythonNumber = null
 
 /*----------------------------------------------------------------------------*/
 
 // define different tasks to make sure that Python tools and packages are working correctly
 
-task makeBuildDir(){
-    doFirst{
-    rootProject.buildDir.mkdirs()
-  }
-}
-
-task checkPython() {
-  dependsOn makeBuildDir
-  doLast{
-      println("Checking python installation")
-      // try to search for python3
-      def pyStr = null
-      try{
-        pyStr = parseCL("python3 --version", "$rootProject.buildDir")
-        pythonNumber = "python3"
-      } catch(e){
-        println(e)
-        println("Command python3 failed")
-        pyStr = parseCL("python --version", "$rootProject.buildDir")
-        pythonNumber = "python"
-      }
-      def pyVer = pyStr.tokenize()[1]
-      println("Python version is $pyVer")
-      println("Python call is $pythonNumber")
-      assert parseVerString(pyVer, versionNumbers.python.failBelow)
-      if (! parseVerString(pyVer, versionNumbers.python.warnBelow)){
-        println("WARNING - OLD PYTHON VERSION")
-  }
-}
-}
-
-task checkPip() {
-  dependsOn checkPython
-  doLast{
-      println("Checking Pip installation")
-      def pipStr = parseCL("pip -V", "$rootProject.buildDir")
-      def pipVer = pipStr.tokenize()[1]
-      println("Pip version is $pipVer")
-      assert parseVerString(pipVer, versionNumbers.pip.failBelow)
-      if (! parseVerString(pipVer, versionNumbers.pip.warnBelow)){
-        println("WARNING - OLD PIP VERSION")
-      }
-  }
-}
-
-task checkNumpy() {
-  dependsOn checkPython
-  doLast{
-      println("Checking Numpy installation with python command $pythonNumber")
-      def numpyVer = parseCL( "$pythonNumber $rootProject.projectDir/ematoblender/scripts/numpy_version.py",
-      "$rootProject.buildDir")
-      //def numpyVer = parseCL("$pythonNumber -c \"import numpy;print(numpy.__version__)\"", "$rootProject.buildDir")
-      assert parseVerString(numpyVer, versionNumbers.numpy.failBelow)
-      if (! parseVerString(numpyVer, versionNumbers.numpy.warnBelow)){
-        println("WARNING - OLD NUMPY VERSION")
-      }
-  }
-}
-
-task checkBlender(){
-//    dependsOn findBlender
-    doLast{
-        println("Checking Blender versioon for compatibility.")
-        
-
-    }
-}
-
-  /*--------------------------------------------------------------------------*/
 
 // define different tasks for downloading and installing mathutils based on OS
 if (Os.isFamily(Os.FAMILY_WINDOWS)){ // OS is windows
-
-  /*--------------------------------------------------------------------------*/
-
-  task findBlender {
-    dependsOn makeBuildDir
-
-    def outputFile = file("$rootProject.buildDir/blender.json")
-    outputs.file outputFile
-
-    doLast{
-      outputFile.parentFile.mkdirs()
-
-      def blenderpath = findbinary{ binary "blender.exe" }.path
-
-      def blenderVersion = (parseVersion("$blenderpath -v")).toDouble()
-      def builder = new groovy.json.JsonBuilder()
-
-      def json = builder.blender{
-          path "$blenderpath"
-          version "$blenderVersion"
-      }
-      println("Outputting blender path to JSON")
-      outputFile.text = builder.toPrettyString()
-    }
-
-  }
-
+ 
   /*--------------------------------------------------------------------------*/
 
   task downloadMathUtils{
@@ -198,7 +58,7 @@ if (Os.isFamily(Os.FAMILY_WINDOWS)){ // OS is windows
   task installMathUtils { // use pip to install Blender-mathutils
 
     dependsOn cloneMathUtils
-    dependsOn checkPip
+    dependsOn checkVersions
 
     doLast{
 
@@ -229,30 +89,7 @@ else{ //OS is Unix/Mac
 
   /*--------------------------------------------------------------------------*/
 
-  task findBlender {
-
-    def outputFile = file("$rootProject.buildDir/blender.json")
-    outputs.file outputFile
-
-    doLast{
-      outputFile.parentFile.mkdirs()
-
-      def blenderpath = findbinary{ binary "blender"
-      custom_path "/usr/bin"}.path
-
-      def blenderVersionString = parseCL("$blenderpath -v", "$rootProject.buildDir")
-      def blenderVersion =blenderVersionString.tokenize()[1]
-      def builder = new groovy.json.JsonBuilder()
-
-      def json = builder.blender{
-          path "$blenderpath"
-          version "$blenderVersion"
-      }
-
-      outputFile.text = builder.toPrettyString()
-    }
-  }
-
+  
   /*--------------------------------------------------------------------------*/
 
   task cloneMathUtils{
