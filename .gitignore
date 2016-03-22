@@ -24,3 +24,4 @@ temp/*
 .idea/
 survey_objects/
 modules/
+.gradle
