@@ -175,7 +175,11 @@ task findPip {
 
     }
     catch(e) {
-      throw new GradleException("Can not find pip.")
+      throw new GradleException("Cannot find pip.\n" +
+      "Please ensure Pip is installed before you continue.\n"+
+      "You can find information about installing pip at:\n" +
+      "https://pip.pypa.io/en/stable/installing/"
+      )
     }
 
     def builder = new groovy.json.JsonBuilder()
@@ -194,9 +198,14 @@ task findPip {
 /*--------------------------------------------------------------------------*/
 
 task findDependencies() {
+  dependsOn findBlender
   dependsOn findPython
   dependsOn findPip
-  dependsOn findBlender
   dependsOn findNumpy
   
 }
+
+findPython.shouldRunAfter findBlender
+findPip.shouldRunAfter findPython
+findNumpy.shouldRunAfter findPip
+
