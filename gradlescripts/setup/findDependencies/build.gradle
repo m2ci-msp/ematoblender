@@ -131,7 +131,12 @@ task findNumpy {
 
     }
     catch(e){
-      throw new GradleException("Can not find numpy.")
+      throw new GradleException("Can not find numpy.\n"+
+      "Please ensure that numpy is installed before you continue.\n"+
+      "If you are on Linux, you can use sudo apt-get install python3-numpy\n"+
+      "If you are on Windows, try downloading a binary.\n"+
+      "See: http://docs.scipy.org/doc/numpy-1.10.1/user/install.html"
+      )
     }
 
     def builder = new groovy.json.JsonBuilder()
@@ -139,6 +144,58 @@ task findNumpy {
     def json = builder.numpy{
       version "$numpyVersion"
       location "$numpyLocation"
+    }
+
+    outputFile.text = builder.toPrettyString()
+
+  }
+
+
+}
+
+/*--------------------------------------------------------------------------*/
+
+task findTk {
+
+  def outputFile = file("$rootProject.buildDir/tk.json")
+  def inputFile = file("$rootProject.buildDir/python.json")
+
+  dependsOn findPython
+
+  outputs.file outputFile
+  inputs.file inputFile
+
+  doLast{
+    outputFile.parentFile.mkdirs()
+
+    def slurper = new groovy.json.JsonSlurper()
+    def pythonData = slurper.parseText(
+      file(inputFile).text
+    )
+
+    def tkVersion = null
+    
+
+    try{
+
+      tkVersion = commandLine.getOutput("$pythonData.python.path $rootProject.projectDir/ematoblender/scripts/tkinter_version.py")
+	  println("$tkVersion")
+      if( tkVersion.contains("FAIL") ) {
+        throw new GradleException()
+      }
+
+    }
+    catch(e){
+      throw new GradleException("Can not find tkinter.\n"+
+      "Please ensure that tk is installed before you continue.\n"+
+      "If you are on Linux, look for the python3-tk package\n"
+      )
+    }
+
+    def builder = new groovy.json.JsonBuilder()
+
+    def json = builder.tk{
+      success "$tkVersion"
     }
 
     outputFile.text = builder.toPrettyString()
@@ -175,7 +232,11 @@ task findPip {
 
     }
     catch(e) {
-      throw new GradleException("Can not find pip.")
+      throw new GradleException("Cannot find pip.\n" +
+      "Please ensure Pip is installed before you continue.\n"+
+      "You can find information about installing pip at:\n" +
+      "https://pip.pypa.io/en/stable/installing/"
+      )
     }
 
     def builder = new groovy.json.JsonBuilder()
@@ -196,6 +257,14 @@ task findPip {
 task findDependencies() {
   dependsOn findBlender
   dependsOn findPython
-  dependsOn findNumpy
   dependsOn findPip
+  dependsOn findNumpy
+  dependsOn findTk
+  
 }
+
+findPython.shouldRunAfter findBlender
+findPip.shouldRunAfter findPython
+findTk.shouldRunAfter findPip
+findNumpy.shouldRunAfter findPip
+

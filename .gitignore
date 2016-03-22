@@ -9,7 +9,6 @@ lib/*
 videomaterials
 data/*
 *.bak
-__init__.py
 *__pycache__
 *pyc
 code_examples/*
@@ -24,3 +23,5 @@ mesh
 temp/*
 .idea/
 survey_objects/
+modules/
+.gradle

@@ -7,30 +7,35 @@
   
 */
 
+ext{
+  pyAlias = { return new groovy.json.JsonSlurper().parseText(file("$rootProject.buildDir/python.json").text).python.path }
+}
+
 // this depends on whether the user wants to use the WAVE or static file
 task runDataServer(){
+  dependsOn ":gradlescripts:setup:setupEnvironment:setup"
   doLast{
     println "Starting a ProcessBuilder for the data server."
-    ProcessBuilder builder = new ProcessBuilder("python ./ematoblender/dataserver.py -g".split(' '))
+    ProcessBuilder builder = new ProcessBuilder("${pyAlias()} ./ematoblender/dataserver.py -g".split(' '))
     Process p = builder.start()
     }
 }
 // this must happen in any case
 task runGameServerStatic(){
+  dependsOn ":gradlescripts:setup:setupEnvironment:setup"
   doLast{
     println "Starting a ProcessBuilder for the static gameserver"
-    ProcessBuilder builder = new ProcessBuilder("python ./ematoblender/gameserver.py".split(' '))
+    ProcessBuilder builder = new ProcessBuilder("${pyAlias()} ./ematoblender/gameserver.py -g".split(' '))
     Process g = builder.start()
-    //  TODO: Add CL option to use GUI when fully-functional
   }
 }
 
 task runGameServerLive(){
+  dependsOn ":gradlescripts:setup:setupEnvironment:setup"
   doLast{
     println "Starting a ProcessBuilder for the live gamserver"
-    ProcessBuilder builder = new ProcessBuilder("python ./ematoblender/gameserver.py --host $host --port $port".split(' '))
+    ProcessBuilder builder = new ProcessBuilder("${pyAlias()} ./ematoblender/gameserver.py --host $host --port $port -g".split(' '))
     Process g = builder.start()
-    //  TODO: Add CL option to use GUI when fully-functional
   }
 }
 
@@ -45,6 +50,7 @@ task run(dependsOn: [runDataServer,runGameServerStatic]){
 
 task runFromWave(){
   dependsOn runGameServerLive
+
   doLast{
     println "Running the gameserver for live streaming on $host $port"
   }
