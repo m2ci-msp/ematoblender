@@ -1,6 +1,7 @@
 __author__ = 'Kristy'
 import math
-from .biteplate_headcorr import BitePlane, ReferencePlane
+
+from . import biteplate_headcorr as hc
 from ...ema_blender import coil_info as ci
 
 
