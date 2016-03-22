@@ -107,6 +107,9 @@ else{ //OS is Unix/Mac
   /*--------------------------------------------------------------------------*/
 
   task installMathUtils(type: Exec){
+    
+    standardOutput = new ByteArrayOutputStream()
+    errorOutput = standardOutput
 
     dependsOn cloneMathUtils
     outputs.dir file("$rootProject.buildDir/mathutils/build")
