@@ -10,10 +10,10 @@ from . import rtclient as rtc
 from ...ema_shared import properties as pps
 
 
-def main():
+def main(args=None):
     # start the server
     global server
-    server = GameServer(pps.gameserver_host, pps.gameserver_port)
+    server = GameServer(args)
 
     # start the GUI
     root = tk.Tk()
