@@ -12,9 +12,9 @@ import math
 import struct
 import os
 import json
-from ematoblender.scripts.ema_io.rtc3d_parser import DataFrame, Component6D, CoilBuilder6D
+from ..rtc3d_parser import DataFrame, Component6D, CoilBuilder6D
 
-xml_skeleton_location = os.path.abspath(os.path.normpath(os.path.dirname(__file__)+'./parameter_skeleton.xml'))
+xml_skeleton_location = os.path.abspath(os.path.normpath(os.path.dirname(__file__) + os.sep +'parameter_skeleton.xml'))
 
 
 class Mapping():

@@ -24,7 +24,7 @@ Functions to handle the RT server protocol are described in the PDF and coded in
 # decode bytes -> ascii -> unicode
 import copy
 import json
-from ematoblender.scripts.ema_shared.general_maths import average_quaternions
+from ..ema_shared.general_maths import average_quaternions
 
 
 import struct

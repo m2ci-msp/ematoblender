@@ -6,8 +6,8 @@ Depends on the rtc3d_parser module to unwrap the binary packages.
 """
 
 # communication with the server, parsing the objects to and from Coil/DataFrame etc
-from ematoblender.scripts.ema_io.rtc3d_parser import RTC3DPacketParser, DataFrame
-from ematoblender.scripts.ema_io.client_server_comms import ClientConnection
+from ..rtc3d_parser import RTC3DPacketParser, DataFrame
+from ..client_server_comms import ClientConnection
 
 # threading of replies
 from threading import Thread

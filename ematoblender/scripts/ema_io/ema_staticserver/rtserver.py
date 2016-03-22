@@ -16,9 +16,9 @@ The main function takes command line arguments for starting the server, and runs
 # server functionality
 import socketserver
 
-from ematoblender.scripts.ema_io.client_server_comms import ServerConnection, RTC3DPacketParser
-from ematoblender.scripts.ema_io.ema_staticserver.rtserver_emulate_func import RTServer_Static
-from ematoblender.scripts.ema_shared import properties as pps
+from ..client_server_comms import ServerConnection, RTC3DPacketParser
+from .rtserver_emulate_func import RTServer_Static
+from ...ema_shared import properties as pps
 
 # for debugging
 import sys
