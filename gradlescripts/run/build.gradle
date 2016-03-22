@@ -13,6 +13,7 @@ ext{
 
 // this depends on whether the user wants to use the WAVE or static file
 task runDataServer(){
+  dependsOn ":gradlescripts:setup:setupEnvironment:setup"
   doLast{
     println "Starting a ProcessBuilder for the data server."
     ProcessBuilder builder = new ProcessBuilder("${pyAlias()} ./ematoblender/dataserver.py -g".split(' '))
@@ -21,6 +22,7 @@ task runDataServer(){
 }
 // this must happen in any case
 task runGameServerStatic(){
+  dependsOn ":gradlescripts:setup:setupEnvironment:setup"
   doLast{
     println "Starting a ProcessBuilder for the static gameserver"
     ProcessBuilder builder = new ProcessBuilder("${pyAlias()} ./ematoblender/gameserver.py -g".split(' '))
@@ -29,6 +31,7 @@ task runGameServerStatic(){
 }
 
 task runGameServerLive(){
+  dependsOn ":gradlescripts:setup:setupEnvironment:setup"
   doLast{
     println "Starting a ProcessBuilder for the live gamserver"
     ProcessBuilder builder = new ProcessBuilder("${pyAlias()} ./ematoblender/gameserver.py --host $host --port $port -g".split(' '))
@@ -40,7 +43,6 @@ task runGameServerLive(){
 // tasks that are executed
 
 task run(dependsOn: [runDataServer,runGameServerStatic]){
-
   doLast{
     println "Running the static data server and gameserver"
   }
