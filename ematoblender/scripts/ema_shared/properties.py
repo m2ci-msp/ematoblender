@@ -106,7 +106,7 @@ show_debugging_lines = True
 
 # choose to send things to wave, like requesting frequency of streaming etc
 game_server_cl_args = ["--smoothframes", "5"]  # none while testing pre-recorded data   #[ '--headcorrect', '-print', '-wav',] # off whilst testing playing video
-game_server_prerecorded_args = ['-bpcs', './temp/biteplate_in_refspace.p', '-rscs', './temp/refspace_in_global.p']
+game_server_prerecorded_args = ['-hc', '-bpcs', './temp/biteplate_in_refspace.p', '-rscs', './temp/refspace_in_global.p']
 # head-correction parameters
 head_correction_time = None
 head_correction_exclude_first_ms = 0
