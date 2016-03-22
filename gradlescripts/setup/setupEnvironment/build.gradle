@@ -17,7 +17,9 @@ import org.ajoberstar.grgit.*
 
 apply plugin: 'org.m2ci.msp.findbinary'
 
-
+ext{
+  commandLine = new CommandLine()
+}
 /*----------------------------------------------------------------------------*/
 
 // define different tasks to make sure that Python tools and packages are working correctly
@@ -58,7 +60,7 @@ if (Os.isFamily(Os.FAMILY_WINDOWS)){ // OS is windows
   task installMathUtils { // use pip to install Blender-mathutils
 
     dependsOn cloneMathUtils
-    dependsOn checkVersions
+    dependsOn ":gradlescripts:setup:checkVersions:checkVersions"
 
     doLast{
 
@@ -124,30 +126,38 @@ else{ //OS is Unix/Mac
 // define tasks that check whether functionality works within Blender
 
 task checkNumpyInBlender() {
-  dependsOn findBlender
-  dependsOn checkBlender
-  dependsOn checkNumpy
+  dependsOn ":gradlescripts:setup:checkVersions:checkVersions"
   
   doLast{
     def slurper = new groovy.json.JsonSlurper()
+    
+    def numpyInfo = slurper.parseText(
+	  file("$rootProject.buildDir/numpy.json").text
+		)
     def blenderInfo = slurper.parseText(
       file("$rootProject.buildDir/blender.json").text
       )
     def bloc = blenderInfo.blender.path
+    
     println "Checking whether numpy works in Blender at $bloc"
     
-    def numpyVer = parseCL("${bloc} --factory-startup  --background --python $rootProject.projectDir/ematoblender/scripts/numpy_version.py", "$rootProject.projectDir")
+    def numpyVer = commandLine.getOutput("${bloc} --factory-startup  --background --python $rootProject.projectDir/ematoblender/scripts/numpy_version.py")
     
     println "Got the output $numpyVer"
-    if ("$numpyVer".contains("FAIL")){   // Numpy could not be found; use the local install within Blender by copying the lib
+    
+    // if Numpy could not be found; use the local install within Blender by copying the lib
+    if ("$numpyVer".contains("FAIL")){   
+      
       // find the site-lib for Python
       println("Version number not found, copying numpy lib into Blender")
-      def libLocation = parseCL("$pythonNumber $rootProject.projectDir/ematoblender/scripts/numpy_location.py", "$rootProject.projectDir")
+      def libLocation = numpyInfo.numpy.location
+      
       println "Numpy library is located at: $libLocation"
+      
       // copy the numpy lib into the modules/numpy dir (now blender can access it)
       copy{
         from  file("$libLocation")
-        into "$rootDir/ematoblender/scripts/modules/numpy"
+        into "$rootProject.projectDir/ematoblender/scripts/modules/numpy"
       }
     }
   }
@@ -157,8 +167,7 @@ task checkNumpyInBlender() {
 // run a script that backs up the User's User Preferences and sets scripts dir
 
 task setBlenderUserPrefs(){
-  dependsOn findBlender
-  dependsOn checkPython
+  dependsOn ":gradlescripts:setup:checkVersions:checkVersions"
   
   doLast{
     // parse the JSON file with the path
@@ -178,8 +187,8 @@ task setBlenderUserPrefs(){
 /*--------------------------------------------------------------------------*/
 
 task setup() {
-  dependsOn findBlender
   dependsOn installMathUtils
   dependsOn checkNumpyInBlender
   dependsOn setBlenderUserPrefs
 }
+
