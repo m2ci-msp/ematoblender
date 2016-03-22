@@ -29,7 +29,7 @@ class UserPrefBackup(object):
         print('Gathering user preferences from', UserPrefBackup.curr_up_fp)
 
         # copy and rename the current UPs
-        if not os.path.exists(UserPrefBackup.old_up_fp):
+        if not os.path.exists(UserPrefBackup.old_up_fp) and os.path.exists(UserPrefBackup.curr_up_fp):
             print('Copying old preferences to ', UserPrefBackup.old_up_fp)
             copy2(UserPrefBackup.curr_up_fp, UserPrefBackup.old_up_fp)
         else:
