@@ -10,22 +10,23 @@ from tkinter import filedialog as fd
 from tkinter import messagebox as mb
 import os, time
 
-import ematoblender.scripts.ema_io.ema_staticserver.rtserver as rts
-import ematoblender.scripts.ema_shared.properties as pps
+from . import rtserver as rts
+from ...ema_shared import properties as pps
 
 
 def extract_files_from_collectionpath(abspath):
     files = []
+    print("Attempting to open the file collection", abspath)
     if os.path.isfile(abspath):  # open the abspath of the file list
         with open(abspath, 'r') as f:
             for line in f:
                 line = line.rstrip('\t\r\n ')  # verbatim filepath
-                # open the filepath relative to project directory, this is the parent of the dataserver file
-                projdir = os.path.abspath('../')
-                print('Searching for relative paths from', projdir)
-                relpath = os.path.normpath(projdir + './' + line)
-                if os.path.isfile(relpath):
-                    files.append(relpath)
+                # open the filepath relative to the collection
+                colldir = os.path.dirname(abspath)
+                print("Searching for data files relative to where the collection is stored")
+                datapath = os.path.normpath(colldir + './' + line) if not os.path.isabs(line) else line
+                if os.path.isfile(datapath):
+                    files.append(datapath)
                 elif os.path.isfile(line) and line != '':
                     files.append(os.path.abspath(line))
                 else:
@@ -37,11 +38,18 @@ def extract_files_from_collectionpath(abspath):
     return files
 
 
-def main():
+def main(collection=None):
     """Show the GUI, firstly loading the file list based on the properties file, starting the server."""
     # get the list of files
-
-    files = extract_files_from_collectionpath(os.path.abspath(pps.mocap_list_of_files))
+    collectionpath = os.path.abspath(os.path.normpath(
+        # default collection (in properties) if collection is not given
+        pps.mocap_list_of_files
+        # TODO: Warn that the pps.mocap_list_of_files is evaluated relative to CWD
+        if collection is None
+        else os.getcwd()+os.sep+collection)
+    )
+    files = extract_files_from_collectionpath(collectionpath)
+    assert files is not False  # there must be valid files in the collection
 
     # start the server
     server_thread, server = rts.initialise_server(datafile=files[0], loop=True)
@@ -98,6 +106,9 @@ class Application(tk.Frame):
         pad = 7
         if type(microsecstring) == int:  # if input is integer
             return '{:7.2f}'.format(microsecstring / 1000000)
+
+        if microsecstring is NotImplemented:
+            return '{0: <9}'.format('NA')
 
         elif microsecstring.is_digit():  # if input is string
             if len(microsecstring) < 6:  # string is an integer

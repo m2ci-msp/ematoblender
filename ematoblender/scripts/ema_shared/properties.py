@@ -9,7 +9,7 @@ waveserver_port = 9007  # TODO: Change to 3030 if using NDI WAVE
 waveserver_host = 'localhost'  # on RUG machine '145.97.132.29' or similar
 
 # if using the server switcher, where is the file list stored?
-mocap_list_of_files = '../data/switcher_file_list.txt'
+mocap_list_of_files = 'data/switcher_file_list.txt'
 
 # filename we are streaming from
 streaming_source = None  # this is for reference only

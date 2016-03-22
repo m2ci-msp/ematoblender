@@ -1,0 +1,201 @@
+buildscript {
+  repositories {
+    jcenter()
+    maven {
+      url  "http://dl.bintray.com/m2ci-msp/maven"
+    }
+  }
+  dependencies {
+    classpath 'org.m2ci.msp:gradle-findbinary-plugin:0.3'
+  }
+}
+
+apply plugin: 'org.m2ci.msp.findbinary'
+
+/*----------------------------------------------------------------------------*/
+
+ext{
+  commandLine = new CommandLine()
+}
+
+/*----------------------------------------------------------------------------*/
+
+task findBlender {
+
+  def outputFile = file("$rootProject.buildDir/blender.json")
+  outputs.file outputFile
+
+  doLast{
+    outputFile.parentFile.mkdirs()
+
+    def blenderPath = null
+    def blenderVersion = null
+
+    try{
+
+      blenderPath = findbinary{ binary "blender" }.path
+
+      blenderVersion = commandLine.parseVersion("$blenderPath -v", "Blender")
+
+    }
+    catch(e){
+      throw new GradleException("Can not find blender.")
+    }
+
+    def builder = new groovy.json.JsonBuilder()
+
+    def json = builder.blender{
+      path "$blenderPath"
+      version "$blenderVersion"
+    }
+
+    outputFile.text = builder.toPrettyString()
+
+  }
+
+}
+
+/*--------------------------------------------------------------------------*/
+
+task findPython {
+
+  def outputFile = file("$rootProject.buildDir/python.json")
+  outputs.file outputFile
+
+  doLast{
+    outputFile.parentFile.mkdirs()
+
+    def pythonPath = null
+    def pythonVersion = null
+
+    try{
+      try{
+        pythonPath = findbinary{ binary "python3" }.path
+      }
+      catch(e) {
+        pythonPath = findbinary{ binary "python" }.path
+      }
+
+      pythonVersion = commandLine.parseVersion("$pythonPath --version", "Python")
+
+    }
+    catch(e){
+      throw new GradleException("Can not find python.")
+    }
+
+    def builder = new groovy.json.JsonBuilder()
+
+    def json = builder.python{
+      path "$pythonPath"
+      version "$pythonVersion"
+    }
+
+    outputFile.text = builder.toPrettyString()
+
+  }
+
+}
+
+/*--------------------------------------------------------------------------*/
+
+task findNumpy {
+
+  def outputFile = file("$rootProject.buildDir/numpy.json")
+  def inputFile = file("$rootProject.buildDir/python.json")
+
+  dependsOn findPython
+
+  outputs.file outputFile
+  inputs.file inputFile
+
+  doLast{
+    outputFile.parentFile.mkdirs()
+
+    def slurper = new groovy.json.JsonSlurper()
+    def pythonData = slurper.parseText(
+      file(inputFile).text
+    )
+
+    def numpyVersion = null
+    def numpyLocation = null
+
+    try{
+
+      numpyVersion = commandLine.getOutput("$pythonData.python.path $rootProject.projectDir/ematoblender/scripts/numpy_version.py")
+
+      if( numpyVersion.contains("FAIL") ) {
+        throw new GradleException()
+      }
+
+      numpyLocation = commandLine.getOutput("$pythonData.python.path $rootProject.projectDir/ematoblender/scripts/numpy_location.py")
+
+    }
+    catch(e){
+      throw new GradleException("Can not find numpy.")
+    }
+
+    def builder = new groovy.json.JsonBuilder()
+
+    def json = builder.numpy{
+      version "$numpyVersion"
+      location "$numpyLocation"
+    }
+
+    outputFile.text = builder.toPrettyString()
+
+  }
+
+
+}
+
+/*--------------------------------------------------------------------------*/
+
+task findPip {
+
+  def outputFile = file("$rootProject.buildDir/pip.json")
+  outputs.file outputFile
+
+  doLast{
+
+    outputFile.parentFile.mkdirs()
+
+    def pipPath = null
+    def pipVersion = null
+
+    try{
+
+      try{
+        pipPath = findbinary{ binary "pip3" }.path
+      }
+      catch(e) {
+        pipPath = findbinary{ binary "pip" }.path
+      }
+
+      pipVersion = commandLine.parseVersion("$pipPath -V", "pip")
+
+    }
+    catch(e) {
+      throw new GradleException("Can not find pip.")
+    }
+
+    def builder = new groovy.json.JsonBuilder()
+
+    def json = builder.pip{
+      path "$pipPath"
+      version "$pipVersion"
+    }
+
+    outputFile.text = builder.toPrettyString()
+
+  }
+
+}
+
+/*--------------------------------------------------------------------------*/
+
+task findDependencies() {
+  dependsOn findBlender
+  dependsOn findPython
+  dependsOn findNumpy
+  dependsOn findPip
+}
