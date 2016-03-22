@@ -123,6 +123,10 @@ task findNumpy {
 
       numpyVersion = commandLine.getOutput("$pythonData.python.path $rootProject.projectDir/ematoblender/scripts/numpy_version.py")
 
+      if( numpyVersion.contains("FAIL") ) {
+        throw new GradleException()
+      }
+
       numpyLocation = commandLine.getOutput("$pythonData.python.path $rootProject.projectDir/ematoblender/scripts/numpy_location.py")
 
     }
