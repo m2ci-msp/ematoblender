@@ -139,7 +139,6 @@ class MessageBuilder(object):
             meanobj = DataFrame()
             meanobj.__dict__ = copy.deepcopy(dflist[-1].__dict__)
             meanobj.smoothed = True
-
             # update the components' coils, keep them the same
             newcoils = meanobj.give_coils()
 
@@ -208,7 +207,8 @@ class DataFrame(Message):
             self.components = components
 
         if fromlist is not None:
-            self = self.__class__.GET_BUILDER_CLASS().average_dataframes(fromlist)
+            # reassign self's attributes to the average value's
+            self.__dict__ = self.__class__.GET_BUILDER_CLASS().average_dataframes(fromlist).__dict__
 
 
     def pack_all(self):
