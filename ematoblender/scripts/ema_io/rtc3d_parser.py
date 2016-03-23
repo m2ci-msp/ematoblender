@@ -64,8 +64,6 @@ class RTC3DPacketParser(BasePacketParser):
             return None
         else:
             #print("input message was {}".format(message))
-            print('unpackign with string', cls.PACKET_STRUCT.format(
-                str(len(message)-cls.HEADER_LEN)))
             return struct.unpack(cls.PACKET_STRUCT.format(
                 str(len(message)-cls.HEADER_LEN)), message)
 
@@ -73,8 +71,7 @@ class RTC3DPacketParser(BasePacketParser):
     def unpack_all(cls, mbytes):
         """Unpack the entire bytestring, returning the relevant object"""
         size, atype, msgbytes = cls.unpack_outer(mbytes)
-        print('s, t, m', size, atype, msgbytes)
-        print(cls.GET_INNER_BUILDER())
+        #  print('s, t, m', size, atype, msgbytes)
         return cls.GET_INNER_BUILDER().unpack_all(msgbytes, atype)
 
     @classmethod
@@ -84,8 +81,8 @@ class RTC3DPacketParser(BasePacketParser):
         """
         if type(command) != bytes:
             command = bytes(command, 'ascii')
-        print('headerlen, commandlen', cls.HEADER_LEN, len(command))
-        print('packing with string', cls.PACKET_STRUCT.format(str(len(command))))
+        #  print('headerlen, commandlen', cls.HEADER_LEN, len(command))
+        #  print('packing with string', cls.PACKET_STRUCT.format(str(len(command))))
         return struct.pack(cls.PACKET_STRUCT.format(str(len(command))),
                            len(command)+cls.HEADER_LEN, atype, command)
 
@@ -217,7 +214,6 @@ class DataFrame(Message):
 
     def give_coils(self):
         """Return a list of the coil objects in a dataframe."""
-        print('returning ALL coils')
         return [coil for comp in self.components for coil in comp.coils]
 
     def __str__(self):
@@ -236,7 +232,6 @@ class DataFrame(Message):
                 for n in range(len(self.components)) \
                 for (c, oc) in zip(self.components[n].give_coils(), other.components[n].give_coils())
                 ):
-            print('Objects are the same')
             return True
         else:
             print('Objects are not the same')
@@ -314,7 +309,7 @@ class ComponentBuilder(object):
             compcontent = bytesleft[cls.EACH_HEADER_LEN: compsize]
             bytesleft = bytesleft[compsize:]  # remove bytes read into variables
 
-            print('component type is', comptype, 'fn is', cls.COMPONENT_CLASS_MAP[comptype])
+            #  print('component type is', comptype, 'fn is', cls.COMPONENT_CLASS_MAP[comptype])
             # append the relevant component object to list
             components.append(cls.COMPONENT_CLASS_MAP[comptype](framenumber, timestamp, compcontent))
 
@@ -372,9 +367,9 @@ class ComponentXD(ComponentBase):
 
     def pack_data(self):
         """Pack the component header, and the bytestring for each marker/coil"""
-        print('struct header', self.__class__.GET_BUILDER_CLASS().HEADER)
-        print('len coils', len(self.coils))
-        print('each header', self.coils[0].__class__.GET_BUILDER_CLASS().EACH_STRUCT)
+        #  print('struct header', self.__class__.GET_BUILDER_CLASS().HEADER)
+        #  print('len coils', len(self.coils))
+        #  print('each header', self.coils[0].__class__.GET_BUILDER_CLASS().EACH_STRUCT)
         return struct.pack(self.__class__.GET_BUILDER_CLASS().HEADER, len(self.coils)) + \
                b''.join([struct.pack(c.__class__.GET_BUILDER_CLASS().EACH_STRUCT, *c.in_packing_order()) for c in self.coils])
 
@@ -431,8 +426,6 @@ class CoilBuilder(object):
     def average(coilobjs):
         thiscoil = CoilBase(0, 0, 0)
         n = len(coilobjs)
-        print('averaging {} objects'.format(n))
-        print('averaging objecs', coilobjs )
         thiscoil.abs_loc = [sum([o.abs_loc[i]/n for o in coilobjs ] ) for i in range(3) ]
 
         if thiscoil.abs_rot is not None:
