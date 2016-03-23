@@ -2,13 +2,13 @@ __author__ = 'Kristy'
 
 from threading import Thread
 import time
-
+import socket
 
 def main():
     print('WARNING: ensure that either NDI-WAVE or RTSERVER is running to provide the information.')
     print('You can test the NDI-WAVE or RTSERVER using scripts.ema_io.ema_staticserver.rtserver_tester')
 
-    testing_passive = True  # simply start
+    testing_passive = False  # simply start
     testing_active = True  # pretend to make some calls from Blender
 
     if testing_passive:  # for running the gameserver in a thread, to operate normally
@@ -30,17 +30,55 @@ def main():
 
     # tests communication from Blender to GS
     if testing_active:  # for testing, runs here and also performs tests
-        from scripts.ema_blender.blender_networking import run_game_server
+
+        from ematoblender.scripts.ema_shared.properties import gameserver_host, gameserver_port
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+        SHOST = gameserver_host
+        SPORT = gameserver_port
+        data = 'TEST_ALIVE'
+        sock.sendto(bytes(data + "\n", encoding='ascii'), (SHOST, SPORT))
+        received = sock.recv(1024)
+        print('I received', received)
+        exit()
+
+
+
+        import ematoblender.scripts.ema_blender.blender_networking as bn
+
+        gs_soc_blocking = bn.setup_socket_to_gameserver(blocking=True, port=9444)
+        bn.send_to_gameserver(gs_soc_blocking, mode='TEST_ALIVE')
+        time.sleep(0.2)  # wait for game server to reply before making a query
+        reply = bn.recv_from_gameserver(gs_soc_blocking)
+
+        exit()
+
+
+
+        from ematoblender.scripts.ema_blender.blender_networking import run_game_server
 #        run_game_server()
-        import scripts.ema_blender.blender_networking as bn
-        s = bn.setup_socket_to_gameserver(blocking=False)
+
+        import ematoblender.scripts.ema_blender.blender_networking as bn
+        ## debugging s = bn.setup_socket_to_gameserver(blocking=False)
+        s = bn.setup_socket_to_gameserver(blocking=True)
 
         print('Performing some simple tests.')
+
+        # check that the gameserver is alive
         from ematoblender.scripts.ema_blender.blender_networking import send_to_gameserver
-        print(send_to_gameserver(s, mode='TEST_ALIVE'))
-        single_dfs = [send_to_gameserver(s) for i in range(10)]
-        for df in single_dfs:
-            print("\nsingle_df:", df)
+        from ematoblender.scripts.ema_blender.blender_networking import wait_til_recv
+
+        send_to_gameserver(s, mode='TEST_ALIVE')
+        response = wait_til_recv(s)
+        exit()
+
+
+        confirm = [send_to_gameserver(s, mode='SINGLE_DF') for i in range(10)]
+        #assert str(type(single_dfs[0])) == 'DataFrame'
+        response = wait_til_recv(s)
+        for i in response:
+            print(i)
+        exit()
 
         parameters = send_to_gameserver(s, mode='PARAMETERS')
         from xml.etree.ElementTree import ElementTree as ET
