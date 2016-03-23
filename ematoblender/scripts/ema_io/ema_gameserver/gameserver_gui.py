@@ -5,7 +5,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog as fd
 
-from .gameserver import GameServer
+from .gameserver import GameServer, MyUDPHandler
 from . import rtclient as rtc
 from ...ema_shared import properties as pps
 
@@ -13,27 +13,27 @@ from ...ema_shared import properties as pps
 def main(args=None):
     # start the server
     global server
-    server = GameServer(args)
+    server = GameServer(pps.game_server_cl_args)
 
     # start the GUI
     root = tk.Tk()
     root.geometry("900x500")
-    root.title("Ematoblender Gameserver")
+    root.title("Ematoblender Gameserver {}".format(server.server_address))
     icon = 'images/ti.ico'
     if os.path.isfile(icon):
         root.wm_iconbitmap(bitmap=icon)
-        
-    app = Application(master=root, servobj=server)
-    
-    root.protocol("WM_DELETE_WINDOW", lambda: on_closing(root, app))
-    
-    app.mainloop()
 
+    app = Application(master=root, servobj=server)
+
+    root.protocol("WM_DELETE_WINDOW", lambda: on_closing(root, app))
+
+    app.mainloop()
+    print('Server will now serve forever.')
     server.serve_forever()
 
     print('Application and server were shutdown.')
-    
-    
+
+
 def on_closing(r, a):
     a.quit()
     r.destroy()
@@ -84,18 +84,20 @@ class Application(tk.Frame):
     def eval_smoothing(self, *args):
         """Convert the output of the smoothing options section into something that can be used in GS."""
         print('Key or button pressed in smoothing frame.')
+        self.servobj.cla.smoothframes, self.servobj.cla.smoothms = None, None
+
         if self.smooth_by.get() == 1: # smooth by ms
             self.msentry.config(state=tk.NORMAL)
             self.frameentry.config(state=tk.DISABLED)
             if self.msentry.get().isnumeric():
-                self.servobj.cla.frames_smoothed = self.servobj.n_frames_smoothed(ms=float(self.msentry.get()))
+                self.servobj.cla.smoothframes = self.servobj.n_frames_smoothed(ms=float(self.msentry.get()))
             else:  # entry is not numeric
                 self.msentry.delete(0, tk.END) # delete any non-numeric things
         else: # smooth by frames
             self.msentry.config(state=tk.DISABLED)
             self.frameentry.config(state=tk.NORMAL)
             if self.frameentry.get().isdigit(): # must be an integer
-                self.servobj.cla.frames_smoothed = self.servobj.n_frames_smoothed(frames=int(self.frameentry.get()))
+                self.servobj.cla.smoothframes = self.servobj.n_frames_smoothed(frames=int(self.frameentry.get()))
             else:
                 self.frameentry.delete(0, tk.END)
 
@@ -259,7 +261,7 @@ and passes them into Blender (or any other application that requests them).'''
 
 
         # options for head-correction
-        
+
         def show_hcmethod():
             """What to show in the head-correction area based on the chosen head-correction method"""
             print('Trigger hcmethod', self.hcmethod.get())
@@ -272,9 +274,9 @@ and passes them into Blender (or any other application that requests them).'''
                 hc2frame.grid()
             else:
                 hc3frame.grid()
-                
+
         # headcorrection methods using the three solutions
-        
+
         def choose_file_and_load_hc():
             fn = fd.askopenfilename()
             self.hc_fn.set(fn)
@@ -286,7 +288,7 @@ and passes them into Blender (or any other application that requests them).'''
                 self.servobj.headcorrection.load_picked_from_file(fn)
             else:
                 self.hc_fn.set("Invalid file selected.")
-                
+
         def record_hcmethod():
             self.live_status.set('Button pressed')
             self.live_status_lbl.update()
@@ -299,28 +301,28 @@ and passes them into Blender (or any other application that requests them).'''
             else:
                 self.live_status.set('RECORDING')
                 self.live_status_lbl.update()
-                
-                self.servobj.headcorrection.load_live(self.servobj, seconds=secs) 
+
+                self.servobj.headcorrection.load_live(self.servobj, seconds=secs)
                 self.live_status.set('COMPLETE')
-        
+
         corrframe = tk.Frame(self.rightframe, relief='groove', bd=2)
         corrframe.pack(side=tk.TOP, fill=tk.X)
         self.hcmethod = tk.IntVar()
-        
+
         self.hc_fn = tk.StringVar()
 
         hc1frame = tk.Frame(corrframe)
         hc1frame.grid(row=3, column=1)
         btn= tk.Button(hc1frame, text='Choose file', command=choose_file_and_load_hc)
         btn.grid(row=1, column=1)
-        lbl = tk.Label(hc1frame, textvariable=self.hc_fn) 
+        lbl = tk.Label(hc1frame, textvariable=self.hc_fn)
         lbl.grid(row=1, column=4, columnspan=3)
         hc1frame.grid_remove()
 
         hc2frame = tk.Frame(corrframe)
         hc2frame.grid(row=3, column=1)
         btn= tk.Button(hc2frame, text='Choose file', command=choose_file_and_load_hc)
-        lbl = tk.Label(hc2frame, textvariable=self.hc_fn) 
+        lbl = tk.Label(hc2frame, textvariable=self.hc_fn)
         lbl.grid(row=1, column=4, columnspan=3)
         btn.grid(row=3, column=1)
 
@@ -330,17 +332,17 @@ and passes them into Blender (or any other application that requests them).'''
         hc3frame.grid(row=3, column=1)
         btn= tk.Button(hc3frame, text='Start streaming', command=record_hcmethod)
         btn.grid(row=3, column=2)
-        lbl = tk.Label(hc3frame, text='Secs:') 
+        lbl = tk.Label(hc3frame, text='Secs:')
         lbl.grid(row=3, column=4, columnspan=3)
 
         self.secentry = tk.Entry(hc3frame, width=4,)
         self.secentry.grid(row=3, column=7)
         self.live_status = tk.StringVar()
-        self.live_status_lbl = tk.Label(hc3frame, textvariable=self.live_status) 
+        self.live_status_lbl = tk.Label(hc3frame, textvariable=self.live_status)
         self.live_status_lbl.grid(row=3, column=8, columnspan=3)
-        
+
         hc3frame.grid_remove()
-            
+
 
         lbl = tk.Label(corrframe, text='Head-correction options:') # todo - add checkbox to switch on/off
         lbl.grid(row=1, column=1, columnspan=3, sticky=tk.W)
