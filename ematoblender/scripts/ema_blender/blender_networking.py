@@ -27,11 +27,13 @@ def setup_socket_to_gameserver(port=0, blocking=False):
     Assigned to a random port number.
     if not blocking, sets timeout to 0.2 seconds.
     """
-    BLENDERHOST, BLENDERPORT = pps.gameserver_host, pps.gameserver_port if port == 0 else port
+    BLENDERHOST = pps.blendersock_host
+    BLENDERPORT = pps.blendersock_port if port == 0 else port
 
     # Create a socket (SOCK_DGRAM is a UDP socket)
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.settimeout(0 if not blocking else 0.2)
+    print('Binding the socket to the address:', BLENDERHOST, BLENDERPORT)
     sock.bind((BLENDERHOST, BLENDERPORT))  # picks a random port if 0
     return sock
 
@@ -234,6 +236,7 @@ def send_to_gameserver(s, mode='SINGLE_DF'):
         print('Mode "{}" cannot be received from the server.'.format(mode))
         return None
     try:
+        print('sending message to addr', mode, (pps.gameserver_host, pps.gameserver_port))
         s.sendto(bytes(mode, encoding='ASCII'), (pps.gameserver_host, pps.gameserver_port))
 
     except AttributeError as e:
