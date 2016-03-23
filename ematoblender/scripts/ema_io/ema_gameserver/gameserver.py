@@ -112,7 +112,7 @@ class GameServer(socketserver.UDPServer):
         super().__init__((HOST, PORT), MyUDPHandler)
             
         self.cla = cl_args
-        self.headcorrector = HeadCorrector()
+        self.headcorrection = HeadCorrector()
 
         self.last_cam_trans = None  # storage needed for handler
         self.cam_pos = None
