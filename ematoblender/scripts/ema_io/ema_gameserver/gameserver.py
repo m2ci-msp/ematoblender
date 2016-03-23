@@ -18,6 +18,7 @@ Because the BlenderGE script will only display the raw data it is given, filteri
 import time
 import argparse
 import os
+import math
 
 # used for serialising and sending
 import socketserver
@@ -47,9 +48,6 @@ def main(argv=pps.game_server_cl_args):
     Start the gameserver, run the biteplate-recording routine.
     Run gameserver.serve_forever()
     """
-    # determine the amount of smoothing on streaming dataframes
-    # nf = n_frames_smoothed(p_conn, ms=cl_args.smoothms, frames=cl_args.smoothframes)
-
     cl_args = parser.parse_args(argv if argv is not None else pps.game_server_cl_args)
 
     # create the file that the streamed data will be printed to
@@ -60,12 +58,12 @@ def main(argv=pps.game_server_cl_args):
 
     global server
     server = GameServer(cl_args)
-    
+
     # set an initial printing value
     server.repl.print_tsv = server.cla.print
 
     ############### BITEPLANE AND HEAD-CORRECTION HYPOTHESIS ############
-    
+
     server.headcorrection = HeadCorrector()
 
     # biteplate recording performed earlier and pickled
@@ -74,15 +72,16 @@ def main(argv=pps.game_server_cl_args):
 
     # perform a biteplate recording and pickle the values
     elif server.cla.headcorrect: # unfulfilled by attempt at loading
-        
+
         if server.cla.live is not None: # do a live recording
             server.headcorrection.load_live(server.cla.live)
         elif server.cla.fromtsv is not None: # get from TSV
             server.headcorrection.load_from_tsv_file(server.cla.fromtsv)
-   
-    
+
+
     # Activate the server; this will keep running until you
     # interrupt the program with Ctrl-C
+    print('About to serve forever')
     server.serve_forever()
     print("Server was shutdown")
 
@@ -105,30 +104,41 @@ class GameServer(socketserver.UDPServer):
         print('Now creating the gameserver with command line arguments:', cl_args)
         if type(cl_args) == list:
             cl_args = parser.parse_args(cl_args)
-        
+
         HOST = pps.gameserver_host
         PORT = pps.gameserver_port
-        
+
         super().__init__((HOST, PORT), MyUDPHandler)
-            
+
+        print('Game server is', self)
+
         self.cla = cl_args
         self.headcorrection = HeadCorrector()
 
         self.last_cam_trans = None  # storage needed for handler
         self.cam_pos = None
 
-
         # import or start the client connection
         if rtc.connection is None or rtc.replies is None:
             p_conn, p_repl = rtc.init_connection(wavehost=self.cla.host, waveport=self.cla.port)
-            # TODO: retain_last to be given in ms here, change further down / 10.3.16: Not sure if this still relevant
         else:
             p_conn, p_repl = rtc.connection, rtc.replies
         self.conn, self.repl = p_conn, p_repl
 
+        # determine the amount of smoothing on streaming dataframes
+        self.set_smoothing_n()
+
+    def set_smoothing_n(self, n=None):
+        """sets the smoothing from the most recent cla values"""
+        if n is None:
+            n = self.n_frames_smoothed(ms=self.cla.smoothms, frames=self.cla.smoothframes)
+        self.smooth_n = n
+        self.repl.change_smoothing_length(self.smooth_n)
+
+
     def n_frames_smoothed(self, ms=None, frames=None):
         """
-        Smoothing takes the form of a rolling average over the last n frames to filter rnadom error.
+        Smoothing takes the form of a rolling average over the last n frames to filter random error.
         The number of frames is either defined directly (frames)
         or by the number of ms over which the frames are retained for smoothing.
         :return int: the number of frames that are retained for smoothing.
@@ -140,7 +150,7 @@ class GameServer(socketserver.UDPServer):
             freqelem = xmlelem.find('.//Frequency')
             print(freqelem)
             frequency = float(freqelem.text)
-            return (frequency * 1/1000 * ms) // 1   # frequency in seconds/1000 * ms desired, lower bound
+            return int(math.floor((frequency * 1/1000 * ms)))   # frequency in seconds/1000 * ms desired, lower bound
         # average over a number of measurements
         elif frames is not None:
             return int(frames)
@@ -200,12 +210,7 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
 
     def handle(self):
         """Handle requests sent to the gameserver from Blender."""
-        if pps.development_mode:
-            from ematoblender.scripts.ema_shared.miscellanous import reload_modules_for_testing
-            reload_modules_for_testing(dm)
 
-        ### self.request is the TCP socket connected to the client
-        ###self.data = self.request.recv(1024).strip()  # no questions asked, just give the latest_dfs object
         self.data = self.request[0].strip()
         self.socket = self.request[1]
 
@@ -225,6 +230,14 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
         elif self.data == b'STREAM_DF':
             newest_x = rtc.get_last_streamed_dfs()
             #data_to_send = newest_x[-1] # simplest output for debugging
+            """
+            This step represents the live filtering
+            - input must be a list of some DataFrame objects
+            - output must be a single DataFrame
+            This currently uses the default fromlist construction
+            which is simply the average of the values in each dimension,
+            and average rotation values using the average_quaternions fn.
+            """
             data_to_send = DataFrame(fromlist=newest_x)  # returns averaged data from the latest x dfs
 
         elif self.data == b'STREAM_STOP':
@@ -234,19 +247,25 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
         # qualitative data, no manipulation
         elif self.data == b'PARAMETERS':
             data_to_send = rtc.get_parameters(self.server.conn)
+
         elif self.data == b'TEST':
             data_to_send = rtc.test_communication(self.server.conn)
+
         elif self.data == b'TEST_ALIVE':
             data_to_send = b'YES, GAMESERVER IS RUNNING'
+
         elif self.data == b'STATUS':
             data_to_send = rtc.get_status()
+
         elif self.data == b'KILL_CLIENT':
             print('\n\nKILLING CLIENT SERVER\n')
             kill_server = True
             data_to_send = b'KILLINGSERVER'
+
         elif self.data == b'CAM_TRANS':
             print('choosing data', self.server.last_cam_trans, server.cam_pos)
             data_to_send = [self.server.last_cam_trans, self.server.cam_pos]
+
         else:
             data_to_send = b'NO DATA REQUESTED.'
 
@@ -264,7 +283,6 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
 
         self.socket.sendto(pd, self.client_address)
 
-
         if kill_server:
             server.conn.s.close()
 
@@ -277,10 +295,12 @@ parser = argparse.ArgumentParser(description='EMA client running as intermediate
 
 # smoothing the streamed dataframes
 smoothgroup = parser.add_mutually_exclusive_group()
-smoothgroup.add_argument('--smoothms',
+smoothgroup.add_argument('-ms', '--smoothms',
+                    type=int,
                     help='Give the number of milliseconds that the location signals should be averaged over.',
                     default='100')
-smoothgroup.add_argument('--smoothframes',
+smoothgroup.add_argument('-fr','--smoothframes',
+                    type=int,
                     help='Give the number of frames that location signals should be smoothed over, if ms not given.')
 
 # saving the dataframes as TSV files and recordings as WAV files
@@ -318,7 +338,7 @@ parser.add_argument('-g', '--gui', help='Use the GUI', action='store_true')
 parser.print_help()
 
 if __name__ == "__main__":
-	
+
     # default CL arguments outside of main in case this is not specified
     main(argv=sys.argv)
 
