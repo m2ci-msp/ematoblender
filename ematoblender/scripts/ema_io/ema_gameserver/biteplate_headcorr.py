@@ -3,6 +3,8 @@ __author__ = 'Kristy'
 # my code based on Alexander Hewer's
 import mathutils
 import os
+import time
+import pickle
 
 from . import data_manipulation as dm
 from ..rtc3d_parser import DataFrame
@@ -51,10 +53,10 @@ class HeadCorrector(object):
             from ..ema_staticserver.mocap_file_parser  import TSVParser
             bytesdfs = TSVParser(tsv_name).give_all_motion_frames()
             dfs = [DataFrame(rawdf=b) for b in bytesdfs]
-            print("about to process:", dfs[0])
             if len(dfs) > 1:
                 av = self.process_frames_pre_calc(dfs)
                 self.calc_COBs_from_df(av)
+                self.save_changes_of_base()
             else:
                 raise ValueError("There is not enough data in the TSV file for a head-correction.")
 
@@ -72,11 +74,12 @@ class HeadCorrector(object):
         
         # if streaming ready, stream biteplate recording for 5 seconds
         else:
-            dfs = self.record_for_seconds(serverobj, secs=self.__class__.recordsecs)
+            dfs = self.record_for_seconds(serverobj, secs=self.__class__.recordsecs if seconds is None else seconds)
             av = self.process_frames_pre_calc(dfs)
             self.calc_COBs_from_df(av)
             
             self.inform_recording_end()
+            self.save_changes_of_base()
             
     @staticmethod
     def inform_recording_start():
@@ -105,11 +108,11 @@ class HeadCorrector(object):
             b"Biteplate recording finished", 0)
         
         
-    def record_for_seconds(gameserverobj, secs=None):
+    def record_for_seconds(self, gameserverobj, secs=None):
         """Ask the gameserverobj to stream secs of data.
         If secs==None, then the time value from the pps file is used.
         """
-        gameserberobj.repl._stop_b = True  # stop the normal behaviour of the data queue
+        gameserverobj.repl._stop_b = True  # stop the normal behaviour of the data queue
             
         print('About to stream utilising the replies queue:', 
         gameserverobj.repl._b.is_alive())
@@ -127,9 +130,8 @@ class HeadCorrector(object):
         # access all the streamed data, empty the queue, saved elements in replies
         print('qsize is ',gameserverobj.repl._q34.qsize())
         all_streamed = []
-        while not server.repl._q34.empty():
+        while not gameserverobj.repl._q34.empty():
             streamed_df = DataFrame(rawdf=gameserverobj.repl._q34.get()[2])
-            print('this streamed df was', streamed_df)
             all_streamed.append(streamed_df)
             
         # reset internal settings
@@ -163,11 +165,22 @@ class HeadCorrector(object):
         else:
             raise FileNotFoundError
 
-    def save_changes_of_base(self):
+    def save_changes_of_base(self, timestampname=True):
         """Save the Biteplane and Referenceplane Changes of Base to pickled files."""
-        pickle.dump(bp_in_rs, open(os.path.normpath(__file__ + "../../../" + os.path.sep + pps.biteplate_cs_storage), 'wb'))
-        pickle.dump(rp_in_gs, open(os.path.normpath(__file__ + "../../../" + os.path.sep + pps.refspace_cs_storage), 'wb')) 
-
+        if timestampname:
+            outputfn = 'HC_' + time.strftime('%Y%m%d-%H.%M.%S') + '.p'
+        else:
+            outputfn = pps.heacorrection_cs_name
+        outputfp = os.path.normpath(__file__ + os.sep + \
+                   "../../../../.." + os.sep + \
+                   pps.headcorrection_cs_location + os.sep + outputfn)
+        
+        if not os.path.exists(os.path.dirname(outputfp)):
+            os.makedirs(os.path.dirname(outputfp))
+        
+        print('Saving changes of base to file:', outputfp)
+        pickle.dump(self.__dict__, open(outputfp, 'wb'))
+        
     def give_bp_rs(self):
         """Return the biteplane obj and the refplane object"""
         return self.biteplane, self.refplane
