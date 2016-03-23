@@ -250,34 +250,7 @@ and passes them into Blender (or any other application that requests them).'''
 
 
         # options for head-correction
-        corrframe = tk.Frame(self.rightframe, relief='groove', bd=2)
-        corrframe.pack(side=tk.TOP, fill=tk.X)
-        self.hcmethod = tk.IntVar()
-
-        hc1frame = tk.Frame(corrframe)
-        hc1frame.grid(row=3, column=1)
-        btn= tk.Button(hc1frame, text='Choose file', command=fd.askopenfile) # todo - set clarg
-        btn.grid(row=1, column=1)
-        hc1frame.grid_remove()
-
-        hc2frame = tk.Frame(corrframe)
-        hc2frame.grid(row=3, column=1)
-        btn= tk.Button(hc2frame, text='Choose file', command=fd.askopenfile) # todo - set clarg
-        btn.grid(row=3, column=1)
-
-        hc2frame.grid_remove()
-
-        hc3frame = tk.Frame(corrframe)
-        hc3frame.grid(row=3, column=1)
-        btn= tk.Button(hc3frame, text='Start streaming', command=fd.askopenfile) # todo - set fn
-        btn.grid(row=3, column=2)
-        lbl = tk.Label(hc3frame, text='Secs:') 
-        lbl.grid(row=3, column=4, columnspan=3)
-        secentry = tk.Entry(hc3frame, width=4,) # todo - grab value
-        secentry.grid(row=3, column=7)
         
-        hc3frame.grid_remove()
-
         def show_hcmethod():
             """What to show in the head-correction area based on the chosen head-correction method"""
             print('Trigger hcmethod', self.hcmethod.get())
@@ -290,6 +263,75 @@ and passes them into Blender (or any other application that requests them).'''
                 hc2frame.grid()
             else:
                 hc3frame.grid()
+                
+        # headcorrection methods using the three solutions
+        
+        def choose_file_and_load_hc():
+            fn = fd.askopenfilename()
+            self.hc_fn.set(fn)
+            if os.path.splitext(fn)[1] == '.tsv':
+                # load tsv
+                self.servobj.headcorrection.load_from_tsv_file(fn)
+            elif os.path.splitext(fn)[1] == '.p':
+                # pickled
+                self.servobj.headcorrection.load_picked_from_file(fn)
+            else:
+                self.hc_fn.set("Invalid file selected.")
+                
+        def record_hcmethod():
+            self.live_status.set('Button pressed')
+            self.live_status_lbl.update()
+            try:
+                secs = int(self.secentry.get())
+            except ValueError:
+                self.secentry.text = ''
+                self.live_status.set('INVALID SECONDS')
+                self.live_status_lbl.update()
+            else:
+                self.live_status.set('RECORDING')
+                self.live_status_lbl.update()
+                
+                self.servobj.headcorrection.load_live(self.servobj, seconds=secs) 
+                self.live_status.set('COMPLETE')
+        
+        corrframe = tk.Frame(self.rightframe, relief='groove', bd=2)
+        corrframe.pack(side=tk.TOP, fill=tk.X)
+        self.hcmethod = tk.IntVar()
+        
+        self.hc_fn = tk.StringVar()
+
+        hc1frame = tk.Frame(corrframe)
+        hc1frame.grid(row=3, column=1)
+        btn= tk.Button(hc1frame, text='Choose file', command=choose_file_and_load_hc)
+        btn.grid(row=1, column=1)
+        lbl = tk.Label(hc1frame, textvariable=self.hc_fn) 
+        lbl.grid(row=1, column=4, columnspan=3)
+        hc1frame.grid_remove()
+
+        hc2frame = tk.Frame(corrframe)
+        hc2frame.grid(row=3, column=1)
+        btn= tk.Button(hc2frame, text='Choose file', command=choose_file_and_load_hc)
+        lbl = tk.Label(hc2frame, textvariable=self.hc_fn) 
+        lbl.grid(row=1, column=4, columnspan=3)
+        btn.grid(row=3, column=1)
+
+        hc2frame.grid_remove()
+
+        hc3frame = tk.Frame(corrframe)
+        hc3frame.grid(row=3, column=1)
+        btn= tk.Button(hc3frame, text='Start streaming', command=record_hcmethod)
+        btn.grid(row=3, column=2)
+        lbl = tk.Label(hc3frame, text='Secs:') 
+        lbl.grid(row=3, column=4, columnspan=3)
+
+        self.secentry = tk.Entry(hc3frame, width=4,)
+        self.secentry.grid(row=3, column=7)
+        self.live_status = tk.StringVar()
+        self.live_status_lbl = tk.Label(hc3frame, textvariable=self.live_status) 
+        self.live_status_lbl.grid(row=3, column=8, columnspan=3)
+        
+        hc3frame.grid_remove()
+            
 
         lbl = tk.Label(corrframe, text='Head-correction options:') # todo - add checkbox to switch on/off
         lbl.grid(row=1, column=1, columnspan=3, sticky=tk.W)
