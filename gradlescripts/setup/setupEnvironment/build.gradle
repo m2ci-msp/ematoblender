@@ -27,7 +27,7 @@ ext{
 
 // define different tasks for downloading and installing mathutils based on OS
 if (Os.isFamily(Os.FAMILY_WINDOWS)){ // OS is windows
- 
+
   /*--------------------------------------------------------------------------*/
 
   task downloadMathUtils{
@@ -91,7 +91,7 @@ else{ //OS is Unix/Mac
 
   /*--------------------------------------------------------------------------*/
 
-  
+
   /*--------------------------------------------------------------------------*/
 
   task cloneMathUtils{
@@ -107,7 +107,7 @@ else{ //OS is Unix/Mac
   /*--------------------------------------------------------------------------*/
 
   task installMathUtils(type: Exec){
-    
+
     standardOutput = new ByteArrayOutputStream()
     errorOutput = standardOutput
 
@@ -129,11 +129,17 @@ else{ //OS is Unix/Mac
 // define tasks that check whether functionality works within Blender
 
 task checkNumpyInBlender() {
+
   dependsOn ":gradlescripts:setup:checkVersions:checkVersions"
-  
+
+  def outputFile = file("$rootProject.buildDir/checkNumpyInBlender.json")
+
+  outputs.file outputFile
+
   doLast{
+
     def slurper = new groovy.json.JsonSlurper()
-    
+
     def numpyInfo = slurper.parseText(
 	  file("$rootProject.buildDir/numpy.json").text
 		)
@@ -141,49 +147,60 @@ task checkNumpyInBlender() {
       file("$rootProject.buildDir/blender.json").text
       )
     def bloc = blenderInfo.blender.path
-    
+
     println "Checking whether numpy works in Blender at $bloc"
-    
+
     def numpyVer = commandLine.getOutput("${bloc} --factory-startup  --background --python $rootProject.projectDir/ematoblender/scripts/numpy_version.py")
-    
+
     println "Got the output $numpyVer"
-    
+
     // if Numpy could not be found; use the local install within Blender by copying the lib
-    if ("$numpyVer".contains("FAIL")){   
-      
+    if ("$numpyVer".contains("FAIL")){
+
       // find the site-lib for Python
       println("Version number not found, copying numpy lib into Blender")
       def libLocation = numpyInfo.numpy.location
-      
+
       println "Numpy library is located at: $libLocation"
-      
+
       // copy the numpy lib into the modules/numpy dir (now blender can access it)
       copy{
         from  file("$libLocation")
         into "$rootProject.projectDir/ematoblender/scripts/modules/numpy"
       }
     }
+
+    def builder = new groovy.json.JsonBuilder()
+    def json = builder.checkNumpyInBlender{
+      state "DONE"
+    }
+
+    outputFile.text = builder.toPrettyString()
+
   }
+
 }
 
 /*--------------------------------------------------------------------------*/
 // run a script that backs up the User's User Preferences and sets scripts dir
 
 task setBlenderUserPrefs(){
+
   dependsOn ":gradlescripts:setup:checkVersions:checkVersions"
-  
+
   doLast{
     // parse the JSON file with the path
     def slurper = new groovy.json.JsonSlurper()
     def blenderInfo = slurper.parseText(
       file("$rootProject.buildDir/blender.json").text
-    )    
+    )
     def bloc = blenderInfo.blender.path
     println "The blender location is  $bloc"
-    exec{   // run the commandline 
+    exec{   // run the commandline
       workingDir = file("$rootProject.projectDir")
       commandLine = "${bloc} --factory-startup  --background --python ./ematoblender/configure_blender.py".tokenize()
     }
+
   }
 }
 
@@ -194,4 +211,3 @@ task setup() {
   dependsOn checkNumpyInBlender
   dependsOn setBlenderUserPrefs
 }
-
