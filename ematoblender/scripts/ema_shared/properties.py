@@ -24,8 +24,8 @@ wav_output_dir = './output'
 wave_writing_chunk_size = 1024
 
 # biteplate storage
-biteplate_cs_storage = './temp/biteplate_in_refspace.p'
-refspace_cs_storage = './temp/refspace_in_global.p'
+headcorrection_cs_location = './output/hc/'
+headcorrection_cs_name = 'latest_headcorrection.p'
 
 # blender game setting
 
