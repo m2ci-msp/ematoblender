@@ -22,12 +22,21 @@ def main(args=None):
     icon = 'images/ti.ico'
     if os.path.isfile(icon):
         root.wm_iconbitmap(bitmap=icon)
+        
     app = Application(master=root, servobj=server)
+    
+    root.protocol("WM_DELETE_WINDOW", lambda: on_closing(root, app))
+    
     app.mainloop()
 
     server.serve_forever()
 
     print('Application and server were shutdown.')
+    
+    
+def on_closing(r, a):
+    a.quit()
+    r.destroy()
 
 
 def example_command():
@@ -54,7 +63,7 @@ class Application(tk.Frame):
         self.createStatusLabel()
 
 
-    def quit_all(self):
+    def quit(self):
         self.root.destroy()
         #  other things needed to quit (eg saving)
         self.servobj.shutdown_server_threads()
@@ -100,7 +109,7 @@ class Application(tk.Frame):
         filemenu.add_command(label="Clear Cache", command=example_command)
         filemenu.add_command(label="Pause Sending/Receiving", command=example_command)
         filemenu.add_separator()
-        filemenu.add_command(label="Exit", command=self.quit_all)
+        filemenu.add_command(label="Exit", command=self.quit)
         menubar.add_cascade(label="File", menu=filemenu)
 
         # create the Edit menu
@@ -130,7 +139,7 @@ and passes them into Blender (or any other application that requests them).'''
         lbl.pack(side=tk.LEFT)
         frame = tk.Frame(self.topframe)
         frame.pack(side=tk.RIGHT)
-        btn = tk.Button(frame, text='Stop Server\nand Quit', fg='red', anchor=tk.E, command=self.quit_all)
+        btn = tk.Button(frame, text='Stop Server\nand Quit', fg='red', anchor=tk.E, command=self.quit)
         btn.pack(side=tk.RIGHT)
 
     def createMiddleFrame(self):
