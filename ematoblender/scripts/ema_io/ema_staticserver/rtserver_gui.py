@@ -64,6 +64,9 @@ def main(collection=None):
     root.title("Static server file selector")
     app = Application(files, server.change_datafile, None, server.change_loop, server, master=root)
     app.setFilelist(files)
+    
+    root.protocol("WM_DELETE_WINDOW", app.quit_all)
+    
     app.mainloop()
 
 
