@@ -61,7 +61,7 @@ def main(collection=None):
     icon = 'images/ti.ico'
     if os.path.isfile(icon):
         root.wm_iconbitmap(bitmap=icon) # hard coded location, gui must run in same directory
-    root.title("Static server file selector")
+    root.title("Static server file selector, {}".format(server.server_address))
     app = Application(files, server.change_datafile, None, server.change_loop, server, master=root)
     app.setFilelist(files)
     
