@@ -99,7 +99,8 @@ class GameServer(socketserver.UDPServer):
         else:
             return relloc + os.sep + 'EMA_'
 
-    def __init__(self, cl_args):
+    def __init__(self, cl_args, serve_in_thread=False):
+
         # Create the server, binding to localhost on port 9999
         print('Now creating the gameserver with command line arguments:', cl_args)
         if type(cl_args) == list:
@@ -127,6 +128,12 @@ class GameServer(socketserver.UDPServer):
 
         # determine the amount of smoothing on streaming dataframes
         self.set_smoothing_n()
+
+        if serve_in_thread:
+            import threading
+            self.serve_thread = threading.Thread(target=self.serve_forever)
+            self.serve_thread.start()
+
 
     def set_smoothing_n(self, n=None):
         """sets the smoothing from the most recent cla values"""
@@ -193,9 +200,18 @@ class GameServer(socketserver.UDPServer):
         return newest_x
 
     def shutdown_server_threads(self):
-        """Shut down this particular socketserver, as well as the conn and replies connections from rtclient"""
+        """Shut down this particular socketserver, 
+        as well as the conn and replies connections from rtclient,
+        and the request handler if running in a thread.
+        """
+        print('Closing the connection to the dataserver (CLIENT ROLE)')
         rtc.close_connection(self.conn)
-        os._exit(1)  #exit() works
+
+        print('Closing the request handler accessed by Blender (REQUEST HANDLER)')
+        if hasattr(self, server_thread):
+            self.serve_thread.join(0.1)
+
+        self.shutdown()
 
 
 # create the request handler
@@ -285,7 +301,6 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
 
         if kill_server:
             server.conn.s.close()
-
             self.shutdown_server_threads()
             self.server.shutdown()
 
