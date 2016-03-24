@@ -33,80 +33,27 @@ def main():
 
         from ematoblender.scripts.ema_shared.properties import gameserver_host, gameserver_port
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock2 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         SHOST = gameserver_host
         SPORT = gameserver_port
-        data = 'TEST_ALIVE'
-        sock.sendto(bytes(data + "\n", encoding='ascii'), (SHOST, SPORT))
-        received = sock.recv(1024)
-        print('I received', received)
-        exit()
 
+        # basic tests for connectivity
+        data = ['TEST_ALIVE', 'SINGLE_DF', 'SINGLE_DF', 'SINGLE_DF']
+        for d in data:
+            print('I sent', d)
+            sock.sendto(bytes(d + "\n", encoding='ascii'), (SHOST, SPORT))
+            received = sock.recv(1024)
+            print('I received', received)
+            
+        sock2.sendto(bytes(data[0] + "\n", encoding='ascii'), (SHOST, SPORT))
+        received = sock2.recv(1024)
+        
+      
+        # bests using the blender_networking module
+        from ematoblender.scripts.ema_blender.blender_networking import main as bnmain
+        bnmain()
 
-
-        import ematoblender.scripts.ema_blender.blender_networking as bn
-
-        gs_soc_blocking = bn.setup_socket_to_gameserver(blocking=True, port=9444)
-        bn.send_to_gameserver(gs_soc_blocking, mode='TEST_ALIVE')
-        time.sleep(0.2)  # wait for game server to reply before making a query
-        reply = bn.recv_from_gameserver(gs_soc_blocking)
-
-        exit()
-
-
-
-        from ematoblender.scripts.ema_blender.blender_networking import run_game_server
-#        run_game_server()
-
-        import ematoblender.scripts.ema_blender.blender_networking as bn
-        ## debugging s = bn.setup_socket_to_gameserver(blocking=False)
-        s = bn.setup_socket_to_gameserver(blocking=True)
-
-        print('Performing some simple tests.')
-
-        # check that the gameserver is alive
-        from ematoblender.scripts.ema_blender.blender_networking import send_to_gameserver
-        from ematoblender.scripts.ema_blender.blender_networking import wait_til_recv
-
-        send_to_gameserver(s, mode='TEST_ALIVE')
-        response = wait_til_recv(s)
-        exit()
-
-
-        confirm = [send_to_gameserver(s, mode='SINGLE_DF') for i in range(10)]
-        #assert str(type(single_dfs[0])) == 'DataFrame'
-        response = wait_til_recv(s)
-        for i in response:
-            print(i)
-        exit()
-
-        parameters = send_to_gameserver(s, mode='PARAMETERS')
-        from xml.etree.ElementTree import ElementTree as ET
-        print(type(parameters))
-        print(parameters)
-
-        stream_dfs = []
-        mydf = send_to_gameserver(s, mode="START_STREAM")
-        print('start streaming df:', mydf)
-
-        from ematoblender.scripts.ema_io.rtc3d_parser import DataFrame
-        while True:
-            send_to_gameserver(s, mode='STREAM_DF')
-            this_df = b''
-            try:
-                this_df = bn.recv_from_gameserver(s)
-            except BlockingIOError:
-                pass
-            #print(this_df)
-            if type(this_df) == DataFrame:
-
-                ts = this_df.give_timestamp_secs()
-                print('\n\n', ts)
-                if ts > 100:
-                    break
-        send_to_gameserver(s, mode="STREAM_STOP")
-        for df in stream_dfs:
-            print("stream df:", df)
 
 if __name__ == "__main__":
     main()
