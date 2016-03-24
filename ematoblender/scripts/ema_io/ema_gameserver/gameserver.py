@@ -208,7 +208,7 @@ class GameServer(socketserver.UDPServer):
         rtc.close_connection(self.conn)
 
         print('Closing the request handler accessed by Blender (REQUEST HANDLER)')
-        if hasattr(self, server_thread):
+        if hasattr(self, 'server_thread'):
             self.serve_thread.join(0.1)
 
         self.shutdown()
