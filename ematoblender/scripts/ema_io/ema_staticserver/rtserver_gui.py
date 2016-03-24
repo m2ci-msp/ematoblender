@@ -58,9 +58,21 @@ def main(collection=None):
     # build the gui
     root = tk.Tk()
     root.geometry("720x400")
-    icon = 'images/ti.ico'
-    if os.path.isfile(icon):
-        root.wm_iconbitmap(bitmap=icon) # hard coded location, gui must run in same directory
+    if os.name == 'nt': # windows icon
+        icon = os.path.normpath(__file__ + os.sep + '../../../../images/ti.ico')
+        root.iconbitmap(icon)
+    else:
+        try:
+            icon = os.path.normpath(__file__ + os.sep + '../../../../images/ti.png')
+            root.iconphoto(True, tk.PhotoImage(file=icon))
+            
+        except FileNotFoundError:
+            pass
+            
+        except:
+            icon = os.path.normpath(__file__ + os.sep + '../../../../images/ti.xbm')
+            root.iconbitmap('@'+icon)
+        
     root.title("Static server file selector, {}".format(server.server_address))
     app = Application(files, server.change_datafile, None, server.change_loop, server, master=root)
     app.setFilelist(files)

@@ -20,9 +20,21 @@ def main(args=None):
     root = tk.Tk()
     root.geometry("900x500")
     root.title("Ematoblender Gameserver {}".format(server.server_address))
-    icon = 'images/ti.ico'
-    if os.path.isfile(icon):
-        root.wm_iconbitmap(bitmap=icon)
+    
+    if os.name == 'nt': # windows icon
+        icon = os.path.normpath(__file__ + os.sep + '../../../../images/ti.ico')
+        root.iconbitmap(icon)
+    else:
+        try:
+            icon = os.path.normpath(__file__ + os.sep + '../../../../images/ti.png')
+            root.iconphoto(True, tk.PhotoImage(file=icon))
+            
+        except FileNotFoundError:
+            pass
+            
+        except:
+            icon = os.path.normpath(__file__ + os.sep + '../../../../images/ti.xbm')
+            root.iconbitmap('@'+icon)
 
     app = Application(master=root, servobj=server)
 
