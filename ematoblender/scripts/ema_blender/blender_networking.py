@@ -154,7 +154,9 @@ def send_to_gameserver(s, mode='SINGLE_DF'):
     KILL_CLIENT: Close the game server"""
 
     # check the input requested
-    if mode not in ['SINGLE_DF', 'STREAM_DF', 'START_STREAM', 'STREAM_STOP', 'PARAMETERS', 'TEST', 'TEST_ALIVE','KILL_CLIENT', 'STATUS', 'CAM_TRANS']:
+    if mode not in ['SINGLE_DF', 'STREAM_DF', 'START_STREAM', 
+    'STREAM_STOP', 'PARAMETERS', 'TEST', 'TEST_ALIVE','KILL_CLIENT',
+    'STATUS', 'CAM_TRANS', 'JSON_ON', 'JSON_OFF)']:
         print('Mode "{}" cannot be received from the server.'.format(mode))
         return None
     try:
