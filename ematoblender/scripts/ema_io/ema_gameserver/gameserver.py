@@ -36,7 +36,7 @@ from ...ema_blender import coil_info as ci
 
 # connection objects (this server essentially wraps rtc behaviour)
 from . import rtclient as rtc
-from ..rtc3d_parser import DataFrame
+from ..rtc3d_parser import DataFrame, JSONBuilder
 
 
 
@@ -114,7 +114,12 @@ class GameServer(socketserver.UDPServer):
         print('Game server is', self)
 
         self.cla = cl_args
+
+        # store headcorrection matrices
         self.headcorrection = HeadCorrector()
+
+        # store info relating to the tongue model
+        self.tongue_model = TongueModel()
 
         self.last_cam_trans = None  # storage needed for handler
         self.cam_pos = None
@@ -129,6 +134,7 @@ class GameServer(socketserver.UDPServer):
         # determine the amount of smoothing on streaming dataframes
         self.set_smoothing_n()
 
+        # start the serve_forever method (used when shown with GUI)
         if serve_in_thread:
             import threading
             self.serve_thread = threading.Thread(target=self.serve_forever)
@@ -223,6 +229,14 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
     wave_name = None
     recording = wr.recording
     stop_recording = wr.stop_recording
+    json_transmission = False
+    
+    def json_transmit(dataframe):
+        """Pack this dataframe as JSON and send it to the C++ server"""
+        jpacket = JSONBuilder.pack_wrapper(data_to_send, 
+        self.server.tongue_model.get_vertex_indices(), 
+        self.server.tongue_model.get_tongue_coil_indices())
+        self.socket.sendto(jpacket, self.server.tongue_model.cpp_address)
 
     def handle(self):
         """Handle requests sent to the gameserver from Blender."""
@@ -238,6 +252,8 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
         if self.data == b'SINGLE_DF':
             newest_df = rtc.get_one_df(self.server.conn, self.server.repl)
             data_to_send = newest_df  # returns unsmoothed data
+            if json_transmission:
+                self.json_transmit(data_to_send)
 
         elif self.data == b'START_STREAM':
             self.server.gs_start_streaming()
@@ -255,10 +271,14 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
             and average rotation values using the average_quaternions fn.
             """
             data_to_send = DataFrame(fromlist=newest_x)  # returns averaged data from the latest x dfs
+            if json_transmission:
+                self.json_transmit(data_to_send)
 
         elif self.data == b'STREAM_STOP':
             newest_x = self.server.gs_stop_streaming()
             data_to_send = DataFrame(fromlist=newest_x)  # returns averaged data from the latest x dfs
+            if json_transmission:
+                self.json_transmit(data_to_send)
 
         # qualitative data, no manipulation
         elif self.data == b'PARAMETERS':
@@ -281,6 +301,16 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
         elif self.data == b'CAM_TRANS':
             print('choosing data', self.server.last_cam_trans, server.cam_pos)
             data_to_send = [self.server.last_cam_trans, self.server.cam_pos]
+
+        elif self.data == b'JSON_ON':
+            json_transmission = True
+
+        elif self.data == b'JSON_OFF':
+            json_transmission = False
+            
+        elif self.data.startswith(b'VERTEX_INDICES:'):
+            self.server.tongue_model.parse_vertex_message(self.data)
+            data_to_send = b'MESH VERTIEX INDICES RECEIVED AND STORED.'
 
         else:
             data_to_send = b'NO DATA REQUESTED.'
