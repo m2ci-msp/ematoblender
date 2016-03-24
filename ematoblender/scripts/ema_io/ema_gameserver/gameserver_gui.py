@@ -13,7 +13,8 @@ from ...ema_shared import properties as pps
 def main(args=None):
     # start the server
     global server
-    server = GameServer(pps.game_server_cl_args)
+    server = GameServer(pps.game_server_cl_args, serve_in_thread=True)
+    print('Server will now serve forever.')
 
     # start the GUI
     root = tk.Tk()
@@ -28,8 +29,6 @@ def main(args=None):
     root.protocol("WM_DELETE_WINDOW", lambda: on_closing(root, app))
 
     app.mainloop()
-    print('Server will now serve forever.')
-    server.serve_forever()
 
     print('Application and server were shutdown.')
 
@@ -64,9 +63,10 @@ class Application(tk.Frame):
 
 
     def quit(self):
-        self.root.destroy()
-        #  other things needed to quit (eg saving)
         self.servobj.shutdown_server_threads()
+        self.root.destroy()
+        #  TODO: are there any other things needed to quit (eg saving?)
+
 
     def toggle_networking_display(self):
         self.shownetworking = not self.shownetworking
