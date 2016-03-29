@@ -32,7 +32,7 @@ def add_game_master():
     # add Always sensor to the Gamemaster to execute the main game script at frequency (time information)
     bpy.ops.logic.sensor_add(type='ALWAYS', name='HIFREQ', object='GameMaster')
     hifreq_sensor = bpy.data.objects['GameMaster'].game.sensors['HIFREQ']
-    hifreq_sensor.use_tap, hifreq_sensor.use_pulse_false_level, hifreq_sensor.use_pulse_true_level = True, False, True
+    hifreq_sensor.use_tap, hifreq_sensor.use_pulse_false_level, hifreq_sensor.use_pulse_true_level = False, False, True
 
     # set sensor frequency, handling changes in field name between v. 2.74 and 2.75
     if hasattr(hifreq_sensor, 'frequency'):
