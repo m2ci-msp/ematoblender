@@ -13,6 +13,7 @@ It also reloads the bpy module on each execution so if you make modifications to
 '''
 
 scriptsdir = os.path.abspath(os.path.dirname(__file__)+'/../')  # scripts directory
+projectdir = os.path.abspath(os.path.dirname(__file__)+'/../../../')  # projectroot
 
 def check_saved():
     # is the .blend file saved
@@ -28,6 +29,8 @@ def add_to_path():
     print("Now adding {} to sys.path".format(scriptsdir))
     if scriptsdir not in sys.path:
         sys.path.append(scriptsdir)
+    if projectdir not in sys.path:
+        sys.path.append(projectdir)
 
 
 def add_blenddir_to_path():
