@@ -1,7 +1,6 @@
 __author__ = 'Kristy'
 import math
 
-from . import biteplate_headcorr as hc
 from ...ema_blender import coil_info as ci
 
 
