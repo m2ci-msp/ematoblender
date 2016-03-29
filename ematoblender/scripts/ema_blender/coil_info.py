@@ -51,6 +51,19 @@ def get_sensor_roles():
     return bsh.ema_active_meshes, bsh.ema_biteplate_meshes, bsh.ema_reference_meshes
 
 
+def get_sensor_indices_by_role(jsonfile=None):
+    """Return three lists with lists of coil indices that fulfil that role
+    """
+    a, b, r = [], [], []
+    jdict = import_sensor_info_json(jsonfilename=jsonfile if jsonfile is not None else pps.json_loc)
+    
+    for i, innerdict in jdict.items():
+        for l, text in zip([a, b, r], ["active", "biteplate", "reference"]):
+            if innerdict.get(text, False):
+                l.append(int(i))
+    return a, b, r
+
+
 def get_sensor_roles_no_blender():
     """Get the sensor roles with no access to Blender shared objects."""
     jdict = import_sensor_info_json(jsonfilename=pps.json_loc)

@@ -5,29 +5,49 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog as fd
 
-from .gameserver import GameServer
+from .gameserver import GameServer, MyUDPHandler
 from . import rtclient as rtc
 from ...ema_shared import properties as pps
 
 
-def main():
+def main(args=None):
     # start the server
     global server
-    server = GameServer(pps.gameserver_host, pps.gameserver_port)
+    server = GameServer(pps.game_server_cl_args, serve_in_thread=True)
+    print('Server will now serve forever.')
 
     # start the GUI
     root = tk.Tk()
     root.geometry("900x500")
-    root.title("Ematoblender Gameserver")
-    icon = 'images/ti.ico'
-    if os.path.isfile(icon):
-        root.wm_iconbitmap(bitmap=icon)
+    root.title("Ematoblender Gameserver {}".format(server.server_address))
+    
+    if os.name == 'nt': # windows icon
+        icon = os.path.normpath(__file__ + os.sep + '../../../../images/ti.ico')
+        root.iconbitmap(icon)
+    else:
+        try:
+            icon = os.path.normpath(__file__ + os.sep + '../../../../images/ti.png')
+            root.iconphoto(True, tk.PhotoImage(file=icon))
+            
+        except FileNotFoundError:
+            pass
+            
+        except:
+            icon = os.path.normpath(__file__ + os.sep + '../../../../images/ti.xbm')
+            root.iconbitmap('@'+icon)
+
     app = Application(master=root, servobj=server)
+
+    root.protocol("WM_DELETE_WINDOW", lambda: on_closing(root, app))
+
     app.mainloop()
 
-    server.serve_forever()
-
     print('Application and server were shutdown.')
+
+
+def on_closing(r, a):
+    a.quit()
+    r.destroy()
 
 
 def example_command():
@@ -54,10 +74,11 @@ class Application(tk.Frame):
         self.createStatusLabel()
 
 
-    def quit_all(self):
-        self.root.destroy()
-        #  other things needed to quit (eg saving)
+    def quit(self):
         self.servobj.shutdown_server_threads()
+        self.root.destroy()
+        #  TODO: are there any other things needed to quit (eg saving?)
+
 
     def toggle_networking_display(self):
         self.shownetworking = not self.shownetworking
@@ -75,18 +96,20 @@ class Application(tk.Frame):
     def eval_smoothing(self, *args):
         """Convert the output of the smoothing options section into something that can be used in GS."""
         print('Key or button pressed in smoothing frame.')
+        self.servobj.cla.smoothframes, self.servobj.cla.smoothms = None, None
+
         if self.smooth_by.get() == 1: # smooth by ms
             self.msentry.config(state=tk.NORMAL)
             self.frameentry.config(state=tk.DISABLED)
             if self.msentry.get().isnumeric():
-                self.servobj.cla.frames_smoothed = self.servobj.n_frames_smoothed(ms=float(self.msentry.get()))
+                self.servobj.cla.smoothframes = self.servobj.n_frames_smoothed(ms=float(self.msentry.get()))
             else:  # entry is not numeric
                 self.msentry.delete(0, tk.END) # delete any non-numeric things
         else: # smooth by frames
             self.msentry.config(state=tk.DISABLED)
             self.frameentry.config(state=tk.NORMAL)
             if self.frameentry.get().isdigit(): # must be an integer
-                self.servobj.cla.frames_smoothed = self.servobj.n_frames_smoothed(frames=int(self.frameentry.get()))
+                self.servobj.cla.smoothframes = self.servobj.n_frames_smoothed(frames=int(self.frameentry.get()))
             else:
                 self.frameentry.delete(0, tk.END)
 
@@ -100,7 +123,7 @@ class Application(tk.Frame):
         filemenu.add_command(label="Clear Cache", command=example_command)
         filemenu.add_command(label="Pause Sending/Receiving", command=example_command)
         filemenu.add_separator()
-        filemenu.add_command(label="Exit", command=self.quit_all)
+        filemenu.add_command(label="Exit", command=self.quit)
         menubar.add_cascade(label="File", menu=filemenu)
 
         # create the Edit menu
@@ -130,7 +153,7 @@ and passes them into Blender (or any other application that requests them).'''
         lbl.pack(side=tk.LEFT)
         frame = tk.Frame(self.topframe)
         frame.pack(side=tk.RIGHT)
-        btn = tk.Button(frame, text='Stop Server\nand Quit', fg='red', anchor=tk.E, command=self.quit_all)
+        btn = tk.Button(frame, text='Stop Server\nand Quit', fg='red', anchor=tk.E, command=self.quit)
         btn.pack(side=tk.RIGHT)
 
     def createMiddleFrame(self):
@@ -233,7 +256,7 @@ and passes them into Blender (or any other application that requests them).'''
         # options for data smoothing/delay
         smoothframe = tk.Frame(self.rightframe, relief='groove', bd=2)
         smoothframe.pack(fill=tk.X, expand=True)
-        lbl = tk.Label(smoothframe, text='Apply rolling average by:')
+        lbl = tk.Label(smoothframe, text='Apply rolling average by:') # todo - ensure is really applied
         lbl.grid(row=1, column=1, columnspan=4, sticky=tk.W)
         self.smooth_by = tk.IntVar()
         self.smooth_int = tk.StringVar()
@@ -250,30 +273,6 @@ and passes them into Blender (or any other application that requests them).'''
 
 
         # options for head-correction
-        corrframe = tk.Frame(self.rightframe, relief='groove', bd=2)
-        corrframe.pack(side=tk.TOP, fill=tk.X)
-        self.hcmethod = tk.IntVar()
-
-        hc1frame = tk.Frame(corrframe)
-        hc1frame.grid(row=3, column=1)
-        btn= tk.Button(hc1frame, text='Choose file', command=fd.askopenfile)
-        btn.grid(row=1, column=1)
-        btn= tk.Button(hc1frame, text='Choose file', command=fd.askopenfile)
-        btn.grid(row=2, column=1)
-        hc1frame.grid_remove()
-
-        hc2frame = tk.Frame(corrframe)
-        hc2frame.grid(row=3, column=1)
-        btn= tk.Button(hc2frame, text='Choose file', command=fd.askopenfile)
-        btn.grid(row=3, column=1)
-
-        hc2frame.grid_remove()
-
-        hc3frame = tk.Frame(corrframe)
-        hc3frame.grid(row=3, column=1)
-        btn= tk.Button(hc3frame, text='Start streaming', command=fd.askopenfile)
-        btn.grid(row=3, column=2)
-        hc3frame.grid_remove()
 
         def show_hcmethod():
             """What to show in the head-correction area based on the chosen head-correction method"""
@@ -288,7 +287,76 @@ and passes them into Blender (or any other application that requests them).'''
             else:
                 hc3frame.grid()
 
-        lbl = tk.Label(corrframe, text='Head-correction options:')
+        # headcorrection methods using the three solutions
+
+        def choose_file_and_load_hc():
+            fn = fd.askopenfilename()
+            self.hc_fn.set(fn)
+            if os.path.splitext(fn)[1] == '.tsv':
+                # load tsv
+                self.servobj.headcorrection.load_from_tsv_file(fn)
+            elif os.path.splitext(fn)[1] == '.p':
+                # pickled
+                self.servobj.headcorrection.load_picked_from_file(fn)
+            else:
+                self.hc_fn.set("Invalid file selected.")
+
+        def record_hcmethod():
+            self.live_status.set('Button pressed')
+            self.live_status_lbl.update()
+            try:
+                secs = int(self.secentry.get())
+            except ValueError:
+                self.secentry.text = ''
+                self.live_status.set('INVALID SECONDS')
+                self.live_status_lbl.update()
+            else:
+                self.live_status.set('RECORDING')
+                self.live_status_lbl.update()
+
+                self.servobj.headcorrection.load_live(self.servobj, seconds=secs)
+                self.live_status.set('COMPLETE')
+
+        corrframe = tk.Frame(self.rightframe, relief='groove', bd=2)
+        corrframe.pack(side=tk.TOP, fill=tk.X)
+        self.hcmethod = tk.IntVar()
+
+        self.hc_fn = tk.StringVar()
+
+        hc1frame = tk.Frame(corrframe)
+        hc1frame.grid(row=3, column=1)
+        btn= tk.Button(hc1frame, text='Choose file', command=choose_file_and_load_hc)
+        btn.grid(row=1, column=1)
+        lbl = tk.Label(hc1frame, textvariable=self.hc_fn)
+        lbl.grid(row=1, column=4, columnspan=3)
+        hc1frame.grid_remove()
+
+        hc2frame = tk.Frame(corrframe)
+        hc2frame.grid(row=3, column=1)
+        btn= tk.Button(hc2frame, text='Choose file', command=choose_file_and_load_hc)
+        lbl = tk.Label(hc2frame, textvariable=self.hc_fn)
+        lbl.grid(row=1, column=4, columnspan=3)
+        btn.grid(row=3, column=1)
+
+        hc2frame.grid_remove()
+
+        hc3frame = tk.Frame(corrframe)
+        hc3frame.grid(row=3, column=1)
+        btn= tk.Button(hc3frame, text='Start streaming', command=record_hcmethod)
+        btn.grid(row=3, column=2)
+        lbl = tk.Label(hc3frame, text='Secs:')
+        lbl.grid(row=3, column=4, columnspan=3)
+
+        self.secentry = tk.Entry(hc3frame, width=4,)
+        self.secentry.grid(row=3, column=7)
+        self.live_status = tk.StringVar()
+        self.live_status_lbl = tk.Label(hc3frame, textvariable=self.live_status)
+        self.live_status_lbl.grid(row=3, column=8, columnspan=3)
+
+        hc3frame.grid_remove()
+
+
+        lbl = tk.Label(corrframe, text='Head-correction options:') # todo - add checkbox to switch on/off
         lbl.grid(row=1, column=1, columnspan=3, sticky=tk.W)
         c = tk.Radiobutton(corrframe, text="Pre-calculated", variable=self.hcmethod, value=1, command=show_hcmethod)
         c.grid(row=2, column=1)

@@ -399,6 +399,20 @@ class MocapParent(object):
                             return wave_name, video_name
 
         return wave_name, video_name
+        
+    def give_all_motion_frames(self):
+        """Return all datafiles from start to end of file.
+        File position is not reset afterwards.
+        """
+        self.reset_motion_section()
+        dflist = []
+        
+        while True:
+            status, frame, *ts = self.give_motion_frame()
+            if status != 3:
+                break
+            dflist.append(frame)
+        return dflist
 
 
 class JSONParser(MocapParent):

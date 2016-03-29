@@ -2,13 +2,13 @@ __author__ = 'Kristy'
 
 from threading import Thread
 import time
-
+import socket
 
 def main():
     print('WARNING: ensure that either NDI-WAVE or RTSERVER is running to provide the information.')
     print('You can test the NDI-WAVE or RTSERVER using scripts.ema_io.ema_staticserver.rtserver_tester')
 
-    testing_passive = True  # simply start
+    testing_passive = False  # simply start
     testing_active = True  # pretend to make some calls from Blender
 
     if testing_passive:  # for running the gameserver in a thread, to operate normally
@@ -30,45 +30,30 @@ def main():
 
     # tests communication from Blender to GS
     if testing_active:  # for testing, runs here and also performs tests
-        from scripts.ema_blender.blender_networking import run_game_server
-#        run_game_server()
-        import scripts.ema_blender.blender_networking as bn
-        s = bn.setup_socket_to_gameserver(blocking=False)
 
-        print('Performing some simple tests.')
-        from ematoblender.scripts.ema_blender.blender_networking import send_to_gameserver
-        print(send_to_gameserver(s, mode='TEST_ALIVE'))
-        single_dfs = [send_to_gameserver(s) for i in range(10)]
-        for df in single_dfs:
-            print("\nsingle_df:", df)
+        from ematoblender.scripts.ema_shared.properties import gameserver_host, gameserver_port
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock2 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-        parameters = send_to_gameserver(s, mode='PARAMETERS')
-        from xml.etree.ElementTree import ElementTree as ET
-        print(type(parameters))
-        print(parameters)
+        SHOST = gameserver_host
+        SPORT = gameserver_port
 
-        stream_dfs = []
-        mydf = send_to_gameserver(s, mode="START_STREAM")
-        print('start streaming df:', mydf)
+        # basic tests for connectivity
+        data = ['TEST_ALIVE', 'SINGLE_DF', 'SINGLE_DF', 'SINGLE_DF']
+        for d in data:
+            print('I sent', d)
+            sock.sendto(bytes(d + "\n", encoding='ascii'), (SHOST, SPORT))
+            received = sock.recv(1024)
+            print('I received', received)
+            
+        sock2.sendto(bytes(data[0] + "\n", encoding='ascii'), (SHOST, SPORT))
+        received = sock2.recv(1024)
+        
+      
+        # bests using the blender_networking module
+        from ematoblender.scripts.ema_blender.blender_networking import main as bnmain
+        bnmain()
 
-        from ematoblender.scripts.ema_io.rtc3d_parser import DataFrame
-        while True:
-            send_to_gameserver(s, mode='STREAM_DF')
-            this_df = b''
-            try:
-                this_df = bn.recv_from_gameserver(s)
-            except BlockingIOError:
-                pass
-            #print(this_df)
-            if type(this_df) == DataFrame:
-
-                ts = this_df.give_timestamp_secs()
-                print('\n\n', ts)
-                if ts > 100:
-                    break
-        send_to_gameserver(s, mode="STREAM_STOP")
-        for df in stream_dfs:
-            print("stream df:", df)
 
 if __name__ == "__main__":
     main()
