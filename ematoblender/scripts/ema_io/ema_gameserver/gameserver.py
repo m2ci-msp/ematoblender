@@ -29,6 +29,7 @@ import xml.etree.ElementTree as et
 from . import wave_recording as wr
 from . import data_manipulation as dm
 from .biteplate_headcorr import HeadCorrector
+from .tongue_model import TongueModel
 
 # global properties, coil definitions
 from ...ema_shared import properties as pps

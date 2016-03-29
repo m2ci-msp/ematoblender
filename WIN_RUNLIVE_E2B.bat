@@ -2,6 +2,7 @@ echo off
 :: This is a batch file to run the core Ematoblender elements 
 :: This script will set up the system to run live - with the WAVE on port 3030
 echo Running the Windows run script for Ematoblender Live
+cd %~dp0%
 pause
 :: Run live data
 set ip_address_string="IPv4 Address"

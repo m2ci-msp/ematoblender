@@ -9,7 +9,8 @@ eg which Vertex indices on the mesh represent the coil location.
 """
 
 import json
-import ematoblender.scripts.ema_shared.properties as pps
+from ...ema_shared import properties as pps
+
 
 class TongueModel():
     """

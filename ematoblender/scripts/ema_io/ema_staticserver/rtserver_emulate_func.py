@@ -212,7 +212,7 @@ class RTServer_Static(RTServerBase):
     def sendcurrentframe(self, *args, **kwargs):
         """Send back the next frame in the data file."""
          # get the motion frame as message in packed wave format
-        status, message, timestamp = self.static_data.give_motion_frame()
+        status, message, *timestamp = self.static_data.give_motion_frame()
 
         # if last measurement sent, set functionality status
         if status == 4:
