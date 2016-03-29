@@ -10,9 +10,9 @@ class CommandLine{
     }
   }
 
-  def getOutput(commandLine) {
+  def getOutput(path, arguments) {
 
-    def process = osString(commandLine).execute()
+    def process = "${osString(path)} $arguments".execute()
     def output = new ByteArrayOutputStream()
     def error = new ByteArrayOutputStream()
 
@@ -28,9 +28,9 @@ class CommandLine{
 
   }
 
-  def parseVersion(commandLine, name) {
+  def parseVersion(path, arguments, name) {
 
-    def process = osString(commandLine).execute()
+    def process = "${osString(path)} $arguments".execute()
     def output = new ByteArrayOutputStream()
     def error = new ByteArrayOutputStream()
 

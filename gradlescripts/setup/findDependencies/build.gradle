@@ -35,7 +35,7 @@ task findBlender {
 
       blenderPath = findbinary{ binary "blender" }.path
 
-      blenderVersion = commandLine.parseVersion("$blenderPath -v", "Blender")
+      blenderVersion = commandLine.parseVersion("$blenderPath", "-v", "Blender")
 
       }
     catch(e){
@@ -76,7 +76,7 @@ task findPython {
         pythonPath = findbinary{ binary "python" }.path
       }
 
-      pythonVersion = commandLine.parseVersion("$pythonPath --version", "Python")
+      pythonVersion = commandLine.parseVersion("$pythonPath", "--version", "Python")
 
     }
     catch(e){
@@ -121,13 +121,13 @@ task findNumpy {
 
     try{
 
-      numpyVersion = commandLine.getOutput("$pythonData.python.path $rootProject.projectDir/ematoblender/scripts/numpy_version.py")
+      numpyVersion = commandLine.getOutput("$pythonData.python.path", "$rootProject.projectDir/ematoblender/scripts/numpy_version.py")
 
       if( numpyVersion.contains("FAIL") ) {
         throw new GradleException()
       }
 
-      numpyLocation = commandLine.getOutput("$pythonData.python.path $rootProject.projectDir/ematoblender/scripts/numpy_location.py")
+      numpyLocation = commandLine.getOutput("$pythonData.python.path", "$rootProject.projectDir/ematoblender/scripts/numpy_location.py")
 
     }
     catch(e){
@@ -179,7 +179,7 @@ task findTk {
 
     try{
 
-      tkVersion = commandLine.getOutput("$pythonData.python.path $rootProject.projectDir/ematoblender/scripts/tkinter_version.py")
+      tkVersion = commandLine.getOutput("$pythonData.python.path", "$rootProject.projectDir/ematoblender/scripts/tkinter_version.py")
 	  println("$tkVersion")
       if( tkVersion.contains("FAIL") ) {
         throw new GradleException()
@@ -229,7 +229,7 @@ task findPip {
         pipPath = findbinary{ binary "pip" }.path
       }
 
-      pipVersion = commandLine.parseVersion("$pipPath -V", "pip")
+      pipVersion = commandLine.parseVersion("$pipPath", "-V", "pip")
 
     }
     catch(e) {

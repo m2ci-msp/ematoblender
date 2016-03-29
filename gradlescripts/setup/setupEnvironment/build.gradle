@@ -150,7 +150,7 @@ task checkNumpyInBlender() {
 
     println "Checking whether numpy works in Blender at $bloc"
 
-    def numpyVer = commandLine.getOutput("${bloc} --factory-startup  --background --python $rootProject.projectDir/ematoblender/scripts/numpy_version.py")
+    def numpyVer = commandLine.getOutput("${bloc}", "--factory-startup  --background --python $rootProject.projectDir/ematoblender/scripts/numpy_version.py")
 
     println "Got the output $numpyVer"
 
