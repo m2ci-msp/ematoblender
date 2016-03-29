@@ -1,8 +1,18 @@
 class CommandLine{
 
+  // create windows friendly command line
+  def osString(commandLine) {
+    if(System.properties['os.name'].toLowerCase().contains('windows')){
+      return "\"$gcommandLine\""
+    }
+    else{
+      return commandLine
+    }
+  }
+
   def getOutput(commandLine) {
 
-    def process = commandLine.execute()
+    def process = osString(commandLine).execute()
     def output = new ByteArrayOutputStream()
     def error = new ByteArrayOutputStream()
 
@@ -20,7 +30,7 @@ class CommandLine{
 
   def parseVersion(commandLine, name) {
 
-    def process = commandLine.execute()
+    def process = osString(commandLine).execute()
     def output = new ByteArrayOutputStream()
     def error = new ByteArrayOutputStream()
 
