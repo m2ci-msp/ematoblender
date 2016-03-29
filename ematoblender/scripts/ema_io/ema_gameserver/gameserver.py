@@ -230,12 +230,12 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
     recording = wr.recording
     stop_recording = wr.stop_recording
     json_transmission = False
-    
+
     def json_transmit(dataframe):
         """Pack this dataframe as JSON and send it to the C++ server"""
-        jpacket = JSONBuilder.pack_wrapper(data_to_send, 
-        self.server.tongue_model.get_vertex_indices(), 
-        self.server.tongue_model.get_tongue_coil_indices())
+        jpacket = JSONBuilder.pack_wrapper(data_to_send,
+                                           self.server.tongue_model.get_vertex_indices(),
+                                           self.server.tongue_model.get_tongue_coil_indices())
         self.socket.sendto(jpacket, self.server.tongue_model.cpp_address)
 
     def handle(self):
@@ -307,7 +307,7 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
 
         elif self.data == b'JSON_OFF':
             json_transmission = False
-            
+
         elif self.data.startswith(b'VERTEX_INDICES:'):
             self.server.tongue_model.parse_vertex_message(self.data)
             data_to_send = b'MESH VERTIEX INDICES RECEIVED AND STORED.'
@@ -341,12 +341,12 @@ parser = argparse.ArgumentParser(description='EMA client running as intermediate
 # smoothing the streamed dataframes
 smoothgroup = parser.add_mutually_exclusive_group()
 smoothgroup.add_argument('-ms', '--smoothms',
-                    type=int,
-                    help='Give the number of milliseconds that the location signals should be averaged over.',
-                    default='100')
+                         type=int,
+                         help='Give the number of milliseconds that the location signals should be averaged over.',
+                         default='100')
 smoothgroup.add_argument('-fr','--smoothframes',
-                    type=int,
-                    help='Give the number of frames that location signals should be smoothed over, if ms not given.')
+                         type=int,
+                         help='Give the number of frames that location signals should be smoothed over, if ms not given.')
 
 # saving the dataframes as TSV files and recordings as WAV files
 savegroup = parser.add_argument_group("Saving options", "Determine whether and where to saved streamed data/audio")
