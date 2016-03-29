@@ -121,6 +121,14 @@ class GameServer(socketserver.UDPServer):
         # store info relating to the tongue model
         self.tongue_model = TongueModel()
 
+        # TODO: This is a temporary solution, should use image and raytracing
+        self.tongue_model.set_vertex_indices(1991,2230,2236,2549, 2687)
+
+        # TODO: This ia a temporary solution, should get this from the coil-indices file and be customisable in GUI
+        self.tongue_model.set_position_names('Back', 'Center', 'Right', 'Tip', "Left")
+        self.tongue_model.set_tongue_coil_indices(15,9,16,11,10)
+
+
         self.last_cam_trans = None  # storage needed for handler
         self.cam_pos = None
 
@@ -233,7 +241,7 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
 
     def json_transmit(dataframe):
         """Pack this dataframe as JSON and send it to the C++ server"""
-        jpacket = JSONBuilder.pack_wrapper(data_to_send,
+        jpacket = JSONBuilder.pack_wrapper(dataframe,
                                            self.server.tongue_model.get_vertex_indices(),
                                            self.server.tongue_model.get_tongue_coil_indices())
         self.socket.sendto(jpacket, self.server.tongue_model.cpp_address)
