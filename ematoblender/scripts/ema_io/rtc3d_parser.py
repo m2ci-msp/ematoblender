@@ -164,6 +164,7 @@ class JSONBuilder(MessageBuilder):
         """
         mydict = {}
         assert len(vertexindices) == len(coilindices)
+        assert all(c is not None for c in coilindices )
         mydict["sourceIndices"] = vertexindices
         mydict["timeStamp"] = dataframe.components[0].timestamp / 1000000
         chosencoils = [dataframe.components[0].coils[i] for i in coilindices]
