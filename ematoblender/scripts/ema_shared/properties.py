@@ -8,6 +8,9 @@ gameserver_host = 'localhost'
 waveserver_port = 9003  # TODO: Change to 3030 if using NDI WAVE
 waveserver_host = 'localhost'  # on RUG machine '145.97.132.29' or similar
 
+cpp_port = 7799
+cpp_host = 'localhost'
+
 # if using the server switcher, where is the file list stored?
 mocap_list_of_files = 'data/example_collection.txt'
 
@@ -24,8 +27,8 @@ wav_output_dir = './output'
 wave_writing_chunk_size = 1024
 
 # biteplate storage
-biteplate_cs_storage = './temp/biteplate_in_refspace.p'
-refspace_cs_storage = './temp/refspace_in_global.p'
+headcorrection_cs_location = './output/hc/'
+headcorrection_cs_name = 'latest_headcorrection.p'
 
 # blender game setting
 
@@ -39,8 +42,8 @@ hifreq_sensor_skips = 5
 lowfreq_sensor_skips = 100
 
 # location of the bpy/game engine script relative to the .blend file. Must be a nested directory
-bpy_script_path = 'scripts.ema_blender.ema_bpy.bpy_emareadin.main'
-bge_script_path = 'scripts.ema_blender.ema_bge.bge_emareadin.main'
+bpy_script_path = 'ematoblender.scripts.ema_blender.ema_bpy.bpy_emareadin.main'
+bge_script_path = 'ematoblender.scripts.ema_blender.ema_bge.bge_emareadin.main'
 
 # relative location of the JSON file with the sensor information
 json_loc = './sensor_info.json'
@@ -106,7 +109,7 @@ show_debugging_lines = True
 
 # choose to send things to wave, like requesting frequency of streaming etc
 game_server_cl_args = ["--smoothframes", "5"]  # none while testing pre-recorded data   #[ '--headcorrect', '-print', '-wav',] # off whilst testing playing video
-game_server_prerecorded_args = ['-bpcs', './temp/biteplate_in_refspace.p', '-rscs', './temp/refspace_in_global.p']
+game_server_prerecorded_args = ['-hc', '-bpcs', './temp/biteplate_in_refspace.p', '-rscs', './temp/refspace_in_global.p']
 # head-correction parameters
 head_correction_time = None
 head_correction_exclude_first_ms = 0

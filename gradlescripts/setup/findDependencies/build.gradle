@@ -16,6 +16,12 @@ apply plugin: 'org.m2ci.msp.findbinary'
 
 ext{
   commandLine = new CommandLine()
+  os_string = {oldstring -> if(System.properties['os.name'].toLowerCase().contains('windows')){
+      return '\"'+oldstring+'\"'
+    }else{
+      return oldstring
+    }
+  }
 }
 
 /*----------------------------------------------------------------------------*/
@@ -35,9 +41,9 @@ task findBlender {
 
       blenderPath = findbinary{ binary "blender" }.path
 
-      blenderVersion = commandLine.parseVersion("$blenderPath -v", "Blender")
+      blenderVersion = commandLine.parseVersion(os_string("$blenderPath -v"), "Blender")
 
-    }
+      }
     catch(e){
       throw new GradleException("Can not find blender.")
     }

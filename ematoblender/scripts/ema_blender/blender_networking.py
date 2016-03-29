@@ -22,17 +22,16 @@ from . import blender_shared_objects as bsh
 from ..ema_shared import properties as pps
 
 
-def setup_socket_to_gameserver(port=0, blocking=False):
+def setup_socket_to_gameserver(blocking=False):
     """Setup a persistent socket to the gameserver.
     Assigned to a random port number.
     if not blocking, sets timeout to 0.2 seconds.
     """
-    BLENDERHOST, BLENDERPORT = pps.gameserver_host, pps.gameserver_port if port == 0 else port
 
     # Create a socket (SOCK_DGRAM is a UDP socket)
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.settimeout(0 if not blocking else 0.2)
-    sock.bind((BLENDERHOST, BLENDERPORT))  # picks a random port if 0
+    if blocking:
+        sock.settimeout(0.2)
     return sock
 
 
@@ -42,86 +41,17 @@ def close_socket(s):
         s.close()
 
 
-def run_game_server(s, user_args=None):
-    """Check the connection controlled by the run_client script. This may already be available from BPY in edit mode.
-    user_arguments are appended to the standard command line arguments."""
-    # open the run_client script, does its thing independently (if connection existing from bpy then leave open)
-
-    send_to_gameserver(s, mode='TEST_ALIVE')
-    reply = recv_from_gameserver(s)
-    print('game servers reply is', reply)
-
-    if not reply:  # server does not respond to this simple query, is obviously not running
-        print('\nWARNING: GAME SERVER IS NOT INITIALISED ALTHOUGH IT IS REQUIRED BY BLENDER; ABORTING THIS SCRIPT.\n\n')
-        raise ConnectionRefusedError
-
-    if False:  # old
-        if bsh.gameserver is None:  #if connection is not None and replies is not None:
-            print("Initialising the game server!")
-
-            if type(user_args) is not list:
-                user_args = []
-
-            scriptpath = os.path.abspath(os.path.normpath(os.path.join(os.path.dirname(__file__), '../ema_io/ema_gameserver/gameserver.py')))
-            maindir = os.path.abspath(os.path.normpath(os.path.join(os.path.dirname(__file__), '../../')))
-
-            # runs the client intermediary in the ematoblender directory, transfers current pythonpath
-            gameserver = Popen(['python', scriptpath] + pps.game_server_cl_args + user_args, cwd=maindir, env=dict(os.environ, PYTHONPATH=os.pathsep.join(sys.path)))  # start the script
-            bsh.gameserver = gameserver
-            print('Gameserver initialised.')
-            return gameserver
-
-        else:
-            print('Game server is already running.')
+def simple_send(s, content):
+    """Simply send the content to the gameserver"""
+    s.sendto(bytes(content + "\n", encoding='ascii'), (pps.gameserver_host, pps.gameserver_port))
 
 
-# unused function (deprecated)
-def prenetworking_run_gameserver(func):
-    """Make sure there is a bsh.gameserver process running before attempting networking."""
-    def prenetworking_wrapper(*args, **kwargs):
-        print('CHECKING GAMESERVER IS ALIVE BEFORE DOING:', func)
-        #if bsh.gameserver is None:
-            #run_game_server(bsh.gs_soc, user_args=pps.game_server_prerecorded_args)
-            #time.sleep(2)  # give the server 2 seconds to initialise before sending the request
-        return func(*args, **kwargs)
-    return prenetworking_wrapper
-
-
-# unused function (deprecated)
-def prenetworking_run_gameserver_make_bp_rec(func):
-    """Make sure there is a bsh.gameserver process running before attempting networking.
-    Record a new biteplate recording in this."""
-    def prenetworking_wrapper(*args, **kwargs):
-        print('Initialising the gameserver with Popen before doing', func)
-        if bsh.gameserver is not None:
-            bsh.gameserver.kill()
-            bsh.gameserver = None
-        run_game_server(bsh.gs_soc_blocking)
-        return func(*args, **kwargs)
-    return prenetworking_wrapper
-
-
-def postnetworking_kill_gameserver(func):
-    """Kill the bsh.gameserver process after this function."""
-    def postnetworking_wrapper(*args, **kwargs):
-        result = func(*args, **kwargs)
-        print('About to kill networking!')
-        if bsh.gameserver is not None:
-            bsh.gameserver.kill()
-            bsh.gameserver = None
-        return result
-    return postnetworking_wrapper
+def simple_recv(s, len=1024):
+    return s.recv(len)
 
 
 def wait_til_recv(s):
     """Wait for a response from a socket s."""
-    temp_socket = False
-    if type(s) != socket.socket:
-        # create a socket to receive from if one doesn't exist
-        print('Socket does not yet exist')
-        raise TypeError
-        #s = setup_socket_to_gameserver(blocking=True)
-        #temp_socket = True
 
     received = b''
     while len(received) < 1:
@@ -146,10 +76,6 @@ def wait_til_recv(s):
     except pickle.UnpicklingError as e:
         print('Received data could not be unpickled', e)
         data = False
-
-    #if temp_socket:
-    #    s.close()
-
     # return the data sent, else False if no data
     return data
 
@@ -163,7 +89,6 @@ def recv_from_gameserver(s):
     If there is nothing received then nothing.
     """
 
-    #temp_socket = False
     print('Performing a large-buffer receive on socket', s)
 
     if type(s) is not socket.socket:  # create a socket to receive from if one doesn't exist
@@ -173,8 +98,6 @@ def recv_from_gameserver(s):
     received = b''
     try:
         received = s.recv(32768)
-        # if temp_socket:
-        #     s.close()
 
     except socket.timeout:
         print('Socket timed out, skipping the rest.')
@@ -216,6 +139,7 @@ def recv_to_deque(s):
         bsh.gs_answers = deque()
     bsh.gs_answers.append(recv_from_gameserver(s))
     return bsh.gs_answers
+    
 
 def send_to_gameserver(s, mode='SINGLE_DF'):
     """Send a message to the gameserver using socket s.
@@ -230,16 +154,18 @@ def send_to_gameserver(s, mode='SINGLE_DF'):
     KILL_CLIENT: Close the game server"""
 
     # check the input requested
-    if mode not in ['SINGLE_DF', 'STREAM_DF', 'START_STREAM', 'STREAM_STOP', 'PARAMETERS', 'TEST', 'TEST_ALIVE','KILL_CLIENT', 'STATUS', 'CAM_TRANS']:
+    if mode not in ['SINGLE_DF', 'STREAM_DF', 'START_STREAM', 
+    'STREAM_STOP', 'PARAMETERS', 'TEST', 'TEST_ALIVE','KILL_CLIENT',
+    'STATUS', 'CAM_TRANS', 'JSON_ON', 'JSON_OFF)']:
         print('Mode "{}" cannot be received from the server.'.format(mode))
         return None
     try:
-        s.sendto(bytes(mode, encoding='ASCII'), (pps.gameserver_host, pps.gameserver_port))
+        simple_send(s, mode)
 
     except AttributeError as e:
         # make the socket if it doesn't exist
         t = setup_socket_to_gameserver()
-        t.sendto(bytes(mode, encoding='ASCII'), (pps.gameserver_host, pps.gameserver_port))
+        simple_send(t, mode)
         close_socket(t)
 
     # return False if fails
@@ -255,7 +181,8 @@ def send_to_gameserver(s, mode='SINGLE_DF'):
 def get_n_seconds_streaming(n=5, skip_seconds=0.1):
     """Get streaming frames for n seconds. Return them as a list of dataframes."""
     output = []
-    if bsh.gs_soc_blocking is None: bsh.gs_soc_blocking = setup_socket_to_gameserver(blocking=True)
+    if bsh.gs_soc_blocking is None: 
+        bsh.gs_soc_blocking = setup_socket_to_gameserver(blocking=True)
     send_to_gameserver(bsh.gs_soc_blocking, mode='START_STREAM')
     starttime = time.time()
     while time.time() < starttime + n:
@@ -349,19 +276,30 @@ def extract_from_xml(xmltree):
     return bsh.mocappath, bsh.soundpath, bsh.vidpath
 
 
-if __name__=="__main__":
-    #run_game_server(user_args=pps.game_server_cl_args) # does head-correction, prepares gameserver
+def main():
     s = setup_socket_to_gameserver()
+    simple_send(s, 'SINGLE_DF')
+    reply = simple_recv(s)
+    print(reply)
+
     send_to_gameserver(s, mode='SINGLE_DF') # get one dataframe
     mydf = recv_from_gameserver(s)
     send_to_gameserver(s, mode="START_STREAM")
     mydf = recv_from_gameserver(s)
-    time.sleep(5)
+    for i in range(5):
+        send_to_gameserver(s, mode='STREAM_DF')
+        sdf = recv_from_gameserver(s)
+        print('streamed df is', sdf)
+        
     send_to_gameserver(s, mode="STREAM_STOP")
     mydf = recv_from_gameserver(s)
+    print('end streaming df:', mydf)
+    
+    send_to_gameserver(s, mode='SINGLE_DF')
+
     print('TEST SINGLE DF RETURNS:', mydf)
+    
     print(mydf.give_coils()[0].__dir__())
-    print(mydf.give_coils()[0].ref_loc, mydf.give_coils()[0].bp_corr_loc)
-    send_to_gameserver(s) # get one dataframe
-    mydf = recv_from_gameserver(s)
-    print(mydf.give_coils()[0].ref_loc, mydf.give_coils()[0].bp_corr_loc)
+
+if __name__=="__main__":
+    main()

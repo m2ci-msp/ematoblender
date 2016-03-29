@@ -25,7 +25,7 @@ replies = None
 
 class NonBlockingStreamReader():
 
-    def __init__(self, stream, last_x=5,):
+    def __init__(self, stream, last_x=5):
         """Stream: The stream to read from, here received from the server.
         Stream is a Clientconnection object, so NBSR make use of the methods.
 
@@ -104,7 +104,7 @@ class NonBlockingStreamReader():
                 else:
                     self._q5.put(line)
             else:
-                print(time.strftime('%x %X %Z'), "\t\tSocket timeout, remains open. \r")
+                print(time.strftime('%x %X %Z'), "\t\tClient socket timeout, remains open. \r")
                 time.sleep(0.5)
                 # Previously closed script here, but rather it may be due to not starting streaming
         print("Queue-populating thread closing.")
@@ -184,13 +184,30 @@ class NonBlockingStreamReader():
         """Return the raw message from the type=5 object (C3D object)"""
         rubbish = self.readq(self._q5)
         return rubbish
+        
+    def change_smoothing_length(self, newnframes):
+        """Replace the self.last_x_dfs deque with a deque with the same
+        contents, but with a new maxlen of newnframes
+        """
+        currentd = self.last_x_dfs
+        print('Changing smoothing to {} frames'.format(newnframes))
+        
+        if newnframes > currentd.maxlen:
+            self.last_x_dfs = deque(currentd, maxlen=newnframes)
+            
+        elif newnframes == currentf.maxlen:
+            return
+            
+        else:
+            # deque method takes latest elements if longer then maxlen
+            self.last_x_dfs = deque(currentd, maxlen=newnframes)
 
 
 class UnexpectedEndOfStream(Exception):
     pass
 
 
-def init_connection(retain_last=5, print_to=None, wave_to=None, wavehost=None, waveport=None):
+def init_connection(retain_last=1, print_to=None, wave_to=None, wavehost=None, waveport=None):
     """Start the connection, set up objects to handle the soon-to-be-incoming data."""
     # create the connection object to handle communication
     global connection, replies
