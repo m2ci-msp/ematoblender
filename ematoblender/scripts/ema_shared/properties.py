@@ -42,8 +42,8 @@ hifreq_sensor_skips = 5
 lowfreq_sensor_skips = 100
 
 # location of the bpy/game engine script relative to the .blend file. Must be a nested directory
-bpy_script_path = 'scripts.ema_blender.ema_bpy.bpy_emareadin.main'
-bge_script_path = 'scripts.ema_blender.ema_bge.bge_emareadin.main'
+bpy_script_path = 'ematoblender.scripts.ema_blender.ema_bpy.bpy_emareadin.main'
+bge_script_path = 'ematoblender.scripts.ema_blender.ema_bge.bge_emareadin.main'
 
 # relative location of the JSON file with the sensor information
 json_loc = './sensor_info.json'
