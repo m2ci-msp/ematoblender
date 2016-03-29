@@ -8,7 +8,7 @@ from ematoblender.scripts.ema_shared import properties as pps
 from ematoblender.scripts.ema_shared.miscellanous import get_random_color
 from ematoblender.scripts.ema_blender import blender_shared_objects as bsh
 
-
+@ws.set_workspace_first_decorator
 @ws.postfn_gamemaster_reset_decorator
 @ws.prefn_objectmode_noselection_decorator
 def add_game_master():

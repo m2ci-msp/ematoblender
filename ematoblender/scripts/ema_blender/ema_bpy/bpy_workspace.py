@@ -99,6 +99,13 @@ def set_workspace_properties():
 
     #TODO: Set metric units
 
+def set_workspace_first_decorator(fn):
+    def inner(*args, **kwargs):
+        set_workspace_properties()
+        fn(*args, **kwargs)
+    return inner
+
+
 
 @postfn_gamemaster_reset_decorator
 def set_texture_view():
