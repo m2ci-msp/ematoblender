@@ -23,6 +23,7 @@ task runDataServer(){
 // this must happen in any case
 task runGameServerStatic(){
   dependsOn ":gradlescripts:setup:setupEnvironment:setup"
+  dependsOn runDataServer
   doLast{
     println "Starting a ProcessBuilder for the static gameserver"
     ProcessBuilder builder = new ProcessBuilder("${pyAlias()} ./ematoblender/gameserver.py -g".split(' '))
