@@ -54,7 +54,7 @@ def show_all_coils_in_position(df, active=True, biteplate=True, reference=True):
         #print("Setting a location of", cubeobj.abs_loc)
         try:
             ema_coil = emacoils[emind]
-            new_loc = ema_coil.abs_loc if ema_coil.bp_corr_loc is None else ema_coil.bp_corr_loc
+            new_loc = getattr(ema_coil, "bp_corr_loc", getattr(ema_coil, "abs_loc", None))
             cubeobj.location = mathutils.Vector(new_loc) + mathutils.Vector(ci.find_transform_by_index(emind))
             # TODO: Update rotation
         except IndexError:

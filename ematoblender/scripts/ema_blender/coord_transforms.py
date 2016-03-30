@@ -5,10 +5,11 @@ from . import coil_info as ci
 from . import blender_shared_objects as bsh
 
 import ematoblender.scripts.ema_io.ema_gameserver.data_manipulation as dm
+import ematoblender.scripts.ema_io.ema_gameserver.biteplate_headcorr as hc
 import ematoblender.scripts.ema_shared.properties as pps
 import ematoblender.scripts.ema_shared.general_maths as bm
 
-class ObjectResizingCS(dm.BitePlane):
+class ObjectResizingCS(hc.BitePlane):
     """Class that takes either three points or two points (plus the assumption that Z is up)
     and generates coordinate systems. These are used to resize objects between scenes."""
 

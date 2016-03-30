@@ -80,7 +80,10 @@ class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
         print('Checking status of threads')
         for t in self.active_threads:
             print(t.name, 'alive?', t.is_alive())
-            t.join(timeout=0.05)  # explicitly close all the threads created, waiting 0.05 secs if needed
+            try:
+                t.join(timeout=0.05)  # explicitly close all the threads created, waiting 0.05 secs if needed
+            except Runtimeerror:
+                pass
             print(t.name, 'alive?', t.is_alive(), '\n')
         print('Closing the open data file.')
         self.rt_fns.static_data.file.close()

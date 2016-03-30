@@ -100,7 +100,32 @@ def set_workspace_properties():
     #TODO: Set metric units
 
 
-@postfn_gamemaster_reset_decorator
+def do_on_scene_setup_decorator(fn):
+    def inner(*args, **kwargs):
+        print('Setting render engine to BLENDER_GAME')
+        set_workspace_properties()
+        print('Setting texture view to TEXTURED')
+        set_texture_view()
+        fn(*args, **kwargs)
+        print('Creating cameras and video planes')
+        build_scene_extra_objects()
+    return inner
+
+
+def build_scene_extra_objects():
+    """Collects various object building scripts that should be executed in the construction"""
+    from . import bpy_static_video as vid
+    from . import bpy_setup_cameras as cam
+    #vid.create_video_plane() # TODO: Add this when supporting video
+    cam.add_circling_camera()
+    cam.add_midsaggital_camera()
+    cam.add_frontal_camera()
+
+    import ematoblender.scripts.ema_shared.properties as pps
+    bpy.context.scene.world.ambient_color = pps.game_background_color
+    bpy.context.scene.world.horizon_color = pps.game_contrast_color
+
+
 def set_texture_view():
     """Set the viewport shading options to TEXTURED so that the video textures appear correctly.
     Possibly a conflict as object transparency requires MATERIAL mode, but webcam/video requires TEXTURED mode."""
@@ -110,6 +135,7 @@ def set_texture_view():
         if area.type == 'VIEW_3D':
             space_data = area.spaces.active
             space_data.viewport_shade = 'TEXTURED'
+
 
 if __name__ == "__main__":
     # test decorator syntax

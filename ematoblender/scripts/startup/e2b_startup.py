@@ -13,6 +13,7 @@ It also reloads the bpy module on each execution so if you make modifications to
 '''
 
 scriptsdir = os.path.abspath(os.path.dirname(__file__)+'/../')  # scripts directory
+projectdir = os.path.abspath(os.path.dirname(__file__)+'/../../../')  # projectroot
 
 def check_saved():
     # is the .blend file saved
@@ -28,6 +29,8 @@ def add_to_path():
     print("Now adding {} to sys.path".format(scriptsdir))
     if scriptsdir not in sys.path:
         sys.path.append(scriptsdir)
+    if projectdir not in sys.path:
+        sys.path.append(projectdir)
 
 
 def add_blenddir_to_path():
@@ -66,6 +69,34 @@ def register():
     print("E2B: Starting blender with the Ematoblender add-ons startup process")
     add_to_path()
     check_script_access()
+    print('E2B: Registering all the operators used in menus.')
+    # register all the operators needed later
+
+
+    from ematoblender.scripts.ema_blender.bpy_operators.op_connectempties import ParentingOperator
+    bpy.utils.register_class(ParentingOperator)
+
+    from ematoblender.scripts.ema_blender.bpy_operators.op_transparentmaterial import TransMatOperator
+    bpy.utils.register_class(TransMatOperator)
+
+    from ematoblender.scripts.ema_blender.bpy_operators.ops_bpy_palate_trace import ModalDrawOperator, PalateVertsToMesh
+    bpy.utils.register_class(ModalDrawOperator)
+    bpy.utils.register_class(PalateVertsToMesh)
+
+    from ematoblender.scripts.ema_blender.bpy_operators.operator_definitions import AddGameMasterOperator
+    bpy.utils.register_class(AddGameMasterOperator)
+
+    from ematoblender.scripts.ema_blender.bpy_operators.operator_definitions import AddCoilObjects, AddInferredObjects
+    bpy.utils.register_class(AddCoilObjects)
+    bpy.utils.register_class(AddInferredObjects)
+
+    from ematoblender.scripts.ema_blender.bpy_operators.operator_definitions import LoadBasicGameAssets
+    bpy.utils.register_class(LoadBasicGameAssets)
+
+    from ematoblender.scripts.ema_blender.bpy_operators.operator_definitions import GetDataFrame
+    bpy.utils.register_class(GetDataFrame)
+
+
     print('E2B: Ematoblender\'s startup process complete')
 
 

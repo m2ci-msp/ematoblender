@@ -3,8 +3,8 @@ import os
 import bpy
 
 # these vals are duplicates, as at this point the pps file may not be accessible
-bpy_script_path = 'scripts.ema_blender.ema_bpy.bpy_emareadin'
-bge_script_path = 'scripts.ema_blender.ema_bge.bge_emareadin'
+bpy_script_path = 'ematoblender.scripts.ema_blender.ema_bpy.bpy_emareadin'
+bge_script_path = 'ematoblender.scripts.ema_blender.ema_bge.bge_emareadin'
 
 def check_script_access():
     fail=False
@@ -37,7 +37,7 @@ def check_script_access():
 
 print('FAILED MODULE TEST:',check_script_access())
 
-from . import bpy_emareadin as be
+import ematoblender.scripts.ema_blender.bpy_emareadin as be
 import importlib as imp
 imp.reload(be)
 be.main()

@@ -43,6 +43,15 @@ def append_item_from_abs_path(blenderfile=None, itemname=None, abspath=None, loc
     bpy.ops.wm.append(filepath=blenderfile, filename=itemname, directory=finalpath)
 
 
+def append_item_relative_to_scriptsdir(blenderfile=None, itemname=None, pathfromscripts=None, locationinblend=None):
+    """Append some item into the blend file as above, though using an import relative to the scripts dir"""
+    scriptsdir = bpy.context.user_preferences.filepaths.script_directory
+    finalpath = os.path.abspath(os.path.normpath(scriptsdir + os.sep + pathfromscripts + \
+                                                 os.path.sep + blenderfile + os.path.sep + locationinblend + os.path.sep))
+    print('final path to resource is', finalpath)
+    bpy.ops.wm.append(filepath=blenderfile, filename=itemname, directory=finalpath)
+
+
 @postfn_gamemaster_reset_decorator
 def grab_scene_contents(*objectnames, targetlayers=(1, 2), targetscenename='Scene', originscenename='Scene.001',
                         deleteoriginscene=True, deletedefaultcams=True):
@@ -119,9 +128,9 @@ def add_statusbar_scene():
     brick on the CircularCamera to show it always.
     TODO: In future this could simply use the main game script and trigger at a lesser interval.
     """
-    append_item_from_rel_path(blenderfile=pps.statusbar_dot_blend,
+    append_item_relative_to_scriptsdir(blenderfile=pps.statusbar_dot_blend,
                               itemname=pps.name_of_statusbar_object,
-                              relpath=pps.rel_loc_of_statusbar_dot_blend,
+                              pathfromscripts=pps.rel_loc_of_statusbar_dot_blend,
                               locationinblend=pps.path_to_statusbar_in_dot_blend)
 
     # switch back to default scene after adding new one
@@ -131,10 +140,13 @@ def add_statusbar_scene():
 
     # get the circling camera object, it is on this that the scene is overlaid
     from ematoblender.scripts.ema_blender.blender_shared_objects import circling_cam
+    circling_cam = bpy.context.scene.objects.get(circling_cam, 0)
+    if not circling_cam:
+        raise ValueError("The circling camera must be added before adding a menu")
     camname = circling_cam.name
 
     # add a low-frequency sensor logic brick to the camera
-    bpy.ops.logic.sensor_add(type='ALWAYS', name='LOWFREQ', object=camname)
+    bpy.ops.logic.sensor_add(type='ALWAYS', name='LOWFREQ', object=circling_cam.name)
     lowfreq_sensor = circling_cam.game.sensors['LOWFREQ']
     lowfreq_sensor.use_tap = True
     lowfreq_sensor.use_pulse_false_level, lowfreq_sensor.use_pulse_true_level = False, True
@@ -166,9 +178,9 @@ def add_statusbar_scene():
 @prefn_gamemaster_select_decorator
 def add_menu_scene(scene_name=pps.name_of_popup_object):
 
-    append_item_from_rel_path(blenderfile=pps.popup_dot_blend,
+    append_item_relative_to_scriptsdir(blenderfile=pps.popup_dot_blend,
                               itemname=pps.name_of_popup_object,
-                              relpath=pps.rel_loc_of_popup_dot_blend,
+                              pathfromscripts=pps.rel_loc_of_popup_dot_blend,
                               locationinblend=pps.path_to_popup_in_dot_blend)
 
     # switch back to default scene after adding new one

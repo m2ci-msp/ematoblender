@@ -36,7 +36,7 @@ class UserPrefBackup(object):
             print('Not copying old settings, as a copy already exists.')
 
         # change the UPs by adding the dir to UserPreferencesFilePaths.script_directory
-        script_target = os.path.abspath(loc)
+        script_target = loc
         bpy.context.user_preferences.filepaths.script_directory = script_target
         bpy.ops.wm.save_userpref()
 
@@ -56,4 +56,10 @@ if __name__ == "__main__":
     if '--restore' in args:
         UserPrefBackup.restore_old_ups()
     else:
-        UserPrefBackup.set_ematoblender_ups('./scripts')
+        UserPrefBackup.set_ematoblender_ups(
+            os.path.abspath(
+                os.path.normpath(
+                    os.path.dirname(__file__) + './scripts'
+                )
+            )
+        )
