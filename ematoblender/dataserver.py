@@ -1,5 +1,6 @@
 __author__ = 'Kristy'
 
+import sys, os
 import time
 import argparse
 import scripts.ema_io.ema_staticserver.rtserver as rts
@@ -38,11 +39,13 @@ def main(level=2):
         rtss.main(collection=args.collection)
 
     elif args.gui and args.collection is not None:
+        sys.stdout = open(os.devnull, "w")
         # use the GUI with a custom collection
         import scripts.ema_io.ema_staticserver.rtserver_gui as rtg
         rtg.main(collection=args.collection)
 
     else:
+        sys.stdout = open(os.devnull, "w")
         # use the gui switcher with the default collection
         import scripts.ema_io.ema_staticserver.rtserver_gui as rtg
         rtg.main()

@@ -119,4 +119,4 @@ class BusyWaitingRepeatTimer(RepeatTimer):
             # when the relevant time is reached, launch the thread to send the data
             streamthread.start()
             self.activation_dt = self.next_exec
-            print('threader activation time is', self.activation_dt,  file=sys.stderr)
+            print('threader activation time is', self.activation_dt)
