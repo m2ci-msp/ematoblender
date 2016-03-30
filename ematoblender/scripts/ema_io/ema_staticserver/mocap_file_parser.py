@@ -442,25 +442,32 @@ class JSONParser(MocapParent):
         self.component = Component6D(fileparser=self)
 
     def give_motion_frame(self):
-        """ Return angle, position and timestamp information for a file. """
-        n = self.motion_lines_read
-        measurements_by_coil = []
-        for ch in self.marker_names:  # TODO: Fill from reading header
-            angles = self.json["channels"][ch]['eulerAngles'][n*3:n*3+3]
-            position = self.json["channels"][ch]["position"][n*3:n*3+3]
-            measurements_by_coil.append(angles+position)
-        timestamp = MocapParent.timestamp_to_microsecs(self.json["timestamps"][n])
-        print(measurements_by_coil)
+        """ Return angle, position and timestamp information for a file and status code. """
+        if self.motion_lines_read < self.max_num_frames:
+            n = self.motion_lines_read
+            measurements_by_coil = []
+            for ch in self.marker_names:  # TODO: Fill from reading header
+                angles = self.json["channels"][ch]['eulerAngles'][n*3:n*3+3]
+                position = self.json["channels"][ch]["position"][n*3:n*3+3]
+                measurements_by_coil.append(angles+position)
+            timestamp = MocapParent.timestamp_to_microsecs(self.json["timestamps"][n])
+            print(measurements_by_coil)
 
-        self.component.coils = [CoilBuilder6D.build_from_mapping(self.mappings, onecoil)
-                                for onecoil in measurements_by_coil]
+            self.component.coils = [CoilBuilder6D.build_from_mapping(self.mappings, onecoil)
+                                    for onecoil in measurements_by_coil]
 
-        self.component.timestamp = timestamp
-        self.latest_timestamp = timestamp
+            self.component.timestamp = timestamp
+            self.latest_timestamp = timestamp
 
-        self.motion_lines_read += 1
-        return 3, DataFrame(components=[self.component]).pack_all(), self.latest_timestamp
+            self.motion_lines_read += 1
+            return 3, DataFrame(components=[self.component]).pack_all(), self.latest_timestamp
+        # no more data available (static, give up)
+        else:
+            print("All the frames have been read")
+            return 4, "No more frames left in mocap file"
 
+    def reset_motion_section(self):
+        self.motion_lines_read = 0
 
 class BVHParser(MocapParent):
     """
