@@ -399,14 +399,14 @@ class MocapParent(object):
                             return wave_name, video_name
 
         return wave_name, video_name
-        
+
     def give_all_motion_frames(self):
         """Return all datafiles from start to end of file.
         File position is not reset afterwards.
         """
         self.reset_motion_section()
         dflist = []
-        
+
         while True:
             status, frame, *ts = self.give_motion_frame()
             if status != 3:
@@ -433,8 +433,7 @@ class JSONParser(MocapParent):
         timestamps = self.json["timestamps"]
 
         self.max_num_frames = len(timestamps)
-        self.frame_times = [t - s for s, t in zip(timestamps, timestamps[1:])]
-        self.frame_time = sum(self.frame_times)/self.max_num_frames
+        self.frame_time = 1 / self.json["samplingFrequency"]
 
         #setup a mapping between EX EY EZ X Y Z to wave
         self.mappings = Mapping(mapping_as_list=[0, 1, 2, 3, 4, 5], angle_type='EULER')

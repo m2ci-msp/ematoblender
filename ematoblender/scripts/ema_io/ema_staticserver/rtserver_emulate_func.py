@@ -174,7 +174,7 @@ class RTServer_Static(RTServerBase):
         """Define how one frame should be streamed using the repeating timer.
         If end reached, set status as EOF or loop."""
         if self.status == 'STREAMING':
-            print("Timer looping, streaming attempted.", file=sys.stderr)
+            print("Timer looping, streaming attempted.")
 
             # get the motion frame as message in packed wave format
             status, message, *timestamp = self.static_data.give_motion_frame()
@@ -188,7 +188,7 @@ class RTServer_Static(RTServerBase):
             #print(DataFrame(message).give_timestamp_secs())
             # time.sleep(0.5) # debugging
         else:
-            print('Timer continues at sampling frequency while waiting to be cancelled.', file=sys.stderr)
+            print('Timer continues at sampling frequency while waiting to be cancelled.')
 
     def _check_streaming_eof(self, status, message, timestamp):
         if status == 4:  # no more data available
@@ -200,7 +200,7 @@ class RTServer_Static(RTServerBase):
             else:
                 self.static_data.reset_motion_section()
                 status, message, timestamp = self.static_data.give_motion_frame()
-                print("Restarted motion frame looks like:", status, message, timestamp, file=sys.stderr)
+                print("Restarted motion frame looks like:", status, message, timestamp)
                 # increment frames streamed in the XML data
                 self.serverparams = self.static_data.update_xml_stats().getroot()
         else:
@@ -212,7 +212,7 @@ class RTServer_Static(RTServerBase):
     def sendcurrentframe(self, *args, **kwargs):
         """Send back the next frame in the data file."""
          # get the motion frame as message in packed wave format
-        status, message, timestamp = self.static_data.give_motion_frame()
+        status, message, *timestamp = self.static_data.give_motion_frame()
 
         # if last measurement sent, set functionality status
         if status == 4:

@@ -4,7 +4,7 @@
   - runGameServerStatic and runGameServerLive take CL args RE showing the GUI,
   - runGameServerLive takes a CL arg to set the PORT number for the articulograph
   - runGameServerStatic takes the collection to show, if not the default
-  
+
 */
 
 ext{
@@ -17,6 +17,7 @@ task runDataServer(){
   doLast{
     println "Starting a ProcessBuilder for the data server."
     ProcessBuilder builder = new ProcessBuilder("${pyAlias()} ./ematoblender/dataserver.py -g".split(' '))
+    builder.inheritIO()
     Process p = builder.start()
     }
 }
@@ -27,6 +28,7 @@ task runGameServerStatic(){
   doLast{
     println "Starting a ProcessBuilder for the static gameserver"
     ProcessBuilder builder = new ProcessBuilder("${pyAlias()} ./ematoblender/gameserver.py -g".split(' '))
+    builder.inheritIO()
     Process g = builder.start()
   }
 }

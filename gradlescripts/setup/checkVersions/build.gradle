@@ -15,6 +15,10 @@ task checkVersions() {
 
   dependsOn ":gradlescripts:setup:findDependencies:findDependencies"
 
+  def outputFile = file("$rootProject.buildDir/checkVersions.json")
+
+  outputs.file outputFile
+
   doLast{
 
     ["blender", "python", "numpy", "pip"].each{ dependency ->
@@ -37,8 +41,15 @@ task checkVersions() {
       }
 
 
-
     } // end each
+
+    def builder = new groovy.json.JsonBuilder()
+    def json = builder.checkVersions{
+      state "SUCCESS"
+    }
+
+    outputFile.text = builder.toPrettyString()
+
 
   } // end doLast
 
