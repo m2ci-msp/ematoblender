@@ -195,39 +195,45 @@ def get_n_seconds_streaming(n=5, skip_seconds=0.1):
 
 
 #@prenetworking_run_gameserver
-def get_parameters_and_one_df():
-    if bsh.gs_soc_blocking is None: bsh.gs_soc_blocking = setup_socket_to_gameserver(blocking=True)
+def get_parameters_and_one_df(sock=bsh.gs_soc_blocking):
+    if sock is None:
+        sock = setup_socket_to_gameserver(blocking=True)
+        bsh.gs_soc_blocking = sock
     # get the parameter string
     from .blender_shared_objects import streaming_xml
-    send_to_gameserver(bsh.gs_soc_blocking, mode='PARAMETERS')
-    param_result = wait_til_recv(bsh.gs_soc_blocking)
+    send_to_gameserver(sock, mode='PARAMETERS')
+    param_result = wait_til_recv(sock)
     streaming_xml = ET.fromstring(param_result)
     extract_from_xml(streaming_xml)
     print('CURRENT PARAMETERS ARE:', streaming_xml)
     # get a single dataframe
-    send_to_gameserver(bsh.gs_soc_blocking, mode='SINGLE_DF')
-    df = wait_til_recv(bsh.gs_soc_blocking)
+    send_to_gameserver(sock, mode='SINGLE_DF')
+    df = wait_til_recv(sock)
     return streaming_xml, df
 
 
 #@postnetworking_kill_gameserver
 #@prenetworking_run_gameserver_make_bp_rec
-def get_live_setup_data():
-    if bsh.gs_soc_blocking is None: bsh.gs_soc_blocking = setup_socket_to_gameserver(blocking=True)
-    send_to_gameserver(bsh.gs_soc_blocking, mode='TEST')
-    testresult = wait_til_recv(bsh.gs_soc_blocking)
+def get_live_setup_data(sock=bsh.gs_soc_blocking):
+    if sock is None:
+        sock = setup_socket_to_gameserver(blocking=True)
+        bsh.gs_soc_blocking = sock
+    send_to_gameserver(sock, mode='TEST')
+    testresult = wait_til_recv(sock)
     print('SETUP TEST RESULT WAS:', testresult)
     params, df = get_parameters_and_one_df()
     return params, df
 
 
-#@postnetworking_kill_gameserver
-#@prenetworking_run_gameserver
 def get_test_response(sock):
     send_to_gameserver(sock, mode='TEST')
-    testresult = wait_til_recv(sock)
+    time.sleep(0.01)
+    testresult = simple_recv(sock)
     print('TEST RESULT WAS:', testresult)
     return testresult
+
+def check_connected(sock):
+    return len(get_test_response(sock)) > 1
 
 
 #@postnetworking_kill_gameserver

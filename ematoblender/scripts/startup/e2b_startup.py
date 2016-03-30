@@ -93,6 +93,8 @@ def register():
     from ematoblender.scripts.ema_blender.bpy_operators.operator_definitions import LoadBasicGameAssets
     bpy.utils.register_class(LoadBasicGameAssets)
 
+    from ematoblender.scripts.ema_blender.bpy_operators.operator_definitions import GetDataFrame
+    bpy.utils.register_class(GetDataFrame)
 
 
     print('E2B: Ematoblender\'s startup process complete')

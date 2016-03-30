@@ -87,6 +87,8 @@ class EmaReadInPanel(bpy.types.Panel):
 
         layout.label("Networking")
         layout.label(text="Get Data Frame")
+        row = layout.row()
+        row.operator("object.get_data_frame")
 
 
 
