@@ -121,6 +121,10 @@ def build_scene_extra_objects():
     cam.add_midsaggital_camera()
     cam.add_frontal_camera()
 
+    import ematoblender.scripts.ema_shared.properties as pps
+    bpy.context.scene.world.ambient_color = pps.game_background_color
+    bpy.context.scene.world.horizon_color = pps.game_contrast_color
+
 
 def set_texture_view():
     """Set the viewport shading options to TEXTURED so that the video textures appear correctly.
