@@ -101,13 +101,13 @@ def set_workspace_properties():
 
 def set_workspace_first_decorator(fn):
     def inner(*args, **kwargs):
+        print('Setting render engine to BLEDNER_GAME')
         set_workspace_properties()
         fn(*args, **kwargs)
     return inner
 
 
 
-@postfn_gamemaster_reset_decorator
 def set_texture_view():
     """Set the viewport shading options to TEXTURED so that the video textures appear correctly.
     Possibly a conflict as object transparency requires MATERIAL mode, but webcam/video requires TEXTURED mode."""
@@ -117,6 +117,14 @@ def set_texture_view():
         if area.type == 'VIEW_3D':
             space_data = area.spaces.active
             space_data.viewport_shade = 'TEXTURED'
+
+
+def set_texture_view_decorator(fn):
+    def inner(*args, **kwargs):
+        print('Setting texture view to TEXTURED')
+        set_texture_view()
+        fn(*args, **kwargs)
+    return inner
 
 if __name__ == "__main__":
     # test decorator syntax
