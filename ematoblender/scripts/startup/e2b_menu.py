@@ -57,6 +57,16 @@ class EmaReadInPanel(bpy.types.Panel):
         layout.label(text="Spawn scene objects:") # Spawn basic coils
         row = layout.row()
         row.operator("object.add_coil_objects")
+
+        layout.label(text="Spawn inferred objects:")
+        col = layout.column(align=True)
+        col.prop(context.scene, "inferred_obj_name")
+        col = layout.column(align=True)
+        col.prop(context.scene, "inferred_obj_rule")
+
+        row = layout.row()
+        row.operator("object.add_inferred_object")
+
         layout.label(text="Load basic game assets:")
         layout.label(text="Load the rigged face from blend:")
         layout.label(text="Load the tongue and palate models (popup):")
@@ -105,10 +115,24 @@ class EmaReadInPanel(bpy.types.Panel):
 
 def register():
     bpy.utils.register_class(EmaReadInPanel)
+    bpy.types.Scene.inferred_obj_name = bpy.props.StringProperty \
+        (
+            name="Name",
+            description="The name that this non-data-driven object will bear",
+            default='NB'
+        )
+    bpy.types.Scene.inferred_obj_rule = bpy.props.StringProperty \
+        (
+            name="Rule,args",
+            description="The rule, args (CSV) defining inferred behaviour",
+            default='mirror_axis, SL_L,X'
+        )
 
 
 def unregister():
     bpy.utils.unregister_class(EmaReadInPanel)
+    del bpy.types.Scene.inferred_obj_name
+    del bpy.types.Scene.inferred_obj_rule
 
 if __name__=="__main__":
     register()

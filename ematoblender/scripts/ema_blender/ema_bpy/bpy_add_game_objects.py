@@ -121,6 +121,7 @@ def spawn_inferred_coil(name, rule, *ruleargs, texture=None):
     """
     Make and return one cube+empty object, according to the naming rule.
     Append the cube object to the bsh.ema_inferred_meshes list.
+    :param name: the name of resulting object
     :param naming_rule: a lambda expression that takes an integer and returns a string (name of the cube object)
     :param rule: fn taking the cubeobj as an argument that sets the appropriate location.
     :return: the cube that was created

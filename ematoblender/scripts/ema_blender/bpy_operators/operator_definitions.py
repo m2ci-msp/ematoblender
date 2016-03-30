@@ -33,3 +33,19 @@ class AddCoilObjects(bpy.types.Operator):
         from scripts.ema_blender.blender_shared_objects import ema_mesh_name_rule
         spawn_hidden_coils(ema_mesh_name_rule)
         return {'FINISHED'}
+
+
+class AddInferredObjects(bpy.types.Operator):
+    """Add objects that mirror/transform from other objects"""
+    bl_idname="object.add_inferred_object"
+    bl_label="Add Inferred Object"
+
+    @classmethod
+    def poll(cls, context):
+        # TODO: Change polling for the fact that it doesn't already exist
+        return context.active_object is not None
+
+    def execute(self, context):
+        from scripts.ema_blender.ema_bpy.bpy_add_game_objects import spawn_inferred_coil
+        spawn_inferred_coil(context.scene.inferred_obj_name, *','.split(context.scene.inferred_obj_rule))
+        return {'FINISHED'}

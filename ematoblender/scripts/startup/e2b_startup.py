@@ -86,8 +86,10 @@ def register():
     from ematoblender.scripts.ema_blender.bpy_operators.operator_definitions import AddGameMasterOperator
     bpy.utils.register_class(AddGameMasterOperator)
 
-    from ematoblender.scripts.ema_blender.bpy_operators.operator_definitions import AddCoilObjects
+    from ematoblender.scripts.ema_blender.bpy_operators.operator_definitions import AddCoilObjects, AddInferredObjects
     bpy.utils.register_class(AddCoilObjects)
+    bpy.utils.register_class(AddInferredObjects)
+
 
     print('E2B: Ematoblender\'s startup process complete')
 
