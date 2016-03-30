@@ -44,7 +44,7 @@ from .. import blender_shared_objects as bsh
 from .. import coord_transforms as ct
 from ...ema_shared import properties as pps
 
-from ...ema_io.rtc3d_parser import DataFrame
+from scripts.ema_io.rtc3d_parser import DataFrame
 from ...ema_shared.miscellanous import reload_modules_for_testing
 
 ##### global variables #####
@@ -64,10 +64,20 @@ key_pace = 20  # number of logic ticks before registering a second keypress
 from queue import deque
 bsh.gs_answers = deque()  # store responses from gameserver (deque to can restrict length if req'd)
 # persistent socket that connects to the gameserver
-from ..blender_shared_objects import gs_soc_blocking, gs_soc_nonblocking
-#bsh.gs_soc_blocking = None
-#bsh.gs_soc_nonblocking = None
 
+
+gs_soc_blocking = bn.setup_socket_to_gameserver(blocking=True)
+# create and make a test call to the game server socket
+print('Confirming connection to gameserver...')
+bn.send_to_gameserver(gs_soc_blocking, mode='TEST_ALIVE')
+
+# setup the non-blocking socket
+gs_soc_nonblocking = bn.setup_socket_to_gameserver()
+gs_soc_nonblocking.settimeout(0)
+print('NB socket created', gs_soc_nonblocking)
+bn.send_to_gameserver(gs_soc_nonblocking, mode='TEST_ALIVE')
+time.sleep(0.2)
+reply = bn.simple_recv(gs_soc_nonblocking)
 
 def main():
     """"
@@ -101,14 +111,14 @@ def setup():
     except TypeError:
         print('One or more cameras ignored due to non-matching name.')
     print('Camera setup completed.')
-
-        # create and make a test call to the game server socket
-    print('Confirming connection to gameserver...')
-    global gs_soc_blocking
-    gs_soc_blocking = bn.setup_socket_to_gameserver(blocking=True)
     bn.send_to_gameserver(gs_soc_blocking, mode='TEST_ALIVE')
     time.sleep(0.2)  # wait for game server to reply before making a query
-    reply = bn.recv_from_gameserver(gs_soc_blocking)
+    reply = bn.simple_recv(gs_soc_blocking)
+
+
+    bn.send_to_gameserver(gs_soc_nonblocking, mode='TEST_ALIVE')
+    time.sleep(0.2)  # wait for game server to reply before making a query
+    reply = bn.recv_to_deque(gs_soc_nonblocking)
 
     # close the game if gameserver not available
     if not len(reply) > 0:
@@ -125,13 +135,6 @@ def setup():
     bn.extract_from_xml(params) # used to update the video and sound file locations in bsh
 
     # setup video if necessary
-    #TODO
-
-    # setup the non-blocking socket
-    global gs_soc_nonblocking
-    gs_soc_nonblocking = bn.setup_socket_to_gameserver(blocking=False)
-    print('NB socket created', gs_soc_nonblocking)
-    #bsh.gs_soc_nonblocking.settimeout(0)
 
     print('Initial game setup completed.')
 
