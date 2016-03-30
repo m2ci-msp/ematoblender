@@ -50,18 +50,36 @@ class EmaReadInPanel(bpy.types.Panel):
         layout = self.layout
         scene = context.scene
 
-        layout.label(text="Set scene properties:")
+        layout.label(text="Load the game logic:")
         row = layout.row()
-        row.operator("object.add_gamemaster") # TODO: Define operators for the other things
+        row.operator("object.add_gamemaster")
 
+        layout.label(text="Spawn scene objects:") # Spawn basic coils
         row = layout.row()
-        row.operator("render.render")
+        row.operator("object.add_coil_objects")
+        layout.label(text="Load basic game assets:")
+        layout.label(text="Load the rigged face from blend:")
+        layout.label(text="Load the tongue and palate models (popup):")
 
-        row = layout.row()
-        row.operator("render.render")
+
+        layout.label(text="Set positions:") # buttons for streaming data, moving face,
+        layout.label(text="Fix relationships:") # parent everything
+
+        layout.label(text='Palate trace options')
+
+        layout.label(text='Play the game')
+
 
 
         layout.label(text="Spawn scene objects:")
+
+        layout.label(text="Spawn scene objects:")
+        row = layout.row()
+        row.operator("render.render") # TODO: load game assets (menus, lamps etc)
+
+        row = layout.row()
+        row.operator("render.render") # TODO: Load the face mesh
+
 
 
         layout.label(text="Load assets")
