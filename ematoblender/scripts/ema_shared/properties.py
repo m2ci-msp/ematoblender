@@ -52,8 +52,8 @@ json_loc = './sensor_info.json'
 # location of menu scenes (relative to current .blend)
 
 # location of status/webcam scene for overlay
-rel_loc_of_statusbar_dot_blend = './text_scene' # "./blender_objects"
-statusbar_dot_blend = 'textscene_for_survey.blend' #"text_video_scene_latest_2_nov_development.blend"  # TODO: Change back
+rel_loc_of_statusbar_dot_blend = '../resources'
+statusbar_dot_blend = 'text_video_scene_latest.blend' #"text_video_scene_latest_2_nov_development.blend"  # TODO: Change back
 path_to_statusbar_in_dot_blend = "Scene"
 name_of_statusbar_object = "TextScene"
 
@@ -61,7 +61,7 @@ name_of_statusbar_object = "TextScene"
 rotation_avatar = 'Avatar'
 
 # location of popup menu scene for occasional overlay
-rel_loc_of_popup_dot_blend = "./blender_objects"
+rel_loc_of_popup_dot_blend = "../resources"
 popup_dot_blend = "popup_menu_latest.blend"
 path_to_popup_in_dot_blend = "Scene"
 name_of_popup_object = "PopupMenu"

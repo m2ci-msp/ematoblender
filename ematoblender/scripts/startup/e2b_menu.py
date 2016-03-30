@@ -68,6 +68,10 @@ class EmaReadInPanel(bpy.types.Panel):
         row.operator("object.add_inferred_object")
 
         layout.label(text="Load basic game assets:")
+        row = layout.row()
+        row.operator("object.load_basic_assets")
+
+
         layout.label(text="Load the rigged face from blend:")
         layout.label(text="Load the tongue and palate models (popup):")
 

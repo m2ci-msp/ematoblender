@@ -90,6 +90,10 @@ def register():
     bpy.utils.register_class(AddCoilObjects)
     bpy.utils.register_class(AddInferredObjects)
 
+    from ematoblender.scripts.ema_blender.bpy_operators.operator_definitions import LoadBasicGameAssets
+    bpy.utils.register_class(LoadBasicGameAssets)
+
+
 
     print('E2B: Ematoblender\'s startup process complete')
 

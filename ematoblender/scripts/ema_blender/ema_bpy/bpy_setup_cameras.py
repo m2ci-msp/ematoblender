@@ -60,7 +60,6 @@ def add_circling_camera():
     eo.delta_scale = mathutils.Vector((eo.delta_scale.x, eo.delta_scale.y*10, eo.delta_scale.z))
 
     # save the object references
-    bsh.circling_cam = co
     bsh.circling_cam_empty = eo
 
 
