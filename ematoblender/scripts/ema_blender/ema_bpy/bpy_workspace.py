@@ -99,13 +99,27 @@ def set_workspace_properties():
 
     #TODO: Set metric units
 
-def set_workspace_first_decorator(fn):
+
+def do_on_scene_setup_decorator(fn):
     def inner(*args, **kwargs):
-        print('Setting render engine to BLEDNER_GAME')
+        print('Setting render engine to BLENDER_GAME')
         set_workspace_properties()
+        print('Setting texture view to TEXTURED')
+        set_texture_view()
         fn(*args, **kwargs)
+        print('Creating cameras and video planes')
+        build_scene_extra_objects()
     return inner
 
+
+def build_scene_extra_objects():
+    """Collects various object building scripts that should be executed in the construction"""
+    from . import bpy_static_video as vid
+    from . import bpy_setup_cameras as cam
+    #vid.create_video_plane() # TODO: Add this when supporting video
+    cam.add_circling_camera()
+    cam.add_midsaggital_camera()
+    cam.add_frontal_camera()
 
 
 def set_texture_view():
@@ -118,13 +132,6 @@ def set_texture_view():
             space_data = area.spaces.active
             space_data.viewport_shade = 'TEXTURED'
 
-
-def set_texture_view_decorator(fn):
-    def inner(*args, **kwargs):
-        print('Setting texture view to TEXTURED')
-        set_texture_view()
-        fn(*args, **kwargs)
-    return inner
 
 if __name__ == "__main__":
     # test decorator syntax
