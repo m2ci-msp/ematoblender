@@ -306,7 +306,7 @@ class MocapParent(object):
         if type(timestamp) == float or (type(timestamp) == str and timestamp.find('.')):
             timestamp = math.floor(float(timestamp) * 1000000)  # seconds to microseconds
 
-        # ts is an integer or string of integer, presumably milliseconds. keep in same format
+        # ts is an integer or string of integer, presumably microseconds. keep in same format
         elif (type(timestamp) == str and timestamp.isnumeric()) or type(timestamp) == int:
             timestamp = int(timestamp)
         else:
@@ -433,7 +433,9 @@ class JSONParser(MocapParent):
         timestamps = self.json["timestamps"]
 
         self.max_num_frames = len(timestamps)
-        self.frame_time = 1 / self.json["samplingFrequency"]
+
+        # compute frame time in microseconds
+        self.frame_time = 1000000 / float(self.json["samplingFrequency"])
 
         #setup a mapping between EX EY EZ X Y Z to wave
         self.mappings = Mapping(mapping_as_list=[0, 1, 2, 3, 4, 5], angle_type='EULER')
@@ -442,25 +444,32 @@ class JSONParser(MocapParent):
         self.component = Component6D(fileparser=self)
 
     def give_motion_frame(self):
-        """ Return angle, position and timestamp information for a file. """
-        n = self.motion_lines_read
-        measurements_by_coil = []
-        for ch in self.marker_names:  # TODO: Fill from reading header
-            angles = self.json["channels"][ch]['eulerAngles'][n*3:n*3+3]
-            position = self.json["channels"][ch]["position"][n*3:n*3+3]
-            measurements_by_coil.append(angles+position)
-        timestamp = MocapParent.timestamp_to_microsecs(self.json["timestamps"][n])
-        print(measurements_by_coil)
+        """ Return angle, position and timestamp information for a file and status code. """
+        if self.motion_lines_read < self.max_num_frames:
+            n = self.motion_lines_read
+            measurements_by_coil = []
+            for ch in self.marker_names:  # TODO: Fill from reading header
+                angles = self.json["channels"][ch]['eulerAngles'][n*3:n*3+3]
+                position = self.json["channels"][ch]["position"][n*3:n*3+3]
+                measurements_by_coil.append(angles+position)
+            timestamp = MocapParent.timestamp_to_microsecs(self.json["timestamps"][n])
+            print(measurements_by_coil)
 
-        self.component.coils = [CoilBuilder6D.build_from_mapping(self.mappings, onecoil)
-                                for onecoil in measurements_by_coil]
+            self.component.coils = [CoilBuilder6D.build_from_mapping(self.mappings, onecoil)
+                                    for onecoil in measurements_by_coil]
 
-        self.component.timestamp = timestamp
-        self.latest_timestamp = timestamp
+            self.component.timestamp = timestamp
+            self.latest_timestamp = timestamp
 
-        self.motion_lines_read += 1
-        return 3, DataFrame(components=[self.component]).pack_all(), self.latest_timestamp
+            self.motion_lines_read += 1
+            return 3, DataFrame(components=[self.component]).pack_all(), self.latest_timestamp
+        # no more data available (static, give up)
+        else:
+            print("All the frames have been read")
+            return 4, "No more frames left in mocap file"
 
+    def reset_motion_section(self):
+        self.motion_lines_read = 0
 
 class BVHParser(MocapParent):
     """
