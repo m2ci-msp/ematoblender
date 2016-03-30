@@ -56,7 +56,7 @@ def wait_til_recv(s):
     received = b''
     while len(received) < 1:
         try:
-            data, addr = s.recvfrom(32768)
+            data, addr = s.recvfrom(8192)
             received += data
         except socket.timeout:
             print('Timeout error occurred, sleeping')
@@ -90,6 +90,7 @@ def recv_from_gameserver(s):
     """
 
     print('Performing a large-buffer receive on socket', s)
+    print('Blocking is set to:', s.gettimeout())
 
     if type(s) is not socket.socket:  # create a socket to receive from if one doesn't exist
         print('Problem: socket doesn\'t exit!')
@@ -97,7 +98,7 @@ def recv_from_gameserver(s):
 
     received = b''
     try:
-        received = s.recv(32768)
+        received = simple_recv(s, len=32768)
 
     except socket.timeout:
         print('Socket timed out, skipping the rest.')
