@@ -261,7 +261,7 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
         if self.data == b'SINGLE_DF':
             newest_df = rtc.get_one_df(self.server.conn, self.server.repl)
             data_to_send = newest_df  # returns unsmoothed data
-            if json_transmission:
+            if self.__class__.json_transmission:
                 self.json_transmit(data_to_send)
 
         elif self.data == b'START_STREAM':
@@ -280,13 +280,13 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
             and average rotation values using the average_quaternions fn.
             """
             data_to_send = DataFrame(fromlist=newest_x)  # returns averaged data from the latest x dfs
-            if json_transmission:
+            if self.__class__.json_transmission:
                 self.json_transmit(data_to_send)
 
         elif self.data == b'STREAM_STOP':
             newest_x = self.server.gs_stop_streaming()
             data_to_send = DataFrame(fromlist=newest_x)  # returns averaged data from the latest x dfs
-            if json_transmission:
+            if self.__class__.json_transmission:
                 self.json_transmit(data_to_send)
 
         # qualitative data, no manipulation
@@ -294,7 +294,7 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
             data_to_send = rtc.get_parameters(self.server.conn)
 
         elif self.data == b'TEST':
-            data_to_send = rtc.test_communication(self.server.conn)
+            data_to_send = rtc.test_communication(self.server.conn, self.server.repl)
 
         elif self.data == b'TEST_ALIVE':
             data_to_send = b'YES, GAMESERVER IS RUNNING'
@@ -312,10 +312,10 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
             data_to_send = [self.server.last_cam_trans, self.server.cam_pos]
 
         elif self.data == b'JSON_ON':
-            json_transmission = True
+            self.__class__.json_transmission = True
 
         elif self.data == b'JSON_OFF':
-            json_transmission = False
+            self.__class__.json_transmission = False
 
         elif self.data.startswith(b'VERTEX_INDICES:'):
             self.server.tongue_model.parse_vertex_message(self.data)
