@@ -71,50 +71,24 @@ class EmaReadInPanel(bpy.types.Panel):
         row = layout.row()
         row.operator("object.load_basic_assets")
 
-
-        layout.label(text="Load the rigged face from blend:")
-        layout.label(text="Load the tongue and palate models (popup):")
-
+        layout.label(text="Load the rigged face from blend:") # prompt location, #prompt position
+        #layout.label(text="Load the tongue and palate models (popup):")
 
         layout.label(text="Set positions:") # buttons for streaming data, moving face,
         layout.label(text="Fix relationships:") # parent everything
+        row = layout.row()
+        row.operator("object.empty_connector")
 
         layout.label(text='Palate trace options')
-
-        layout.label(text='Play the game')
-
-
-
-        layout.label(text="Spawn scene objects:")
-
-        layout.label(text="Spawn scene objects:")
-        row = layout.row()
-        row.operator("render.render") # TODO: load game assets (menus, lamps etc)
-
-        row = layout.row()
-        row.operator("render.render") # TODO: Load the face mesh
-
-
-
-        layout.label(text="Load assets")
-
-        row = layout.row()
-        row.operator("object.transparent_material")
-
-        layout.label(text="Palate Trace")
-
         row = layout.row()
         row.operator("view3d.palate_trace")
-
         row = layout.row()
         row.operator("view3d.palate_mesh")
 
-        layout.label(text="Position/connect objects")
+        layout.label("Networking")
+        layout.label(text="Get Data Frame")
 
-        layout.label(text="Get mocap data")
 
-        row = layout.row()
-        row.operator("object.empty_connector")
 
 
 def register():
