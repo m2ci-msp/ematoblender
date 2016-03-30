@@ -306,7 +306,7 @@ class MocapParent(object):
         if type(timestamp) == float or (type(timestamp) == str and timestamp.find('.')):
             timestamp = math.floor(float(timestamp) * 1000000)  # seconds to microseconds
 
-        # ts is an integer or string of integer, presumably milliseconds. keep in same format
+        # ts is an integer or string of integer, presumably microseconds. keep in same format
         elif (type(timestamp) == str and timestamp.isnumeric()) or type(timestamp) == int:
             timestamp = int(timestamp)
         else:
@@ -433,7 +433,9 @@ class JSONParser(MocapParent):
         timestamps = self.json["timestamps"]
 
         self.max_num_frames = len(timestamps)
-        self.frame_time = 1 / self.json["samplingFrequency"]
+
+        # compute frame time in microseconds
+        self.frame_time = 1000000 / float(self.json["samplingFrequency"])
 
         #setup a mapping between EX EY EZ X Y Z to wave
         self.mappings = Mapping(mapping_as_list=[0, 1, 2, 3, 4, 5], angle_type='EULER')
