@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-__author__ = 'Kristy'
+__author__ = 'Kristy James, Alexander Hewer'
+
 
 """
 This module encapsulates the functionality of the RTServer.
@@ -17,6 +18,7 @@ import os
 import time
 import sys
 
+import threading
 
 # Base class for server-internal info
 class RTServerBase():
@@ -145,36 +147,42 @@ class RTServer_Static(RTServerBase):
 
         # time aspect
         ft = self.static_data.frame_time  # frame time (inverse of frequency) in microseconds
-        from .scheduler import RepeatTimer, EfficientRepeatTimer, BusyWaitingRepeatTimer
 
-        # create a repeated timer thread, that executes self._stream_one_frame periodically
-        t = BusyWaitingRepeatTimer(ft/1000000, self._stream_one_frame)  # timer is in seconds
+        self._delay = 0
+
+        streamthread = threading.Thread(group=None, target=self._stream_one_frame)
 
         # use the command to stop/fail to start streaming
         if 'stop' in args and (self.status == 'READY' or self.status == 'STREAMING'):  # stop streaming
             self.status = 'READY'
-            t.cancel()
 
         elif self.status == 'EOF':
             self.conn.send_packed("No data, EOF or no measurement", 4)
-            t.cancel()
 
         else:  # command asks to start streaming
             print("Starting the repeating timer, using only the pre-determined frequency.")
             self.status = 'STREAMING'
-            t.start()
-
-            # poll to stop timer every half second
-            while True:
-                time.sleep(0.5)
-                if self.status != 'STREAMING':
-                    t.cancel()
+            streamthread.start()
 
     def _stream_one_frame(self, *args, **kwargs):
         """Define how one frame should be streamed using the repeating timer.
         If end reached, set status as EOF or loop."""
-        if self.status == 'STREAMING':
-            print("Timer looping, streaming attempted.")
+
+        ft = self.static_data.frame_time/1000000  # frame time (inverse of frequency) in microseconds
+        while self.status == 'STREAMING':
+
+            # get starting time
+            start = time.clock()
+
+            # check current delay
+            if self._delay > ft:
+
+                # skip frame if delay becomes too high
+                self.static_data.motion_lines_read += 1
+                self._delay -= ft
+
+                # get to next iteration, we might have to skip more frames
+                continue
 
             # get the motion frame as message in packed wave format
             status, message, *timestamp = self.static_data.give_motion_frame()
@@ -187,8 +195,24 @@ class RTServer_Static(RTServerBase):
             #from scripts.ema_io.rtc3d_parser import DataFrame
             #print(DataFrame(message).give_timestamp_secs())
             # time.sleep(0.5) # debugging
-        else:
-            print('Timer continues at sampling frequency while waiting to be cancelled.')
+
+            # get end time
+            end = time.clock()
+
+            # compute time we can sleep
+            sleeptime = ft - (end - start)
+
+            # check if we have time to sleep
+            if sleeptime > 0:
+
+                # we have time
+                time.sleep(sleeptime)
+            else:
+
+                # no time, we might even be late
+                # measure delay
+                self._delay += abs(sleeptime)
+
 
     def _check_streaming_eof(self, status, message, timestamp):
         if status == 4:  # no more data available
