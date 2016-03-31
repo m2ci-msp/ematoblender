@@ -8,8 +8,8 @@ gameserver_host = 'localhost'
 waveserver_port = 9003  # TODO: Change to 3030 if using NDI WAVE
 waveserver_host = 'localhost'  # on RUG machine '145.97.132.29' or similar
 
-cpp_port = 7799
-cpp_host = 'localhost'
+cpp_port = 1234
+cpp_host = '134.96.104.156'
 
 # if using the server switcher, where is the file list stored?
 mocap_list_of_files = 'data/example_collection.txt'
@@ -109,7 +109,7 @@ show_debugging_lines = True
 
 # choose to send things to wave, like requesting frequency of streaming etc
 game_server_cl_args = ["--smoothframes", "5"]  # none while testing pre-recorded data   #[ '--headcorrect', '-print', '-wav',] # off whilst testing playing video
-game_server_prerecorded_args = ['-hc', '-bpcs', './temp/biteplate_in_refspace.p', '-rscs', './temp/refspace_in_global.p']
+#game_server_prerecorded_args = ['-hc', '-bpcs', './temp/biteplate_in_refspace.p', '-rscs', './temp/refspace_in_global.p']
 # head-correction parameters
 head_correction_time = None
 head_correction_exclude_first_ms = 0
@@ -124,8 +124,8 @@ display_cameras = ['FCamera', 'MSCamera']  # missing CircularCamera #  ]#] # TOD
 
 development_mode = True
 
-global_coordinate_transform = {'flip_xyz': (False, True, True),
-                               'axis_order': ('X', 'Z', 'Y'),
+global_coordinate_transform = {'flip_xyz': (False, False, False),
+                               'axis_order': ( 'X', 'Y', 'Z' ),
                                }
 # note : correct global_coordinate_transform for Martijn's VENI data is:
 # {'flip_xyz': (False, True, True), 'axis_order': ('X', 'Z', 'Y'), }
