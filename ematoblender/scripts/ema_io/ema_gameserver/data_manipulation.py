@@ -74,10 +74,11 @@ def head_corr_bp_correct(df, biteplate_refspace, headpos_refspace):
     refcoils = [df.give_coils()[reference[x][0]] for x in range(len(reference))]
     print('refcoils', refcoils)
     print('active', active)
+    from .biteplate_headcorr import ReferencePlane
     current_rs = ReferencePlane(*[x.abs_loc for x in refcoils[:3]]) # todo: this could be a source of error - are these the correct coils?
 
 
-    if not biteplate_refspace.ui_origin:  # ON FIRST ACTIVE SENSOR READING
+    if not hasattr(biteplate_refspace, 'ui_origin'):  # ON FIRST ACTIVE SENSOR READING
         print('\n\n\n This is the first reading of the active sensors.')
         # set the origin of the biteplate CS as UI
         ui_index = [x[0] for x in active if x[2] == 'UI'][0]

@@ -43,7 +43,7 @@ matched_ik_coils_bones = []  # collects the names of the pointer bones and the c
 tongue_control_empties = {'TB':None, 'TM':None, 'TT':None}  # connect to objects that show the positions from emadata
 
 # cameras # must be same as bpy.data.objects
-circling_cam = None
+circling_cam = 'CircularCamera'
 circling_cam_empty = None
 
 

@@ -8,8 +8,8 @@ gameserver_host = 'localhost'
 waveserver_port = 9003  # TODO: Change to 3030 if using NDI WAVE
 waveserver_host = 'localhost'  # on RUG machine '145.97.132.29' or similar
 
-cpp_port = 7799
-cpp_host = 'localhost'
+cpp_port = 1234
+cpp_host = '134.96.104.156'
 
 # if using the server switcher, where is the file list stored?
 mocap_list_of_files = 'data/example_collection.txt'
@@ -52,8 +52,8 @@ json_loc = './sensor_info.json'
 # location of menu scenes (relative to current .blend)
 
 # location of status/webcam scene for overlay
-rel_loc_of_statusbar_dot_blend = './text_scene' # "./blender_objects"
-statusbar_dot_blend = 'textscene_for_survey.blend' #"text_video_scene_latest_2_nov_development.blend"  # TODO: Change back
+rel_loc_of_statusbar_dot_blend = '../resources'
+statusbar_dot_blend = 'text_video_scene_latest.blend' #"text_video_scene_latest_2_nov_development.blend"  # TODO: Change back
 path_to_statusbar_in_dot_blend = "Scene"
 name_of_statusbar_object = "TextScene"
 
@@ -61,7 +61,7 @@ name_of_statusbar_object = "TextScene"
 rotation_avatar = 'Avatar'
 
 # location of popup menu scene for occasional overlay
-rel_loc_of_popup_dot_blend = "./blender_objects"
+rel_loc_of_popup_dot_blend = "../resources"
 popup_dot_blend = "popup_menu_latest.blend"
 path_to_popup_in_dot_blend = "Scene"
 name_of_popup_object = "PopupMenu"
@@ -109,7 +109,7 @@ show_debugging_lines = True
 
 # choose to send things to wave, like requesting frequency of streaming etc
 game_server_cl_args = ["--smoothframes", "5"]  # none while testing pre-recorded data   #[ '--headcorrect', '-print', '-wav',] # off whilst testing playing video
-game_server_prerecorded_args = ['-hc', '-bpcs', './temp/biteplate_in_refspace.p', '-rscs', './temp/refspace_in_global.p']
+#game_server_prerecorded_args = ['-hc', '-bpcs', './temp/biteplate_in_refspace.p', '-rscs', './temp/refspace_in_global.p']
 # head-correction parameters
 head_correction_time = None
 head_correction_exclude_first_ms = 0
@@ -124,8 +124,8 @@ display_cameras = ['FCamera', 'MSCamera']  # missing CircularCamera #  ]#] # TOD
 
 development_mode = True
 
-global_coordinate_transform = {'flip_xyz': (False, True, True),
-                               'axis_order': ('X', 'Z', 'Y'),
+global_coordinate_transform = {'flip_xyz': (False, False, False),
+                               'axis_order': ( 'X', 'Y', 'Z' ),
                                }
 # note : correct global_coordinate_transform for Martijn's VENI data is:
 # {'flip_xyz': (False, True, True), 'axis_order': ('X', 'Z', 'Y'), }

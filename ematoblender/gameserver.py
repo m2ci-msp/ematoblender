@@ -6,7 +6,7 @@ import sys, os
 if True:
         from scripts.ema_io.ema_gameserver import gameserver_gui as gg
         sys.stdout = open(os.devnull, "w")
-        gg.main(sys.argv[1:]) # command line args are pre-defined as those in properties file
+        gg.main(args=sys.argv[1:]) # command line args are pre-defined as those in properties file
 
 else:
 	from scripts.ema_io.ema_gameserver import gameserver as gs

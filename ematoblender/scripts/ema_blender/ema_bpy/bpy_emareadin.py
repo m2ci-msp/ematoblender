@@ -43,8 +43,7 @@ def main():
 
     print('BUILDING BLENDER-INTERNAL OBJECTS')
     ago.add_game_master()  # must be first in the process, as some other functions refer to this object
-    ws.set_workspace_properties()
-    ws.set_texture_view()
+    # note that the add_game_master fn is decorated to set the appropriate render engine and texture view
 
     # spawn default coil-cubes and empties
     ago.spawn_hidden_coils(bsh.ema_mesh_name_rule)

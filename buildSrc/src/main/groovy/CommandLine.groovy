@@ -3,7 +3,7 @@ class CommandLine{
   // create windows friendly command line
   def osString(commandLine) {
     if(System.properties['os.name'].toLowerCase().contains('windows')){
-      return "\"$gcommandLine\""
+      return "\"$commandLine\""
     }
     else{
       return commandLine

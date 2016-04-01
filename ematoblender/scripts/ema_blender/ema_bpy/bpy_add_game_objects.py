@@ -8,7 +8,7 @@ from ematoblender.scripts.ema_shared import properties as pps
 from ematoblender.scripts.ema_shared.miscellanous import get_random_color
 from ematoblender.scripts.ema_blender import blender_shared_objects as bsh
 
-
+@ws.do_on_scene_setup_decorator
 @ws.postfn_gamemaster_reset_decorator
 @ws.prefn_objectmode_noselection_decorator
 def add_game_master():
@@ -120,6 +120,7 @@ def spawn_inferred_coil(name, rule, *ruleargs, texture=None):
     """
     Make and return one cube+empty object, according to the naming rule.
     Append the cube object to the bsh.ema_inferred_meshes list.
+    :param name: the name of resulting object
     :param naming_rule: a lambda expression that takes an integer and returns a string (name of the cube object)
     :param rule: fn taking the cubeobj as an argument that sets the appropriate location.
     :return: the cube that was created

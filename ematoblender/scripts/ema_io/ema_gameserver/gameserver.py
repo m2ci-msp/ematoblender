@@ -42,7 +42,7 @@ from ..rtc3d_parser import DataFrame, JSONBuilder
 
 
 
-def main(argv=pps.game_server_cl_args):
+def main(argv):
     """
     Initialise the gameserver, getting the TSV and WAV locations to print from from CL arguments,
     or if they are not present from the properties file.
@@ -115,9 +115,12 @@ class GameServer(socketserver.UDPServer):
         print('Game server is', self)
 
         self.cla = cl_args
+        print('Initial CL args are', self.cla)
+
 
         # store headcorrection matrices
         self.headcorrection = HeadCorrector()
+        print('Initial headcorrection status is', self.cla.headcorrect)
 
         # store info relating to the tongue model
         self.tongue_model = TongueModel()
@@ -127,7 +130,7 @@ class GameServer(socketserver.UDPServer):
 
         # TODO: This ia a temporary solution, should get this from the coil-indices file and be customisable in GUI
         self.tongue_model.set_position_names('Back', 'Center', 'Right', 'Tip', "Left")
-        self.tongue_model.set_tongue_coil_indices(15,9,16,11,10)
+        self.tongue_model.set_tongue_coil_indices(14,8,15,10,9)#(15,9,16,11,10)
 
 
         self.last_cam_trans = None  # storage needed for handler
@@ -238,14 +241,16 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
     wave_name = None
     recording = wr.recording
     stop_recording = wr.stop_recording
-    json_transmission = False
+    json_transmission = True
 
-    def json_transmit(dataframe):
+    def json_transmit(self, dataframe):
         """Pack this dataframe as JSON and send it to the C++ server"""
         jpacket = JSONBuilder.pack_wrapper(dataframe,
                                            self.server.tongue_model.get_vertex_indices(),
                                            self.server.tongue_model.get_tongue_coil_indices())
-        self.socket.sendto(jpacket, self.server.tongue_model.cpp_address)
+        print('Sending to ', self.server.tongue_model.cpp_address)
+        print(self.socket)
+        self.socket.sendto(bytes(jpacket, encoding='ascii'), self.server.tongue_model.cpp_address)
 
     def handle(self):
         """Handle requests sent to the gameserver from Blender."""
@@ -254,6 +259,7 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
         self.socket = self.request[1]
 
         print("UDP Gameserver received the request:", self.data)
+        print('Headcorrection is', self.server.cla.headcorrect)
         kill_server = False
 
         # catch the data to be sent
@@ -261,7 +267,7 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
         if self.data == b'SINGLE_DF':
             newest_df = rtc.get_one_df(self.server.conn, self.server.repl)
             data_to_send = newest_df  # returns unsmoothed data
-            if json_transmission:
+            if self.__class__.json_transmission:
                 self.json_transmit(data_to_send)
 
         elif self.data == b'START_STREAM':
@@ -280,13 +286,13 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
             and average rotation values using the average_quaternions fn.
             """
             data_to_send = DataFrame(fromlist=newest_x)  # returns averaged data from the latest x dfs
-            if json_transmission:
+            if self.__class__.json_transmission:
                 self.json_transmit(data_to_send)
 
         elif self.data == b'STREAM_STOP':
             newest_x = self.server.gs_stop_streaming()
             data_to_send = DataFrame(fromlist=newest_x)  # returns averaged data from the latest x dfs
-            if json_transmission:
+            if self.__class__.json_transmission:
                 self.json_transmit(data_to_send)
 
         # qualitative data, no manipulation
@@ -294,7 +300,7 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
             data_to_send = rtc.get_parameters(self.server.conn)
 
         elif self.data == b'TEST':
-            data_to_send = rtc.test_communication(self.server.conn)
+            data_to_send = rtc.test_communication(self.server.conn, self.server.repl)
 
         elif self.data == b'TEST_ALIVE':
             data_to_send = b'YES, GAMESERVER IS RUNNING'
@@ -312,10 +318,10 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
             data_to_send = [self.server.last_cam_trans, self.server.cam_pos]
 
         elif self.data == b'JSON_ON':
-            json_transmission = True
+            self.__class__.json_transmission = True
 
         elif self.data == b'JSON_OFF':
-            json_transmission = False
+            self.__class__.json_transmission = False
 
         elif self.data.startswith(b'VERTEX_INDICES:'):
             self.server.tongue_model.parse_vertex_message(self.data)
@@ -326,11 +332,12 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
 
         # head-correct the data to be sent
         if type(data_to_send) == DataFrame and self.server.cla.headcorrect:
-            print('performing head-correction on this dataframe with', self.server.bp_in_rs)
+            print('performing head-correction on this dataframe with', self.server.headcorrection.biteplane)
             print('performing head correction on this df', data_to_send)
             data_to_send, self.server.last_cam_trans, self.server.cam_pos = dm.head_corr_bp_correct(data_to_send,
-                                                                                                    self.server.bp_in_rs if self.server.bp_in_rs is not None else pickle.load(open(self.server.cla.bpcs), 'rb'),
-                                                                                                    self.server.rp_in_gs if self.server.rp_in_gs is not None else pickle.load(open(self.server.cla.rscs), 'rb'))
+             self.server.headcorrection.biteplane,
+            self.server.headcorrection.refplane)
+            print('Applying head-correction')
 
         # serialise the data to be sent
         pd = pickle.dumps(data_to_send)
@@ -374,7 +381,7 @@ parser.add_argument('--wavdir',
 # whether head-correction should be performed, and if so, potentially the location of a pickled biteplate object
 parser.add_argument('-hc', '--headcorrect',
                     help='Perform head-correction, making a biteplate recording if needed.',
-                    action='store_true', default=False)
+                    action='store_true')
 hcgroup = parser.add_mutually_exclusive_group()
 hcgroup.add_argument('--prepickled',
                      help="filename of the pickled head-correction recording if already made.")
