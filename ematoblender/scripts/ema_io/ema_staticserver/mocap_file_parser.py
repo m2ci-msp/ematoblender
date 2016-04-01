@@ -422,6 +422,13 @@ class JSONParser(MocapParent):
     Must be able to be reconstructed into JSON format for the C++ server.
     """
 
+    # http://stackoverflow.com/questions/4836710/does-python-have-a-built-in-function-for-string-natural-sort
+    def natural_sort(self, l):
+        import re
+        convert = lambda text: int(text) if text.isdigit() else text.lower()
+        alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ]
+        return sorted(l, key = alphanum_key)
+
     def read_header(self):
         """Read in the JSON file"""
         print('Reading in JSON file, this may take a while')
@@ -429,7 +436,8 @@ class JSONParser(MocapParent):
         print(self.json.keys())
         self.motion_lines_read = 0
 
-        self.marker_names = self.json["channels"].keys()
+        # use a natural sorting of the marker names
+        self.marker_names = self.natural_sort(self.json["channels"].keys())
         timestamps = self.json["timestamps"]
 
         self.max_num_frames = len(timestamps)
