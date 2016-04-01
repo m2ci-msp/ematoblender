@@ -57,6 +57,7 @@ class HeadCorrector(object):
                 av = self.process_frames_pre_calc(dfs)
                 self.calc_COBs_from_df(av)
                 self.save_changes_of_base()
+                print('Changes of base are:', self)
             else:
                 raise ValueError("There is not enough data in the TSV file for a head-correction.")
 

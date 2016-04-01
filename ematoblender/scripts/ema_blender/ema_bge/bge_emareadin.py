@@ -46,6 +46,7 @@ from ...ema_shared import properties as pps
 
 from scripts.ema_io.rtc3d_parser import DataFrame
 from ...ema_shared.miscellanous import reload_modules_for_testing
+import xml.etree.ElementTree as ET
 
 ##### global variables #####
 
@@ -75,9 +76,11 @@ bn.send_to_gameserver(gs_soc_blocking, mode='TEST_ALIVE')
 gs_soc_nonblocking = bn.setup_socket_to_gameserver()
 gs_soc_nonblocking.settimeout(0)
 print('NB socket created', gs_soc_nonblocking)
-bn.send_to_gameserver(gs_soc_nonblocking, mode='TEST_ALIVE')
+bn.send_to_gameserver(gs_soc_nonblocking, mode='PARAMETERS')
 time.sleep(0.2)
-reply = bn.simple_recv(gs_soc_nonblocking)
+paramstring = bn.recv_from_gameserver(gs_soc_nonblocking)
+parameters = ET.fromstring(paramstring)
+
 
 def main():
     """"
@@ -111,6 +114,9 @@ def setup():
     except TypeError:
         print('One or more cameras ignored due to non-matching name.')
     print('Camera setup completed.')
+    global parameters
+    param_result = wait_til_recv(sock)
+    parameters = ET.fromstring(param_result)
     bn.send_to_gameserver(gs_soc_blocking, mode='TEST_ALIVE')
     time.sleep(0.2)  # wait for game server to reply before making a query
     reply = bn.simple_recv(gs_soc_blocking)
@@ -217,6 +223,7 @@ def update():
             # choose if multiple DataFrames, choose that with greatest timestamp
             if bsh.latest_df is None or m.give_timestamp_secs() >= bsh.latest_df.give_timestamp_secs():
                 bsh.latest_df = m
+            print(m.give_coils()[0].__dict__)
         elif type(m) == tuple:
             bsh.head_inversion = m
         elif type(m) == str:

@@ -13,7 +13,8 @@ from ...ema_shared import properties as pps
 def main(args=None):
     # start the server
     global server
-    server = GameServer(pps.game_server_cl_args, serve_in_thread=True)
+    server = GameServer(pps.game_server_cl_args if args is None else args,
+                        serve_in_thread=True)
     print('Server will now serve forever.')
 
     # start the GUI

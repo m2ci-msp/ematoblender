@@ -59,7 +59,7 @@ if __name__ == "__main__":
         UserPrefBackup.set_ematoblender_ups(
             os.path.abspath(
                 os.path.normpath(
-                    os.path.dirname(__file__) + './scripts'
+                    os.path.dirname(__file__) + '/scripts'
                 )
             )
         )
