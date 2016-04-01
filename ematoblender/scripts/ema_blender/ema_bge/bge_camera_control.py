@@ -8,7 +8,7 @@ import bge
 from . import bge_splines_lines as sl
 from . import bge_menus_overlays as mo
 from .. import blender_shared_objects as bsh
-from ematoblender.scripts.ema_shared import properties as pps
+from ema_shared import properties as pps
 
 neutral_position = None # todo: get the basic position
 speed_factor=50
