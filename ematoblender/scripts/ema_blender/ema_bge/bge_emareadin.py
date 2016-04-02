@@ -20,6 +20,7 @@ and does not use threading due to Blender requirements
 import bge         # game engine functionality
 import mathutils
 import time
+import sys, os
 
 # For I/O with the server
 
@@ -102,6 +103,7 @@ def setup():
      - Connect to the game server with a UDP socket and make a test call
      - Collect the parameter string for the data being streamed
     """
+    sys.stdout = open(os.devnull, "w")
     print('Executing initial game setup.')
 
     # whilst in development, reload cached modules that may change
@@ -162,7 +164,7 @@ def update():
     keys = gf.catch_keypresses()   # check keyboard interactions
 
     ################## MAKE REQUESTS TO UDP SERVER #############
-    
+
     if streaming:
         print('Game loop sending','STREAM_DF')
         send_to_gameserver(gs_soc_nonblocking, mode='STREAM_DF')
@@ -176,7 +178,7 @@ def update():
         send_to_gameserver(gs_soc_nonblocking, mode='CAM_TRANS')
 
     ##################### OTHER ACTIONS RESPONDING TO KEYS/BUTTONS ######
-    
+
     if keys['esckey']:  # quit
         shutdown()
 
@@ -234,7 +236,7 @@ def update():
     ############ UPDATE FROM THE LATEST DATA ###########
 
     # camera position
-    print('camera controls '+'up: {}, down:{}, left:{}, right:{}'.format(keys['upkey'], keys['downkey'], 
+    print('camera controls '+'up: {}, down:{}, left:{}, right:{}'.format(keys['upkey'], keys['downkey'],
                                                                          keys['leftkey'], keys['rightkey']))
     cc.bge_circular_camera_control(keys)  # includes head movement correction
 
@@ -284,11 +286,11 @@ def update():
 
 
 def shutdown(stopgame=True):
-    """ 
-    End the game.
-    If stopgame is False, then the game is reinitialised, re-reading parameters for a new datafile. 
     """
-    
+    End the game.
+    If stopgame is False, then the game is reinitialised, re-reading parameters for a new datafile.
+    """
+
     global streaming
     if streaming:
         send_to_gameserver(gs_soc_nonblocking, mode='STREAM_STOP')
@@ -342,6 +344,3 @@ def toggle_popup_menu():
             pa.sound_setup()
         mo.hide_menu_overlay()
         print('game loop menu hidden')
-
-
-
