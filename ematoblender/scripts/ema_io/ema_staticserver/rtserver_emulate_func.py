@@ -171,55 +171,51 @@ class RTServer_Static(RTServerBase):
         # compute frame time in seconds
         ft = self.static_data.frame_time/1000000
 
-        # prepare the first data package to be sent
+        # use currently read lines as offset
+        frameOffset = self.static_data.motion_lines_read
 
-        # get the motion frame as message in packed wave format
-        status, message, *timestamp = self.static_data.give_motion_frame()
+        # get starting time
+        startingTime = time.monotonic()
 
-        # restart loop or cancel if EOF, update stats
-        status, message, *timestamp = self._check_streaming_eof(status, message, timestamp)
-
-        # try to send frames, such that betweeen two send operations ft seconds have passed
+        # send frames, perform frameskipping if needed
         while self.status == 'STREAMING':
 
-            # send data
-            self.conn.send_packed(message, status)
+            # start measuring time for processing
+            start = time.monotonic()
 
-            # get starting time for measuring preparation time
-            start = time.clock()
+            # compute index of current frame depending on passed time
+            currentFrame = int((time.monotonic() - startingTime) / ft)
 
-            # skip frames if delay becomes too high
-            while self._delay > ft:
-
-                self.static_data.motion_lines_read += 1
-                self._delay -= ft
+            # set index, add offset
+            self.static_data.motion_lines_read = frameOffset + currentFrame
 
             # get the motion frame as message in packed wave format
             status, message, *timestamp = self.static_data.give_motion_frame()
 
+            # reset starting time and frame offset if eof was read
+            if status == 4:
+                startingTime = time.monotonic()
+                frameOffset = 0
+
             # restart loop or cancel if EOF, update stats
             status, message, *timestamp = self._check_streaming_eof(status, message, timestamp)
+
+            # send data
+            self.conn.send_packed(message, status)
+
+            # end measuring time for processing
+            end = time.monotonic()
+
+            # sleep some time if any is left
+            sleepTime = ft - (end - start)
+
+            if sleepTime > 0:
+                time.sleep(sleepTime)
 
             #from scripts.ema_io.rtc3d_parser import DataFrame
             #print(DataFrame(message).give_timestamp_secs())
             # time.sleep(0.5) # debugging
 
-            # get end time for measuring preparation time
-            end = time.clock()
-
-            # compute time we can sleep before sending the data
-            sleeptime = ft - (end - start)
-
-            # check if we have time to sleep
-            if sleeptime > 0:
-
-                # we have time
-                time.sleep(sleeptime)
-            else:
-
-                # no time, we might even be late
-                # measure delay
-                self._delay += abs(sleeptime)
 
 
     def _check_streaming_eof(self, status, message, timestamp):
