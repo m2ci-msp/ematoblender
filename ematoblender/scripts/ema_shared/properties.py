@@ -9,7 +9,7 @@ waveserver_port = 9003  # TODO: Change to 3030 if using NDI WAVE
 waveserver_host = 'localhost'  # on RUG machine '145.97.132.29' or similar
 
 cpp_port = 1234
-cpp_host = '134.96.104.156'
+cpp_host = 'localhost'
 
 # if using the server switcher, where is the file list stored?
 mocap_list_of_files = 'data/example_collection.txt'

@@ -20,6 +20,7 @@ and does not use threading due to Blender requirements
 import bge         # game engine functionality
 import mathutils
 import time
+import sys, os
 
 # For I/O with the server
 
@@ -102,6 +103,7 @@ def setup():
      - Connect to the game server with a UDP socket and make a test call
      - Collect the parameter string for the data being streamed
     """
+    sys.stdout = open(os.devnull, "w")
     print('Executing initial game setup.')
 
     # whilst in development, reload cached modules that may change
@@ -115,8 +117,10 @@ def setup():
         print('One or more cameras ignored due to non-matching name.')
     print('Camera setup completed.')
     global parameters
-    param_result = wait_til_recv(sock)
-    parameters = ET.fromstring(param_result)
+
+    paramstring = bn.recv_from_gameserver(gs_soc_nonblocking)
+    parameters = ET.fromstring(paramstring)
+
     bn.send_to_gameserver(gs_soc_blocking, mode='TEST_ALIVE')
     time.sleep(0.2)  # wait for game server to reply before making a query
     reply = bn.simple_recv(gs_soc_blocking)
@@ -151,18 +155,18 @@ def update():
     Executed once every nth logic tick, check for key/button events.
     Firstly update rigid body locations, then armatures, then meshes.
     """
-    print(gs_soc_nonblocking, 'is the NB socket')
 
     global streaming, prev_streaming_state, ticks_since_stream_toggle, \
         menu_overlaying, head_movement,  \
         gs_soc_blocking, gs_soc_nonblocking
+    print(gs_soc_nonblocking, 'is the NB socket')
     print("\n\n Executing modal - streaming is {}".format(str(streaming)))
 
     scn, objs, cont, own, acts = gf.get_scene_info()  # get info about the current state of the scene
     keys = gf.catch_keypresses()   # check keyboard interactions
 
     ################## MAKE REQUESTS TO UDP SERVER #############
-    
+
     if streaming:
         print('Game loop sending','STREAM_DF')
         send_to_gameserver(gs_soc_nonblocking, mode='STREAM_DF')
@@ -176,7 +180,7 @@ def update():
         send_to_gameserver(gs_soc_nonblocking, mode='CAM_TRANS')
 
     ##################### OTHER ACTIONS RESPONDING TO KEYS/BUTTONS ######
-    
+
     if keys['esckey']:  # quit
         shutdown()
 
@@ -234,7 +238,7 @@ def update():
     ############ UPDATE FROM THE LATEST DATA ###########
 
     # camera position
-    print('camera controls '+'up: {}, down:{}, left:{}, right:{}'.format(keys['upkey'], keys['downkey'], 
+    print('camera controls '+'up: {}, down:{}, left:{}, right:{}'.format(keys['upkey'], keys['downkey'],
                                                                          keys['leftkey'], keys['rightkey']))
     cc.bge_circular_camera_control(keys)  # includes head movement correction
 
@@ -284,11 +288,11 @@ def update():
 
 
 def shutdown(stopgame=True):
-    """ 
-    End the game.
-    If stopgame is False, then the game is reinitialised, re-reading parameters for a new datafile. 
     """
-    
+    End the game.
+    If stopgame is False, then the game is reinitialised, re-reading parameters for a new datafile.
+    """
+
     global streaming
     if streaming:
         send_to_gameserver(gs_soc_nonblocking, mode='STREAM_STOP')
@@ -342,6 +346,3 @@ def toggle_popup_menu():
             pa.sound_setup()
         mo.hide_menu_overlay()
         print('game loop menu hidden')
-
-
-
