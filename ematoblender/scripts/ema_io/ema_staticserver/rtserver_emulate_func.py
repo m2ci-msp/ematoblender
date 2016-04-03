@@ -168,21 +168,31 @@ class RTServer_Static(RTServerBase):
         """Define how one frame should be streamed using the repeating timer.
         If end reached, set status as EOF or loop."""
 
-        ft = self.static_data.frame_time/1000000  # frame time (inverse of frequency) in microseconds
+        # compute frame time in seconds
+        ft = self.static_data.frame_time/1000000
+
+        # prepare the first data package to be sent
+
+        # get the motion frame as message in packed wave format
+        status, message, *timestamp = self.static_data.give_motion_frame()
+
+        # restart loop or cancel if EOF, update stats
+        status, message, *timestamp = self._check_streaming_eof(status, message, timestamp)
+
+        # try to send frames, such that betweeen two send operations ft seconds have passed
         while self.status == 'STREAMING':
 
-            # get starting time
+            # send data
+            self.conn.send_packed(message, status)
+
+            # get starting time for measuring preparation time
             start = time.clock()
 
-            # check current delay
-            if self._delay > ft:
+            # skip frames if delay becomes too high
+            while self._delay > ft:
 
-                # skip frame if delay becomes too high
                 self.static_data.motion_lines_read += 1
                 self._delay -= ft
-
-                # get to next iteration, we might have to skip more frames
-                continue
 
             # get the motion frame as message in packed wave format
             status, message, *timestamp = self.static_data.give_motion_frame()
@@ -190,16 +200,14 @@ class RTServer_Static(RTServerBase):
             # restart loop or cancel if EOF, update stats
             status, message, *timestamp = self._check_streaming_eof(status, message, timestamp)
 
-            # send the data
-            self.conn.send_packed(message, status)
             #from scripts.ema_io.rtc3d_parser import DataFrame
             #print(DataFrame(message).give_timestamp_secs())
             # time.sleep(0.5) # debugging
 
-            # get end time
+            # get end time for measuring preparation time
             end = time.clock()
 
-            # compute time we can sleep
+            # compute time we can sleep before sending the data
             sleeptime = ft - (end - start)
 
             # check if we have time to sleep
