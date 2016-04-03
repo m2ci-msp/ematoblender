@@ -117,8 +117,10 @@ def setup():
         print('One or more cameras ignored due to non-matching name.')
     print('Camera setup completed.')
     global parameters
-    param_result = wait_til_recv(sock)
-    parameters = ET.fromstring(param_result)
+
+    paramstring = bn.recv_from_gameserver(gs_soc_nonblocking)
+    parameters = ET.fromstring(paramstring)
+
     bn.send_to_gameserver(gs_soc_blocking, mode='TEST_ALIVE')
     time.sleep(0.2)  # wait for game server to reply before making a query
     reply = bn.simple_recv(gs_soc_blocking)
@@ -153,11 +155,11 @@ def update():
     Executed once every nth logic tick, check for key/button events.
     Firstly update rigid body locations, then armatures, then meshes.
     """
-    print(gs_soc_nonblocking, 'is the NB socket')
 
     global streaming, prev_streaming_state, ticks_since_stream_toggle, \
         menu_overlaying, head_movement,  \
         gs_soc_blocking, gs_soc_nonblocking
+    print(gs_soc_nonblocking, 'is the NB socket')
     print("\n\n Executing modal - streaming is {}".format(str(streaming)))
 
     scn, objs, cont, own, acts = gf.get_scene_info()  # get info about the current state of the scene
