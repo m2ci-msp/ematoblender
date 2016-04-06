@@ -22,17 +22,29 @@ from . import blender_shared_objects as bsh
 from ..ema_shared import properties as pps
 
 
-def setup_socket_to_gameserver(blocking=False):
-    """Setup a persistent socket to the gameserver.
-    Assigned to a random port number.
-    if not blocking, sets timeout to 0.2 seconds.
+class BlenderSocket(socket.socket):
+    """ Class shadowing inbuit socket, so that is closed upon deletion.
     """
+    def __init__(self, blocking=False):
+        """
+        Setup a persistent socket to the gameserver.
+        Assigned to a random port number.
+        if not blocking, sets timeout to 0.2 seconds.
+        """
+        super().__init__(socket.AF_INET, socket.SOCK_DGRAM)
+        if blocking:
+            self.settimeout(0.2)
+        else:
+            self.settimeout(0)
 
+    def __del__(self):
+        self.close()
+        del self
+
+
+def setup_socket_to_gameserver(blocking=False):
     # Create a socket (SOCK_DGRAM is a UDP socket)
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    if blocking:
-        sock.settimeout(0.2)
-    return sock
+    return BlenderSocket(blocking=blocking)
 
 
 def close_socket(s):
@@ -92,8 +104,8 @@ def recv_from_gameserver(s):
     print('Performing a large-buffer receive on socket', s)
     print('Blocking is set to:', s.gettimeout())
 
-    if type(s) is not socket.socket:  # create a socket to receive from if one doesn't exist
-        print('Problem: socket doesn\'t exit!')
+    if s is None:
+        print('Error: Socket is None')
         raise TypeError
 
     received = b''
