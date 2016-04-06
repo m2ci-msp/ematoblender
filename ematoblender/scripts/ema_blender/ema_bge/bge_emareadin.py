@@ -130,7 +130,7 @@ def setup():
     print('\n\nData parameters received from GS are:', paramstring)
     try:
         parameters = ET.fromstring(paramstring)
-        bn.extract_from_xml(params) # used to update the video and sound file locations in bsh
+        bn.extract_from_xml(parameters)  # used to update the video and sound file locations in bsh
     except BlockingIOError as e:
         print(e)
     except TypeError as e:
