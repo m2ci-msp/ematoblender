@@ -408,9 +408,14 @@ and passes them into Blender (or any other application that requests them).'''
         """Put a label with some configurable text along the bottom"""
         self.bottomframe = tk.Frame(self.root, relief='sunken', bd=3)
         self.bottomframe.pack(side=tk.BOTTOM, fill=tk.X)
-        labeltext = 'Example label'
+        labeltext = self.servobj.last_status
         self.bottomlabel = tk.Label(self.bottomframe, text=labeltext)
         self.bottomlabel.pack(side=tk.RIGHT, fill=tk.X)
+        self.bottomlabel.after(10, func=self.updateStatusLabel)
+
+    def updateStatusLabel(self):
+        self.bottomlabel.config(text=self.servobj.last_status)
+        self.after(10, self.updateStatusLabel)
 
     def start_stop_streaming(self):
         """Toggle streaming, and text on button"""

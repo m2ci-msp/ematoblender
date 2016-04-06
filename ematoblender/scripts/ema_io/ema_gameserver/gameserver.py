@@ -146,6 +146,8 @@ class GameServer(socketserver.UDPServer):
         # determine the amount of smoothing on streaming dataframes
         self.set_smoothing_n()
 
+        self.last_status = 'INITIALISED'
+
         # start the serve_forever method (used when shown with GUI)
         if serve_in_thread:
             import threading
@@ -256,6 +258,7 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
         """Handle requests sent to the gameserver from Blender."""
 
         self.data = self.request[0].strip()
+        self.server.last_status = self.data
         self.socket = self.request[1]
 
         print("UDP Gameserver received the request:", self.data)
