@@ -243,7 +243,7 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
     wave_name = None
     recording = wr.recording
     stop_recording = wr.stop_recording
-    json_transmission = True
+    json_transmission = pps.transmit_json_to_cpp
 
     def json_transmit(self, dataframe):
         """Pack this dataframe as JSON and send it to the C++ server"""
