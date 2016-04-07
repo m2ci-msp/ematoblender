@@ -95,9 +95,14 @@ else{ //OS is Unix/Mac
   /*--------------------------------------------------------------------------*/
 
   task cloneMathUtils{
-    outputs.dir file("$rootProject.buildDir/mathutils")
+    def outputDir = file("$rootProject.buildDir/mathutils")
+    outputs.dir outputDir
 
     doLast{
+      if( outputDir.exists() ) {
+        // delete existing directory
+        outputDir.deleteDir()
+      }
       Grgit.clone(dir: file("$rootProject.buildDir/mathutils"),
         uri: 'https://gitlab.com/ideasman42/blender-mathutils.git'
       )
