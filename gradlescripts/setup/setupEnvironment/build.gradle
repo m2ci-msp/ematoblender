@@ -35,6 +35,11 @@ if (Os.isFamily(Os.FAMILY_WINDOWS)){ // OS is windows
     doLast{
       def tree = fileTree(rootProject.file('external')).include("blender_mathutils-*.whl")
       if (tree.isEmpty()){
+        // create the external directory if it doesn't already exist
+        def extdir = rootProject.file('external') //file(new File("external"))
+        if (!extdir.exists()){
+          mkdir(extdir)
+        }
         println("\n\n----------------NOTICE-----------------------")
         println("Please manually download an appropriate version of mathutils into ./external")
         println("We recommend blender_mathutils-2.74-cp34-none-win32.whl")
