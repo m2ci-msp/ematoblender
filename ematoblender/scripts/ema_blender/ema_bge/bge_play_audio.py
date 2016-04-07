@@ -38,7 +38,7 @@ def sound_setup(*filepath):
         soundpath = bsh.soundpath
         print('USING STANDARD SOUND FILE', soundpath)
 
-    if os.path.isfile(soundpath):
+    if soundpath is not None and os.path.isfile(soundpath):
 
         factory = aud.Factory(soundpath)
         sound_actuator.sound = factory

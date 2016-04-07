@@ -146,6 +146,8 @@ class GameServer(socketserver.UDPServer):
         # determine the amount of smoothing on streaming dataframes
         self.set_smoothing_n()
 
+        self.last_status = 'INITIALISED'
+
         # start the serve_forever method (used when shown with GUI)
         if serve_in_thread:
             import threading
@@ -241,7 +243,7 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
     wave_name = None
     recording = wr.recording
     stop_recording = wr.stop_recording
-    json_transmission = True
+    json_transmission = pps.transmit_json_to_cpp
 
     def json_transmit(self, dataframe):
         """Pack this dataframe as JSON and send it to the C++ server"""
@@ -256,6 +258,7 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
         """Handle requests sent to the gameserver from Blender."""
 
         self.data = self.request[0].strip()
+        self.server.last_status = self.data
         self.socket = self.request[1]
 
         print("UDP Gameserver received the request:", self.data)

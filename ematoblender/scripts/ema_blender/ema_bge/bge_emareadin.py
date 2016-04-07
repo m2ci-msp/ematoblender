@@ -20,7 +20,7 @@ and does not use threading due to Blender requirements
 import bge         # game engine functionality
 import mathutils
 import time
-import sys, os
+import sys, os, socket
 
 # For I/O with the server
 
@@ -65,22 +65,26 @@ key_pace = 20  # number of logic ticks before registering a second keypress
 
 from queue import deque
 bsh.gs_answers = deque()  # store responses from gameserver (deque to can restrict length if req'd)
-# persistent socket that connects to the gameserver
 
-
+# persistent sockets that connects to the gameserver
+print('Initialising sockets')
 gs_soc_blocking = bn.setup_socket_to_gameserver(blocking=True)
-# create and make a test call to the game server socket
-print('Confirming connection to gameserver...')
-bn.send_to_gameserver(gs_soc_blocking, mode='TEST_ALIVE')
-
-# setup the non-blocking socket
 gs_soc_nonblocking = bn.setup_socket_to_gameserver()
 gs_soc_nonblocking.settimeout(0)
-print('NB socket created', gs_soc_nonblocking)
+
+print('Testing sockets')
+bn.send_to_gameserver(gs_soc_blocking, mode='TEST_ALIVE')
+time.sleep(1)
+reply = bn.recv_from_gameserver(gs_soc_blocking)
+assert reply is not None
+print('Alive reply:', reply, '\n')
 bn.send_to_gameserver(gs_soc_nonblocking, mode='PARAMETERS')
-time.sleep(0.2)
+time.sleep(1)
 paramstring = bn.recv_from_gameserver(gs_soc_nonblocking)
+assert paramstring is not None
 parameters = ET.fromstring(paramstring)
+bn.extract_from_xml(parameters)
+print('Parameters on initialisation:', parameters)
 
 
 def main():
@@ -116,15 +120,26 @@ def setup():
     except TypeError:
         print('One or more cameras ignored due to non-matching name.')
     print('Camera setup completed.')
+
+    # request the parameters
     global parameters
-
+    print('Requesting single DF')
+    bn.send_to_gameserver(gs_soc_nonblocking, mode='SINGLE_DF')
+    time.sleep(1)
     paramstring = bn.recv_from_gameserver(gs_soc_nonblocking)
-    parameters = ET.fromstring(paramstring)
+    print('\n\nData parameters received from GS are:', paramstring)
+    try:
+        parameters = ET.fromstring(paramstring)
+        bn.extract_from_xml(parameters)  # used to update the video and sound file locations in bsh
+    except BlockingIOError as e:
+        print(e)
+    except TypeError as e:
+        print(e, 'Parameter string is not parameters')
 
+    # make some more test calls
     bn.send_to_gameserver(gs_soc_blocking, mode='TEST_ALIVE')
-    time.sleep(0.2)  # wait for game server to reply before making a query
+    time.sleep(1)  # wait for game server to reply before making a query
     reply = bn.simple_recv(gs_soc_blocking)
-
 
     bn.send_to_gameserver(gs_soc_nonblocking, mode='TEST_ALIVE')
     time.sleep(0.2)  # wait for game server to reply before making a query
@@ -135,14 +150,12 @@ def setup():
         print('Gameserver cannot be accessed. Closing game.')
         shutdown(stopgame=True)
 
-    print('Game server started.')
+    print('Game server started and tested.')
 
     # Collect the parameter string from the data being streamed
     bn.send_to_gameserver(gs_soc_blocking, mode='PARAMETERS')
     time.sleep(0.3)  # wait for a server response
     params = bn.recv_from_gameserver(gs_soc_blocking)
-    print('\n\nData parameters received from GS are:', params)
-    bn.extract_from_xml(params) # used to update the video and sound file locations in bsh
 
     # setup video if necessary
 

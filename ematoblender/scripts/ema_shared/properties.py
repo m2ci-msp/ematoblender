@@ -11,6 +11,8 @@ waveserver_host = 'localhost'  # on RUG machine '145.97.132.29' or similar
 cpp_port = 1234
 cpp_host = 'localhost'
 
+transmit_json_to_cpp = True
+
 # if using the server switcher, where is the file list stored?
 mocap_list_of_files = 'data/example_collection.txt'
 

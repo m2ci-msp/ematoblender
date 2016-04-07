@@ -37,7 +37,7 @@ def catch_keypresses(keyboard=bge.logic.keyboard):
     okey = keyboard.events[bge.events.OKEY] == IJA or keyboard.events[bge.events.OKEY] == IA
 
     skey = keyboard.events[bge.events.SKEY] == IJA or keyboard.events[bge.events.SKEY] == IA
-    dkey = keyboard.events[bge.events.DKEY] == IJA or keyboard.events[bge.events.DKEY] == IA
+    dkey = keyboard.events[bge.events.DKEY] == IJA   # for d, only take just activated, one activation per press
     fkey = keyboard.events[bge.events.FKEY] == IJA or keyboard.events[bge.events.FKEY] == IA
     gkey = keyboard.events[bge.events.GKEY] == IJA or keyboard.events[bge.events.GKEY] == IA
     hkey = keyboard.events[bge.events.HKEY] == IJA or keyboard.events[bge.events.HKEY] == IA
