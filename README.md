@@ -11,7 +11,7 @@ Cross-platform installation is easy! Just clone the this repository, and in the 
 
   *   ``./gradlew setup`` if you're using Linux/OSX in the terminal, or
   *   ``gradlew setup`` at the command prompt if you're a Windows user.
-  
+
 Installation has been tested on recent versions of OSX and Ubuntu, as well as Windows 7.
 
 There are several dependencies in this package:
@@ -26,6 +26,14 @@ The installation script will check your versions, and warn you if you need to up
 It will also notify you if certain packages are not installed (such as mathutils) and give you OS-specific advice about
 how to rectify this. Therefore don't be shy about reading the terminal output if the build fails!
 
+For the C++ utilities, you need the additional dependencies:
+
+6. armadillo (http://arma.sourceforge.net/)
+7. Insight Segmentation and Registration Toolkit (http://www.itk.org/)
+8. Asio library (http://think-async.com/)
+
+Right now, these dependencies are not checcked by the gradle script.
+
 
 ## Execution
 The execution of this package is made significantly easier with gradle:
@@ -33,8 +41,8 @@ The execution of this package is made significantly easier with gradle:
 Just run ``gradlew run`` or ``gradle runFromWave`` (remember to add the ``./`` prefix on UNIX)
 to run the static-data streaming system or the WAVE-interfacing system respectively.
 
-Alternatively, Windows users can also use the appropriately-named BAT files in the top directory. 
-To execute these, double-click on the icon, or if there is a problem, right-click and choose ``Run as administrator`` 
+Alternatively, Windows users can also use the appropriately-named BAT files in the top directory.
+To execute these, double-click on the icon, or if there is a problem, right-click and choose ``Run as administrator``
 
 These scripts use gradle to launch the dataserver and gameserver with GUIs enabled.
 
@@ -42,12 +50,12 @@ All that is left is to run Blender (the package's menu should be loaded on start
 as described below.
 
 Alternatively you can run these scripts manually for more control:
-This involves: 
+This involves:
 
 1. Running the static server ``python ematoblender/dataserver.py`` (various CL options)
 1. Running the game server ``python ematoblender/gameserver.py`` (various CL options)
 
-1. If you want to eschew the Blender options, you can load the initial coil positions using the ``run_bpy.py`` script 
+1. If you want to eschew the Blender options, you can load the initial coil positions using the ``run_bpy.py`` script
 in a blend file saved in the repository's root directory. Else just use the menu in Blender.
 
 ## Configuring Blender
@@ -63,7 +71,7 @@ Alternatively you can construct a scene from scratch using the Ematoblender opti
 5. Load the tongue model **TODO**
 6. Load the palate model **TODO **
 
-3. Request some head-corrected data from the gameserver (this will give a rough estimate of where the assets need to be 
+3. Request some head-corrected data from the gameserver (this will give a rough estimate of where the assets need to be
 placed to be controlled by the data. **TODO**
 8. Ensure that you have performed a biteplate recording for head-correction
 7. Adapt the palate model by performing a palate trace. **TODO**
@@ -82,7 +90,7 @@ It has a three-part architecture:
     1.  the Wave native software on port 3030 (search in code for 'localhost' and set to your IP address that is hosting the Wave machine)
     2.  locally, by running `run_rtserver.py` in the terminal with the command line arguments telling it about the datafile and whether to loop. This will run until you kill it.
      Inspect the code for information about how to best enter the command line arguments.
-     Also be aware that the game engine later looks for an audio file to match this data file, so it works best if you give it an absolute path. Audio files should be in the same directory or a sister directory. 
+     Also be aware that the game engine later looks for an audio file to match this data file, so it works best if you give it an absolute path. Audio files should be in the same directory or a sister directory.
 
 2. The game server.
 
@@ -99,9 +107,9 @@ It has a three-part architecture:
     [ONGOING] In the future the game loop should be runnable as a standalone, for now it is only available within Blender proper.
 
     &nbsp;
-    
+
     There are two additional components:
-    
+
     &nbsp;
 
 4. The Blender Scene construction scripts
@@ -111,32 +119,32 @@ It has a three-part architecture:
     3. Append external assets like rigged lips/tongues/palate traces etc, and game menus etc.
     4. Initialise the game server and get one frame of locational information to set an initial position for the coils.
     5. [ONGOING] Scale the assets so they fit the initial data shape and link them to the game's objects.
-    
+
     Also, there is [ONGOING] work to fit these functions into an add-on, so that instead of running the script, this can be done at the click of a button.
-    
+
     &nbsp;
-    
+
 5. Properties and JSON files
     1. The ``scripts.ema_shared.properties.py`` file contains various constants that are accessed from either (or both!) of the Blender game loop or the Blender scene construction routines.
     These generally refer to the names and locations of assets (these names are very important as they the main way of accessing objects in Blender), or of external files that need to be imported/accessed.
     2. The properties file needs access to a JSON file with information about which sensor lies where on the subject.
      The standard file is ``scripts.ema_shared.sensor_info.json`` but you can change this reference if needed (keep the structure the same though!).
-      These help determine which sensors should be updated every tick, or used for head-correction etc. 
-     
-## Directory Structure      
-      
+      These help determine which sensors should be updated every tick, or used for head-correction etc.
+
+## Directory Structure
+
 The directory structure should be fairly self-explanatory:
 
   * The root directory holds most of the gradle files and directories used to run the package.
   * The package content is within the ``ematoblender`` subdirectory.
-  
+
  Within the ``ematoblender/scripts`` directory, the ``startup`` folder holds scripts automatically launched by Blender.
  Other modules are imported as normal. They can be basically separated as follows:
- 
+
  1.  ``ema_io`` handles the real-time server and gameserver's behaviour, ie all of the behaviour that deals with decoding different EMA data formats, representing them as ``DataFrame`` or ``Component`` objects, (un)packing them to/from binary, responding to commands like a WAVE would.
  2.  ``ema_shared`` handles the Blender-wide information, like properties, sensor information, persistent Blender objects, as well as game-server-level bevaviour like head-correction or smoothing.
  3.  ``ema_bge`` contains the main game loop (``bge_emareadin``) and other functionality broken out into theme-based modules.
- 4.  ``ema_bpy`` contains the main building loop (``bpy_emareadin``) and other functionality broken out into theme-based modules. 
+ 4.  ``ema_bpy`` contains the main building loop (``bpy_emareadin``) and other functionality broken out into theme-based modules.
 
 The assets to be imported should (but don't have to) be in the sub-folder ``./blender_objects``, and unless the default directory is changed, ``.tsv`` outputs of the streamed data are written into the ``./output`` folder with their timestamp.
 
@@ -155,8 +163,8 @@ The application was developed on Blender version 2.74/5.
 Blender comes with an installation of Python, but you will require an external installation in order to run the real-time server in the terminal of your choice.
 
 
-In ./scripts/ema_shared/properties you should set the variable ``abspath_to_repo`` with the location of the downloaded repository. This helps Blender find the pre-made assets. 
-At the moment you can build a .blend file on your own, but a pre-built scene are being finalised and will be available online soon! 
+In ./scripts/ema_shared/properties you should set the variable ``abspath_to_repo`` with the location of the downloaded repository. This helps Blender find the pre-made assets.
+At the moment you can build a .blend file on your own, but a pre-built scene are being finalised and will be available online soon!
 
 ## Tests
 
