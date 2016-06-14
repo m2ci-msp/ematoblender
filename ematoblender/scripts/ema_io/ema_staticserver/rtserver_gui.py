@@ -239,6 +239,7 @@ class Application(tk.Frame):
         file_ind = self.listbox.curselection()
         file_name = self.file_list[file_ind[0]]
         if file_name != self.running:
+            self.file_list.pop(file_ind[0])
             self.listbox.delete(file_ind)
             self.collection_changed = True
 
