@@ -1,9 +1,13 @@
-__author__ = 'Kristy'
+__author__ = 'Kristy James'
+__credits__ = 'Alexander Hewer'
 
 """
 GUI for the static RTServer.
 """
 
+
+import json
+import sys
 
 import tkinter as tk
 from tkinter import filedialog as fd
@@ -15,28 +19,12 @@ from ...ema_shared import properties as pps
 
 
 def extract_files_from_collectionpath(abspath):
-    files = []
-    print("Attempting to open the file collection", abspath)
-    if os.path.isfile(abspath):  # open the abspath of the file list
-        with open(abspath, 'r') as f:
-            for line in f:
-                line = line.rstrip('\t\r\n ')  # verbatim filepath
-                # open the filepath relative to the collection
-                colldir = os.path.dirname(abspath)
-                print("Searching for data files relative to where the collection is stored")
-                datapath = os.path.normpath(colldir + './' + line) if not os.path.isabs(line) else line
-                if os.path.isfile(datapath):
-                    files.append(datapath)
-                elif os.path.isfile(line) and line != '':
-                    files.append(os.path.abspath(line))
-                else:
-                    print('Warning: filepath {} cannot be found, and is not shown in the GUI.'.format(line))
-    else:
-        print('Warning - the file list {} could not be found.'.format(abspath))
-        return False
+
+    f = open(abspath, 'r')
+    files = json.load(f)
+    f.close()
 
     return files
-
 
 def main(collection=None):
     """Show the GUI, firstly loading the file list based on the properties file, starting the server."""
@@ -48,8 +36,12 @@ def main(collection=None):
         if collection is None
         else os.getcwd()+os.sep+collection)
     )
-    files = extract_files_from_collectionpath(collectionpath)
-    assert files is not False  # there must be valid files in the collection
+
+    files = []
+    try:
+        files = extract_files_from_collectionpath(collectionpath)
+    except:
+        mb.showinfo("Error", "Can not read file collection file.")
 
     # start the server
     server_thread, server = rts.initialise_server(datafile=files[0], loop=True)
@@ -65,20 +57,20 @@ def main(collection=None):
         try:
             icon = os.path.normpath(__file__ + os.sep + '../../../../images/ti.png')
             root.iconphoto(True, tk.PhotoImage(file=icon))
-            
+
         except FileNotFoundError:
             pass
-            
+
         except:
             icon = os.path.normpath(__file__ + os.sep + '../../../../images/ti.xbm')
             root.iconbitmap('@'+icon)
-        
+
     root.title("Static server file selector, {}".format(server.server_address))
     app = Application(files, server.change_datafile, None, server.change_loop, server, master=root)
     app.setFilelist(files)
-    
+
     root.protocol("WM_DELETE_WINDOW", app.quit_all)
-    
+
     app.mainloop()
 
 
@@ -108,8 +100,8 @@ class Application(tk.Frame):
     def save_list_changes(self):
         """Overwrite the self.collection_path file with the current file list"""
         f = open(self.collection_path, 'w')
-        for p in self.file_list:
-            f.write(p)
+        content = json.dumps(self.file_list, indent=2)
+        f.write(content)
         f.close()
 
     def prompt_overwrite(self):

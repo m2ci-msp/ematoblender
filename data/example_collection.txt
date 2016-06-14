@@ -1,3 +1,5 @@
-./data/Example3.tsv
-./data/Example3.tsv
-./data/Example2.bvh
+[
+  "./data/Example3.tsv",
+  "./data/Example3.tsv",
+  "./data/Example2.bvh"
+]
