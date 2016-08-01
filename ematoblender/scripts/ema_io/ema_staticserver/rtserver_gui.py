@@ -230,9 +230,11 @@ class Application(tk.Frame):
     def add_to_list(self):
         """Opens a dialog to select a file, adds the absolute filepath to the list."""
         new_fn = fd.askopenfilename()
-        self.listbox.insert(tk.END, new_fn)
-        self.file_list.append(new_fn)
-        self.collection_changed = True
+        # only add files that have a name
+        if new_fn != '':
+            self.listbox.insert(tk.END, new_fn)
+            self.file_list.append(new_fn)
+            self.collection_changed = True
 
     def remove_from_list(self):
         """Remove the selected filename from the list."""
