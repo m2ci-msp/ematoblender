@@ -15,15 +15,15 @@ class ModelReconstructor:
         self.modelSpace = ModelSpace(modelData)
         self.convert = ModelConvert(modelData)
 
-    def get_mean(self):
+    def get_shape_space_origin(self):
 
         result = []
 
-        for i in range(0, self.modelData.dimTarget // 3):
+        for i in range(0, self.modelData.dimVertex // 3):
 
-            x = self.modelData.mean[i*3 + 0]
-            y = self.modelData.mean[i*3 + 1]
-            z = self.modelData.mean[i*3 + 2]
+            x = self.modelData.shapeSpaceOrigin[i*3 + 0]
+            y = self.modelData.shapeSpaceOrigin[i*3 + 1]
+            z = self.modelData.shapeSpaceOrigin[i*3 + 2]
             position = mathutils.Vector()
             position[0] = x
             position[1] = y
@@ -44,7 +44,7 @@ class ModelReconstructor:
 
         result = []
 
-        for i in range(0, self.modelData.dimTarget // 3):
+        for i in range(0, self.modelData.dimVertex // 3):
 
             x = target[i*3 + 0]
             y = target[i*3 + 1]
@@ -59,6 +59,6 @@ class ModelReconstructor:
 
     def __reconstruct_target_from_weights(self, weights):
 
-        identity = self.modelSpace.identity(weights.idWeights)
-        result = identity.dot(weights.expWeights) + self.modelData.mean
+        speaker = self.modelSpace.speaker(weights.speakerWeights)
+        result = speaker.dot(weights.phonemeWeights) + self.modelData.shapeSpaceOrigin
         return result

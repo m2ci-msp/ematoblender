@@ -45,15 +45,15 @@ class GameMeshBinding:
     #
     # parameters:
     #
-    # - idWeights: weights affecting the identity
-    # - expWeights: weights affecting the expression
+    # - speakerWeights: weights affecting the speaker anatomy
+    # - phonemeWeights: weights affecting the phoneme related shape
     #
-    def update_for_weights(self, idWeights, expWeights):
+    def update_for_weights(self, speakerWeights, phonemeWeights):
 
         # compute new vertex positions
         weights = ModelWeights()
-        weights.idWeights = numpy.array(idWeights)
-        weights.expWeights = numpy.array(expWeights)
+        weights.speakerWeights = numpy.array(speakerWeights)
+        weights.phonemeWeights = numpy.array(phonemeWeights)
         newPositions = self.__reconstructor.reconstruct_from_weights(weights)
 
         # update game mesh using the new positions
@@ -67,7 +67,7 @@ class GameMeshBinding:
     def __build_lookup_table(self):
 
         # get model vertices
-        originalVertices = self.__reconstructor.get_mean()
+        originalVertices = self.__reconstructor.get_shape_space_origin()
 
         # build kd-tree
         kd = mathutils.kdtree.KDTree(len(originalVertices))

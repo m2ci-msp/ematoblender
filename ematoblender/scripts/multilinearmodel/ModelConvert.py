@@ -11,27 +11,27 @@ class ModelConvert:
     def __init__(self, modelData):
 
         self.modelData = modelData
-        self.scaleFactorIdentity = sqrt(modelData.dimIdentity)
-        self.scaleFactorExpression = sqrt(modelData.dimExpression)
+        self.scaleFactorSpeaker = sqrt(modelData.dimSpeaker)
+        self.scaleFactorPhoneme = sqrt(modelData.dimPhoneme)
 
     def to_weights(self, weights):
 
         result = ModelWeights()
-        result.idWeights  = weights.idWeights / self.scaleFactorIdentity
-        result.idWeights += self.modelData.identityCenter
+        result.speakerWeights  = weights.speakerWeights / self.scaleFactorSpeaker
+        result.speakerWeights += self.modelData.speakerMeanWeights
 
-        result.expWeights  = weights.expWeights / self.scaleFactorExpression
-        result.expWeights += self.modelData.expressionCenter
+        result.phonemeWeights  = weights.phonemeWeights / self.scaleFactorPhoneme
+        result.phonemeWeights += self.modelData.phonemeMeanWeights
 
         return result
 
     def to_variations(self, weights):
 
         result = ModelWeights()
-        result.idWeights -= self.modelData.identityCenter
-        result.idWeights  = weights.idWeights * self.scaleFactorIdentity
+        result.speakerWeights -= self.modelData.speakerMeanWeights
+        result.speakerWeights  = weights.speakerWeights * self.scaleFactorSpeaker
 
-        result.expWeights -= self.modelData.expressionCenter
-        result.expWeights  = weights.expWeights * self.scaleFactorExpression
+        result.phonemeWeights -= self.modelData.phonemeMeanWeights
+        result.phonemeWeights  = weights.phonemeWeights * self.scaleFactorPhoneme
 
         return result

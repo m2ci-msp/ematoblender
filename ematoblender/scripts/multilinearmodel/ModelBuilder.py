@@ -17,12 +17,12 @@ class ModelBuilder:
         with open(modelFile) as inputFile:
             rawModel = json.load(inputFile)
 
-        self.modelData.dimTarget = rawModel['ModeDimensions'][0]
-        self.modelData.dimIdentity = rawModel['ModeDimensions'][1]
-        self.modelData.dimExpression = rawModel['ModeDimensions'][2]
+        self.modelData.dimVertex = rawModel['Dimensions']['VertexMode']
+        self.modelData.dimSpeaker = rawModel['Dimensions']['SpeakerMode']
+        self.modelData.dimPhoneme = rawModel['Dimensions']['PhonemeMode']
 
-        self.modelData.model = numpy.array(rawModel['MultilinearModel'])
-        self.modelData.mean = numpy.array(rawModel['Mean'])
-        self.modelData.identityCenter = numpy.array(rawModel['ModeMean'][0:self.modelData.dimIdentity])
-        self.modelData.expressionCenter = numpy.array(rawModel['ModeMean'][self.modelData.dimIdentity:])
+        self.modelData.coreTensor = numpy.array(rawModel['CoreTensor'])
+        self.modelData.shapeSpaceOrigin = numpy.array(rawModel['ShapeSpace']['Origin'])
+        self.modelData.speakerMeanWeights = numpy.array(rawModel['MeanWeights']['SpeakerMode'])
+        self.modelData.phonemeMeanWeights = numpy.array(rawModel['MeanWeights']['PhonemeMode'])
         return self.modelData

@@ -5,5 +5,5 @@ class ModelWeights:
 
     def __init__(self):
 
-        self.idWeights = None
-        self.expWeights = None
+        self.speakerWeights = None
+        self.phonemeWeights = None

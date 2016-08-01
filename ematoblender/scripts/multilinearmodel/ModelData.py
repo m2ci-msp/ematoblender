@@ -6,10 +6,10 @@ class ModelData:
 
     def __init__(self):
 
-        self.model = None
-        self.mean  = None
-        self.identityCenter = None
-        self.expressionCenter = None
-        self.dimIdentity = 0
-        self.dimExpression = 0
-        self.dimTarget = 0
+        self.coreTensor = None
+        self.shapeSpaceOrigin  = None
+        self.speakerMeanWeights = None
+        self.phonemeMeanWeights = None
+        self.dimSpeaker = 0
+        self.dimPhoneme = 0
+        self.dimVertex = 0

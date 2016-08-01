@@ -9,33 +9,33 @@ class ModelSpace:
 
     def __init__(self, modelData):
 
-        self.__modelIdentity = []
+        self.__modelSpeaker = []
         self.modelData = modelData
-        self.__generate_model_identity()
+        self.__generate_model_speaker()
 
-    def identity(self, idWeights):
+    def speaker(self, speakerWeights):
 
-        result = numpy.zeros(shape=(self.modelData.dimTarget, self.modelData.dimExpression))
+        result = numpy.zeros(shape=(self.modelData.dimVertex, self.modelData.dimPhoneme))
 
-        for i_id in range(0, self.modelData.dimIdentity):
-            result += idWeights[i_id] * self.__modelIdentity[i_id]
+        for i_speaker in range(0, self.modelData.dimSpeaker):
+            result += speakerWeights[i_speaker] * self.__modelSpeaker[i_speaker]
 
         return result
 
-    def __generate_model_identity(self):
+    def __generate_model_speaker(self):
 
-        for i_identity in range(0, self.modelData.dimIdentity):
+        for i_speaker in range(0, self.modelData.dimSpeaker):
 
-            tmp = numpy.zeros(shape=(self.modelData.dimTarget, self.modelData.dimExpression))
+            tmp = numpy.zeros(shape=(self.modelData.dimVertex, self.modelData.dimPhoneme))
 
-            for i_expression in range(0, self.modelData.dimExpression):
+            for i_phoneme in range(0, self.modelData.dimPhoneme):
 
-                for i_target in range(0, self.modelData.dimTarget):
+                for i_vertex in range(0, self.modelData.dimVertex):
 
-                    index = i_target +\
-                            i_identity * self.modelData.dimTarget +\
-                            i_expression * self.modelData.dimTarget * self.modelData.dimIdentity
+                    index = i_speaker * self.modelData.dimPhoneme * self.modelData.dimVertex +\
+                            i_phoneme * self.modelData.dimVertex +\
+                            i_vertex
 
-                    tmp[i_target, i_expression] = self.modelData.model[index]
+                    tmp[i_vertex, i_phoneme] = self.modelData.coreTensor[index]
 
-            self.__modelIdentity.append(tmp)
+            self.__modelSpeaker.append(tmp)
