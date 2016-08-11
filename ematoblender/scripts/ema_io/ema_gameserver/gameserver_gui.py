@@ -6,6 +6,7 @@ from tkinter import ttk
 from tkinter import filedialog as fd
 
 from .gameserver import GameServer, MyUDPHandler
+from .GameServerSettings import GameServerSettings
 from . import rtclient as rtc
 from ...ema_shared import properties as pps
 
@@ -13,15 +14,16 @@ from ...ema_shared import properties as pps
 def main(args=None):
     # start the server
     global server
-    server = GameServer(pps.game_server_cl_args if args is None else args,
-                        serve_in_thread=True)
+    server = GameServer(serve_in_thread=True)
+#    server = GameServer(pps.game_server_cl_args if args is None else args,
+#                        serve_in_thread=True)
     print('Server will now serve forever.')
 
     # start the GUI
     root = tk.Tk()
     root.geometry("900x500")
     root.title("Ematoblender Gameserver {}".format(server.server_address))
-    
+
     if os.name == 'nt': # windows icon
         icon = os.path.normpath(__file__ + os.sep + '../../../../images/ti.ico')
         root.iconbitmap(icon)
@@ -29,10 +31,10 @@ def main(args=None):
         try:
             icon = os.path.normpath(__file__ + os.sep + '../../../../images/ti.png')
             root.iconphoto(True, tk.PhotoImage(file=icon))
-            
+
         except FileNotFoundError:
             pass
-            
+
         except:
             icon = os.path.normpath(__file__ + os.sep + '../../../../images/ti.xbm')
             root.iconbitmap('@'+icon)
@@ -97,20 +99,20 @@ class Application(tk.Frame):
     def eval_smoothing(self, *args):
         """Convert the output of the smoothing options section into something that can be used in GS."""
         print('Key or button pressed in smoothing frame.')
-        self.servobj.cla.smoothframes, self.servobj.cla.smoothms = None, None
+        GameServerSettings.smoothFrames, GameServerSettings.smoothMs = None, None
 
         if self.smooth_by.get() == 1: # smooth by ms
             self.msentry.config(state=tk.NORMAL)
             self.frameentry.config(state=tk.DISABLED)
             if self.msentry.get().isnumeric():
-                self.servobj.cla.smoothframes = self.servobj.n_frames_smoothed(ms=float(self.msentry.get()))
+                GameServerSettings.smoothFrames = self.servobj.n_frames_smoothed(ms=float(self.msentry.get()))
             else:  # entry is not numeric
                 self.msentry.delete(0, tk.END) # delete any non-numeric things
         else: # smooth by frames
             self.msentry.config(state=tk.DISABLED)
             self.frameentry.config(state=tk.NORMAL)
             if self.frameentry.get().isdigit(): # must be an integer
-                self.servobj.cla.smoothframes = self.servobj.n_frames_smoothed(frames=int(self.frameentry.get()))
+                GameServerSettings.smoothFrames = self.servobj.n_frames_smoothed(frames=int(self.frameentry.get()))
             else:
                 self.frameentry.delete(0, tk.END)
 
@@ -181,22 +183,22 @@ and passes them into Blender (or any other application that requests them).'''
 
         def set_tsvdir():
             self.tsvfilelocation.set(fd.askdirectory())
-            self.servobj.cla.printdir = self.tsvfilelocation.get()
+            GameServerSettings.receivedDataOutputDir = self.tsvfilelocation.get()
 
         def set_wavdir():
             self.wavfilelocation.set(fd.askdirectory())
-            self.servobj.cla.wavdir = self.wavfilelocation.get()
+            GameServerSettings.waveDir = self.wavfilelocation.get()
 
         def set_tsvbtn():
             self.tsvbtn.config(state=tk.ACTIVE if self.savetsv.get() else tk.DISABLED)
             self.tsvlab.config(state=tk.ACTIVE if self.savetsv.get() else tk.DISABLED)
             self.servobj.repl.print_tsv = self.savetsv.get()
-            self.servobj.cla.print = self.savetsv.get()
+            GameServerSettings.saveReceivedData = self.savetsv.get()
 
         def set_wavbtn():
             self.wavbtn.config(state=tk.ACTIVE if self.savewav.get() else tk.DISABLED)
             self.wavlab.config(state=tk.ACTIVE if self.savewav.get() else tk.DISABLED)
-            self.servobj.cla.wav = self.savewav.get()
+            GameServerSettings.outputWave = self.savewav.get()
 
         tk.Label(saveframe, text="Save received TSV").grid(row=1, column=1, sticky=tk.W)
         btn = tk.Checkbutton(saveframe, variable=self.savetsv, command=set_tsvbtn)
@@ -219,7 +221,7 @@ and passes them into Blender (or any other application that requests them).'''
 
         self.savetsv.set(False)
         self.savewav.set(False)
-        self.servobj.cla.print, self.servobj.cla.wav = self.savetsv.get(), self.savewav.get()
+        GameServerSettings.saveReceivedData, GameServerSettings.outputWave = self.savetsv.get(), self.savewav.get()
 
         # TODO: Choose which audio input
 
