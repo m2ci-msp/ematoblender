@@ -14,6 +14,9 @@ from ...ema_shared import properties as pps
 def main(args=None):
     # start the server
     global server
+    GameServerSettings.port = pps.gameserver_port
+    GameServerSettings.host = pps.gameserver_host
+
     server = GameServer(serve_in_thread=True)
 #    server = GameServer(pps.game_server_cl_args if args is None else args,
 #                        serve_in_thread=True)

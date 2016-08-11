@@ -3,22 +3,22 @@ __email__ = "hewer@coli.uni-saarland.de"
 
 class ActionBuilder:
 
-    def fit(self, coilPositions, timeStamp):
+    def build_fit_action(self, coilPositions, timeStamp):
 
         action = self.__base_action("FIT")
         action["points"] = coilPositions
         action["timeStamp"] = timeStamp
         return action
 
-    def fix_speaker(self):
+    def build_fix_speaker_action(self):
 
         return self.__base_action("FIX_SPEAKER")
 
-    def reset(self):
+    def build_reset_action(self):
 
         return self.__base_action("RESET")
 
-    def set_model_indices(self, indices):
+    def build_set_model_indices_action(self, indices):
 
         action = self.__base_action("SET_MODEL_INDICES")
         action["indices"] = indices

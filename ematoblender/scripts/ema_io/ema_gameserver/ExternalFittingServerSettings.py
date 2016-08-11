@@ -1,7 +1,7 @@
 class ExternalFittingServerSettings:
 
     host = "localhost"
-    port = "1234"
+    port = 1234
 
     neededAmountForFixedSpeaker = 100
 

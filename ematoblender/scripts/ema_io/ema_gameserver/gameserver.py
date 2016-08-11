@@ -305,7 +305,7 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
             data_to_send = b'NO DATA REQUESTED.'
 
         # head-correct the data to be sent
-        if type(data_to_send) == DataFrame and settings.useHeadcorrection:
+        if type(data_to_send) == DataFrame and settings.useHeadCorrection:
             print('performing head-correction on this dataframe with', self.server.headcorrection.biteplane)
             print('performing head correction on this df', data_to_send)
             data_to_send, self.server.last_cam_trans, self.server.cam_pos = dm.head_corr_bp_correct(data_to_send,
