@@ -1,0 +1,30 @@
+{
+    "externalFittingServerSettings":
+    {
+        "coilCorrespondences":
+        {
+            "coilPositionNames": ["Back", "Center", "Right", "Tip", "Left"],
+            "coilIndices": [14, 8, 15, 10, 9],
+            "modelVertexIndices": [1991, 2230, 2236, 2549, 2687]
+        },
+        "host": "localhost",
+        "neededAmountForFixedSpeaker": 100,
+        "port": 1234
+    },
+    "gameServerSettings":
+    {
+        "useHeadCorrection": false,
+        "smoothing":
+        {
+            "mode": "milliseconds", "value": 10
+        },
+        "host": "localhost",
+        "outputWave": false,
+        "waveDir": null,
+        "port": "9995",
+        "outputReceivedData": false,
+        "receivedDataOutputDir": null,
+        "rtcHost": "localhost",
+        "rtcPort": 9995
+    }
+}
