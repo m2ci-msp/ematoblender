@@ -10,12 +10,12 @@ class GameServerSettings:
     port = 1111
 
     rtcHost = "localhost"
-    rtcPort = 9999
+    rtcPort = 9995
 
     outputWave = False
-    waveDir = None
+    waveOutputDir = None
 
-    saveReceivedData = False
+    outputReceivedData = False
     receivedDataOutputDir = None
 
     smoothMs = 20

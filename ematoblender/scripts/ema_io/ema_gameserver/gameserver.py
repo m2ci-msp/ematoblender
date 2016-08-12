@@ -181,11 +181,11 @@ class GameServer(socketserver.UDPServer):
         timestring = time.strftime('%Y%m%d-%H.%M.%S')
 
         if settings.outputWave:
-            self.wave_name = self.output_prefix(settings.waveDir) + timestring +'.wav'
+            self.wave_name = self.output_prefix(settings.waveOutputDir) + timestring +'.wav'
             # get the latest audio sample number to this value:
             self.repl.wave_sampnum_deque = wr.start_sound_recording(self.wave_name) # give the wave sample id deque to the client
 
-        if settings.saveReceivedData:
+        if settings.outputReceivedData:
             self.tsv_name = self.output_prefix(settings.receivedDataOutputDir + timestring + '.tsv')
             print('tsv goes here:', self.tsv_name)
             self.repl.starting_timestamp=None
