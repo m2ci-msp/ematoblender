@@ -7,6 +7,7 @@ from tkinter import filedialog as fd
 
 from .gameserver import GameServer, MyUDPHandler
 from .GameServerSettings import GameServerSettings
+from .SettingsReader import SettingsReader
 from . import rtclient as rtc
 from ...ema_shared import properties as pps
 
@@ -54,11 +55,6 @@ def main(args=None):
 def on_closing(r, a):
     a.quit()
     r.destroy()
-
-
-def example_command():
-    print('weeee!!!')
-
 
 class Application(tk.Frame):
     """ GUI class for the gameserver application. """
@@ -126,8 +122,9 @@ class Application(tk.Frame):
         filemenu = tk.Menu(menubar, tearoff=0)
 
         # create the filemenu
-        filemenu.add_command(label="Clear Cache", command=example_command)
-        filemenu.add_command(label="Pause Sending/Receiving", command=example_command)
+        filemenu.add_command(label="Open project", command=self.open_project)
+#        filemenu.add_command(label="Clear Cache", command=example_command)
+#        filemenu.add_command(label="Pause Sending/Receiving", command=example_command)
         filemenu.add_separator()
         filemenu.add_command(label="Exit", command=self.quit)
         menubar.add_cascade(label="File", menu=filemenu)
@@ -136,13 +133,13 @@ class Application(tk.Frame):
         editmenu = tk.Menu(menubar, tearoff=0)
         editmenu.add_command(label="Show/Hide Networking", command=self.toggle_networking_display)
         editmenu.add_separator()
-        editmenu.add_command(label="User Preferences", command=example_command)
+#        editmenu.add_command(label="User Preferences", command=example_command)
         menubar.add_cascade(label="Edit", menu=editmenu)
 
         # create the Help menu
         helpmenu = tk.Menu(menubar, tearoff=0)
-        helpmenu.add_command(label="Go to documentation", command=example_command)
-        helpmenu.add_command(label="About", command=example_command)
+#        helpmenu.add_command(label="Go to documentation", command=example_command)
+#        helpmenu.add_command(label="About", command=example_command)
         menubar.add_cascade(label="Help", menu=helpmenu)
 
         self.root.config(menu=menubar)
@@ -433,6 +430,18 @@ and passes them into Blender (or any other application that requests them).'''
             self.servobj.gs_start_streaming()
             self.streamtext.set("Stop streaming")
             self.streaming = True
+
+    def open_project(self):
+
+        options = {}
+        options['defaultextension'] = '.json'
+        options['filetypes'] = [('JSON files', '.json')]
+        fn = fd.askopenfilename(**options)
+
+        if fn != "":
+
+            SettingsReader.read_from(fn)
+
 
 
 
