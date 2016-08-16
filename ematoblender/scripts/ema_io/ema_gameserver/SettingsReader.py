@@ -5,6 +5,7 @@ import json
 
 from .GameServerSettings import GameServerSettings
 from .ExternalFittingServerSettings import ExternalFittingServerSettings
+from .CoilSettings import CoilSettings
 
 class SettingsReader:
 
@@ -15,26 +16,14 @@ class SettingsReader:
 
         __class__.set_game_server_settings(settingsDictionary["gameServerSettings"])
         __class__.set_external_fitting_server_settings(settingsDictionary["externalFittingServerSettings"])
-
+        __class__.set_coil_settings(settingsDictionary["coilSettings"])
 
     def set_game_server_settings(settings):
 
-        GameServerSettings.useHeadCorrection = settings["useHeadCorrection"]
         GameServerSettings.host = settings["host"]
         GameServerSettings.port = settings["port"]
         GameServerSettings.rtcHost = settings["rtcHost"]
         GameServerSettings.rtcPort = settings["rtcPort"]
-
-        smoothing = settings["smoothing"]
-        if smoothing["mode"] == "milliseconds":
-
-            GameServerSettings.smoothMs = smoothing["value"]
-            GameServerSettings.smoothFrames = None
-
-        else:
-
-            GameServerSettings.smoothMs = None
-            GameServerSettings.smoothFrames = smoothing["value"]
 
     def set_external_fitting_server_settings(settings):
 
@@ -47,3 +36,8 @@ class SettingsReader:
         ExternalFittingServerSettings.modelVertexIndices = coilCorrespondences["modelVertexIndices"]
         ExternalFittingServerSettings.coilPositionNames = coilCorrespondences["coilPositionNames"]
         ExternalFittingServerSettings.coilIndices = coilCorrespondences["coilIndices"]
+
+    def set_coil_settings(settings):
+
+        CoilSettings.coils = settings
+        CoilSettings.save()

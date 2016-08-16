@@ -1,10 +1,29 @@
 {
+    "coilSettings":
+    {
+        "tongueCenter": 8,
+        "tongueLeft": 9,
+        "tip": 10,
+        "tongueBack": 14,
+        "tongueRight": 15,
+        "bitePlateLeft": 12,
+        "bitePlateRight": 13,
+        "bitePlateFront": 11,
+        "referenceLeft": 1,
+        "referenceRight": 2,
+        "referenceFront": 3,
+        "referenceOrigin": 4,
+        "upperLip": 0,
+        "upperIncisors": 10,
+        "lowerIncicors": 11
+    }
+    ,
     "externalFittingServerSettings":
     {
         "coilCorrespondences":
         {
-            "coilPositionNames": ["Back", "Center", "Right", "Tip", "Left"],
             "coilIndices": [14, 8, 15, 10, 9],
+            "coilPositionNames": ["TongueBack", "TongueCenter", "TongueRight", "TongueTip", "TongueLeft"],
             "modelVertexIndices": [1991, 2230, 2236, 2549, 2687]
         },
         "host": "localhost",
@@ -13,17 +32,8 @@
     },
     "gameServerSettings":
     {
-        "useHeadCorrection": false,
-        "smoothing":
-        {
-            "mode": "milliseconds", "value": 10
-        },
         "host": "localhost",
-        "outputWave": false,
-        "waveDir": null,
         "port": "9995",
-        "outputReceivedData": false,
-        "receivedDataOutputDir": null,
         "rtcHost": "localhost",
         "rtcPort": 9995
     }
