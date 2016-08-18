@@ -4,7 +4,7 @@ __email__   = "hewer@coli.uni-saarland.de"
 
 class GameServerSettings:
 
-    useHeadCorrection = False
+    useHeadCorrection = True
 
     host = "localhost"
     port = 1111
@@ -20,3 +20,5 @@ class GameServerSettings:
 
     smoothMs = 20
     smoothFrames = 4
+
+    bitePlateFrontIsBack = False

@@ -11,6 +11,8 @@ from ..rtc3d_parser import DataFrame
 from ...ema_shared import properties as pps
 from ...ema_blender import coil_info as ci
 
+from .GameServerSettings import GameServerSettings as settings
+
 
 class HeadCorrector(object):
     """Container class for various bite-plane and reference plane objs
@@ -18,34 +20,34 @@ class HeadCorrector(object):
     Recording head-corrector objects from a TSV
     Recording head-corrector objects from live data
     Pickling the objects etc.
-    
+
     self.load handles the acquisition of the data
     self.save handles saving the data
     """
     recordsecs = 10
-    
+
     def __init__(self):
-            
+
         self.biteplane = NotImplemented
         self.refplane = NotImplemented # coordinate system around reference sensors in global space
         self.inputmode = NotImplemented
-        
+
         self.active_indices = NotImplemented
         self.reference_indices = NotImplemented
         self.biteplate_indices = NotImplemented
-        
+
         self.get_coil_role_indices()
-        
+
     # todo: given dataframe, headcorrect only
-    
+
     # todo: given dataframe, biteplate correct only
-    
+
     # todo: given dataframe, biteplate and headcorrect
-    
+
     def get_coil_role_indices(self):
         self.active_indices, self.biteplate_indices, self.reference_indices = \
         ci.get_sensor_indices_by_role()
-    
+
     def load_from_tsv_file(self, tsv_name):
         tsv_name = os.path.normpath(os.getcwd() + os.sep + tsv_name) \
         if not os.path.isabs(tsv_name) else tsv_name
@@ -64,24 +66,24 @@ class HeadCorrector(object):
         else:
             print('The TSV file could not be loaded')
             raise FileNotFoundError(tsv_name)
-            
+
     def load_live(self, serverobj, seconds=5):
         """Using the server object, """
         response = self.inform_recording_start()
-        
+
         # if response is to abort:
         if not response == 1:
             print("Live streaming aborted.")
-        
+
         # if streaming ready, stream biteplate recording for 5 seconds
         else:
             dfs = self.record_for_seconds(serverobj, secs=self.__class__.recordsecs if seconds is None else seconds)
             av = self.process_frames_pre_calc(dfs)
             self.calc_COBs_from_df(av)
-            
+
             self.inform_recording_end()
             self.save_changes_of_base()
-            
+
     @staticmethod
     def inform_recording_start():
         """launch a dialog on Windows to pause until biteplate-recording is ready"""
@@ -95,10 +97,10 @@ class HeadCorrector(object):
         else:
             ready = 1
         return ready
-        
+
     @staticmethod
     def inform_recording_end():
-        """TODO: Inform the user about the recordings, 
+        """TODO: Inform the user about the recordings,
         instruct them to prepare the tongue sensors.
         """
         print('NOW PREPARE FOR NORMAL STREAMING')
@@ -107,19 +109,19 @@ class HeadCorrector(object):
             notification = ctypes.windll.user32.MessageBoxA(0,
             b"Set up your wave/server for streaming of active sensor data",
             b"Biteplate recording finished", 0)
-        
-        
+
+
     def record_for_seconds(self, gameserverobj, secs=None):
         """Ask the gameserverobj to stream secs of data.
         If secs==None, then the time value from the pps file is used.
         """
         gameserverobj.repl._stop_b = True  # stop the normal behaviour of the data queue
-            
-        print('About to stream utilising the replies queue:', 
+
+        print('About to stream utilising the replies queue:',
         gameserverobj.repl._b.is_alive())
 
         # start streaming, get either secs or (in properties) defined seconds of streaming data
-        gameserverobj.gs_start_streaming()      
+        gameserverobj.gs_start_streaming()
         print('started streaming')
         time.sleep(pps.head_correction_time if secs is None else secs)
 
@@ -134,15 +136,15 @@ class HeadCorrector(object):
         while not gameserverobj.repl._q34.empty():
             streamed_df = DataFrame(rawdf=gameserverobj.repl._q34.get()[2])
             all_streamed.append(streamed_df)
-            
+
         # reset internal settings
         gameserverobj.repl.latest_df = None
         gameserverobj.repl.last_x_dfs.clear()
         gameserverobj.repl._stop_b = False  # restart the normal behaviour of streamed data
-        
+
         #print('\n\nstreamed data looks like', all_streamed[:1])
         return all_streamed # a list of dataframe objects streamed
-            
+
     def process_frames_pre_calc(self, list_of_dfs):
         """Remove the first and last ms of the list
         Then remove outliers from the list
@@ -156,7 +158,7 @@ class HeadCorrector(object):
         print("averaguing", DataFrame(fromlist=no_outliers))
 
         return DataFrame(fromlist=no_outliers)
-    
+
     def load_pickled_from_file(self, pickledfile):
         """If available, unpickle biteplate reps from these locations."""
         if os.path.isfile(pickledfile):
@@ -175,41 +177,46 @@ class HeadCorrector(object):
         outputfp = os.path.normpath(__file__ + os.sep + \
                    "../../../../.." + os.sep + \
                    pps.headcorrection_cs_location + os.sep + outputfn)
-        
+
         if not os.path.exists(os.path.dirname(outputfp)):
             os.makedirs(os.path.dirname(outputfp))
-        
+
         print('Saving changes of base to file:', outputfp)
         pickle.dump(self.__dict__, open(outputfp, 'wb'))
-        
+
     def give_bp_rs(self):
         """Return the biteplane obj and the refplane object"""
         return self.biteplane, self.refplane
-        
+
     def __str__(self):
         return 'correcting matrices are\n'+ \
         str(self.refplane.give_local_to_global_mat()) + "\n" + \
         str(self.biteplane.give_global_to_local_mat())
-                
+
     def calc_COBs_from_df(self, df):
         """Calculate the changes of base off one average dataframe"""
-        
+
         # isolate the coil objects
         refcoils = [df.give_coils()[i] for i in self.reference_indices]
         bpcoils = [df.give_coils()[i] for i in self.biteplate_indices]
-        
-        lind, rind, find = [ci.find_sensor_index(n) for n in ['BP1', 'BP2', 'BP3']]  #todo: check order
-        
+
+        bitePlateLeft, bitePlateRight, bitePlateFront = [ci.find_sensor_index(n) for n in ['BPL', 'BPR', 'BPF']]  #todo: check order
+        referenceLeft, referenceRight, referenceFront = [ci.find_sensor_index(n) for n in ['MR', 'ML', 'FT']]  #todo: check order
+
         # create a coordinate-system based on reference sensors (fully-defined here)
-        self.refplane = ReferencePlane(*[x.abs_loc for x in refcoils[:3]])
+        self.refplane = ReferencePlane(*[df.give_coils()[x].abs_loc for x in [referenceLeft, referenceRight, referenceFront]])
 
         # transform the bpcoils into the FOR of the refplane
         for c in bpcoils:
-            c.ref_loc = self.refplane.project_to_lcs(c.abs_loc)  
-            
-        # create an origin-less biteplane FOR in reference space
-        self.biteplane = BitePlane(*[df.give_coils()[x].ref_loc for x in [lind, rind, find]])
+            c.ref_loc = self.refplane.project_to_lcs(c.abs_loc)
 
+
+
+        bitePlateLeftPos, bitePlateRightPos, bitePlateFrontPos = [df.give_coils()[x].ref_loc for x in [bitePlateLeft, bitePlateRight, bitePlateFront]]
+
+        # create an origin-less biteplane FOR in reference space
+#        self.biteplane = BitePlane(*[df.give_coils()[x].ref_loc for x in [bitePlateLeft, bitePlateRight, bitePlateFront]])
+        self.biteplane = BitePlane(bitePlateLeftPos, bitePlateRightPos, bitePlateFrontPos, settings.bitePlateFrontIsBack)
 
 class BitePlane(object):
     """Use biteplate coordinates to construct a local coordinate system centered around an origin.
@@ -240,7 +247,7 @@ class BitePlane(object):
                 dict[k] = mathutils.Vector(v)
         self.__dict__ = dict
 
-    def __init__(self, leftcoords, rightcoords, frontcoords):
+    def __init__(self, leftcoords, rightcoords, frontcoords, frontIsBack=False):
         """Collect the coil positions.
         Leftcoords/Rightcoords are on the left/right respectively from the experimenter's perspective,
         ie for the subject dexter/sinister."""
@@ -257,12 +264,38 @@ class BitePlane(object):
         self.z_axis = mathutils.Vector()
 
         self.transform_mat = None
+        self.frontIsBack = frontIsBack
 
         self.compute_local_cs()
+
+    def compute_origin(self):
+
+        self.origin = ( self.left_coil + self.right_coil + self.front_coil ) / 3
+
+    def compute_rotation(self):
+
+        leftToRight = self.right_coil - self.left_coil
+        leftToFront = self.front_coil - self.left_coil
+
+        self.x_axis = leftToRight
+        self.x_axis.normalize()
+        self.y_axis = mathutils.Vector.cross(leftToFront, self.x_axis)
+        self.y_axis.normalize()
+        self.z_axis = mathutils.Vector.cross(self.x_axis, self.y_axis)
+        self.z_axis.normalize()
+        if self.frontIsBack == True:
+            self.z_axis = - self.z_axis
+
+
 
     def compute_local_cs(self):
         """Compute the axes of the local coordinate system in the global coordinate system."""
 
+        self.compute_origin()
+        self.compute_rotation()
+
+
+        '''
         # compute vectors based on the sensor locations
         right_to_left  = self.right_coil - self.left_coil
 
@@ -286,6 +319,7 @@ class BitePlane(object):
 
         # set the origin as the centre of the biteplate
         self.origin = lr_midpoint
+        '''
         self.ui_origin = False
 
     def set_origin(self, ui_loc):

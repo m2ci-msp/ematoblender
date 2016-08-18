@@ -441,6 +441,9 @@ and passes them into Blender (or any other application that requests them).'''
         if fn != "":
 
             SettingsReader.read_from(fn)
+            self.servobj.init_headcorrection()
+            self.servobj.externalServer.reset()
+            self.servobj.externalServer.set_model_vertex_indices()
 
 
 

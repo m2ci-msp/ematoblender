@@ -75,8 +75,9 @@ def head_corr_bp_correct(df, biteplate_refspace, headpos_refspace):
     print('refcoils', refcoils)
     print('active', active)
     from .biteplate_headcorr import ReferencePlane
-    current_rs = ReferencePlane(*[x.abs_loc for x in refcoils[:3]]) # todo: this could be a source of error - are these the correct coils?
 
+    referenceLeft, referenceRight, referenceFront = [ci.find_sensor_index(n) for n in ['MR', 'ML', 'FT']]
+    current_rs = ReferencePlane(*[df.give_coils()[x].abs_loc for x in [referenceLeft, referenceRight, referenceFront]])
 
     if not hasattr(biteplate_refspace, 'ui_origin'):  # ON FIRST ACTIVE SENSOR READING
         print('\n\n\n This is the first reading of the active sensors.')

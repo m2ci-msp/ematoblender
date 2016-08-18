@@ -117,10 +117,6 @@ class GameServer(socketserver.UDPServer):
         # external fitting server
         self.externalServer = ExternalFittingServer()
 
-        # store headcorrection matrices
-        self.headcorrection = HeadCorrector()
-        print('Initial headcorrection status is', settings.useHeadCorrection)
-
         self.last_cam_trans = None  # storage needed for handler
         self.cam_pos = None
 
@@ -142,6 +138,12 @@ class GameServer(socketserver.UDPServer):
             import threading
             self.serve_thread = threading.Thread(target=self.serve_forever)
             self.serve_thread.start()
+
+    def init_headcorrection(self):
+        # store headcorrection matrices
+        self.headcorrection = HeadCorrector()
+        print('Initial headcorrection status is', settings.useHeadCorrection)
+
 
 
     def set_smoothing_n(self, n=None):
@@ -309,8 +311,7 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
             print('performing head-correction on this dataframe with', self.server.headcorrection.biteplane)
             print('performing head correction on this df', data_to_send)
             data_to_send, self.server.last_cam_trans, self.server.cam_pos = dm.head_corr_bp_correct(data_to_send,
-             self.server.headcorrection.biteplane,
-            self.server.headcorrection.refplane)
+             self.server.headcorrection.biteplane, self.server.headcorrection.refplane)
             print('Applying head-correction')
 
         # fit data frame in external fitting server
