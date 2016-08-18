@@ -47,7 +47,7 @@ class ExternalFittingServer:
     def set_model_vertex_indices(self):
 
         self.send(
-            self.actionBuilder.build_set_model_vertex_indices_action(
+            self.actionBuilder.build_set_model_indices_action(
                 settings.modelVertexIndices)
         )
 
