@@ -56,10 +56,10 @@ class CoilSettings:
         elif id == "referenceOrigin":
             return "REF"
         elif id == "bitePlateFront":
-            return "BP1"
+            return "BPF"
         elif id == "bitePlateLeft":
-            return "BP2"
+            return "BPL"
         elif id == "bitePlateRight":
-            return "BP3"
+            return "BPR"
         else:
             return id
