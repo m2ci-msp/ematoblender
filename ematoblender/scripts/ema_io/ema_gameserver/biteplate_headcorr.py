@@ -216,7 +216,7 @@ class HeadCorrector(object):
 
         # create an origin-less biteplane FOR in reference space
 #        self.biteplane = BitePlane(*[df.give_coils()[x].ref_loc for x in [bitePlateLeft, bitePlateRight, bitePlateFront]])
-        self.biteplane = BitePlane(bitePlateLeftPos, bitePlateRightPos, bitePlateFrontPos, settings.bitePlateFrontIsBack)
+        self.biteplane = BitePlane(bitePlateLeftPos, bitePlateRightPos, bitePlateFrontPos, settings.bitePlateFrontIsBack, True)
 
 class BitePlane(object):
     """Use biteplate coordinates to construct a local coordinate system centered around an origin.
@@ -247,7 +247,7 @@ class BitePlane(object):
                 dict[k] = mathutils.Vector(v)
         self.__dict__ = dict
 
-    def __init__(self, leftcoords, rightcoords, frontcoords, frontIsBack=False):
+    def __init__(self, leftcoords, rightcoords, frontcoords, frontIsBack=False, adaptAxes=False):
         """Collect the coil positions.
         Leftcoords/Rightcoords are on the left/right respectively from the experimenter's perspective,
         ie for the subject dexter/sinister."""
@@ -265,6 +265,7 @@ class BitePlane(object):
 
         self.transform_mat = None
         self.frontIsBack = frontIsBack
+        self.adaptAxes = adaptAxes
 
         self.compute_local_cs()
 
@@ -277,14 +278,26 @@ class BitePlane(object):
         leftToRight = self.right_coil - self.left_coil
         leftToFront = self.front_coil - self.left_coil
 
+        # if front coil was attached to back -> reverse direction
+        if self.frontIsBack == True:
+            leftToFront = - leftToFront
+
         self.x_axis = leftToRight
         self.x_axis.normalize()
         self.y_axis = mathutils.Vector.cross(leftToFront, self.x_axis)
         self.y_axis.normalize()
         self.z_axis = mathutils.Vector.cross(self.x_axis, self.y_axis)
         self.z_axis.normalize()
-        if self.frontIsBack == True:
-            self.z_axis = - self.z_axis
+
+        # modify axes to match avatar
+        if self.adaptAxes == True:
+            xBackup = self.x_axis
+            yBackup = self.y_axis
+            zBackup = self.z_axis
+
+            self.z_axis = - yBackup
+            self.y_axis = - zBackup
+            self.x_axis = - xBackup
 
 
 
