@@ -32,6 +32,7 @@ from .biteplate_headcorr import HeadCorrector
 from .tongue_model import TongueModel
 from .ExternalFittingServer import ExternalFittingServer
 from .GameServerSettings import GameServerSettings as settings
+from .ReferencePointBuilder import ReferencePointBuilder
 
 # global properties, coil definitions
 from ...ema_shared import properties as pps
@@ -142,6 +143,8 @@ class GameServer(socketserver.UDPServer):
     def init_headcorrection(self):
         # store headcorrection matrices
         self.headcorrection = HeadCorrector()
+        self.referencePointBuilder = ReferencePointBuilder(self.headcorrection)
+
         print('Initial headcorrection status is', settings.useHeadCorrection)
 
 

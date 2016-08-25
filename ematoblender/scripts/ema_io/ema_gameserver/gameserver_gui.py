@@ -368,6 +368,33 @@ and passes them into Blender (or any other application that requests them).'''
         c = tk.Radiobutton(corrframe, text="Record live", variable=self.hcmethod, value=3, command=show_hcmethod)
         c.grid(row=4, column=1, sticky=tk.W)
 
+        def record_refpoint():
+            self.ref_live_status.set('RECORDING')
+            self.ref_live_status_lbl.update()
+
+            secs = int(self.refsecentry.get())
+            self.servobj.referencePointBuilder.load_live(self.servobj, seconds=secs)
+            self.ref_live_status.set('COMPLETE')
+
+        referenceFrame = tk.Frame(self.rightframe, relief='groove', bd=2)
+        referenceFrame.pack(side=tk.TOP, fill=tk.X, expand=False)
+        lbl = tk.Label(referenceFrame, text='Record reference point:', justify=tk.LEFT) # todo - add checkbox to switch on/off
+        lbl.grid(row=1, column=1, columnspan=1, sticky=tk.W)
+
+        btn= tk.Button(referenceFrame, text='Start streaming', command=record_refpoint)
+        btn.grid(row=2, column=1, sticky=tk.W)
+        lbl = tk.Label(referenceFrame, text='Secs:')
+        lbl.grid(row=2, column=2, columnspan=3)
+
+        self.refsecentry = tk.Entry(referenceFrame, width=4, text="2")
+        self.refsecentry.grid(row=2, column=4)
+
+        self.ref_live_status = tk.StringVar()
+        self.ref_live_status_lbl = tk.Label(referenceFrame, textvariable=self.ref_live_status)
+        self.ref_live_status_lbl.grid(row=3, column=1, columnspan=3)
+
+
+
 #        lbl = tk.Label(corrframe, text='Axis swap options:')
 #        lbl.grid(row=4, column=1, columnspan=3, sticky=tk.W)
 #        self.reflect_x, self.reflect_y, self.reflect_z = tk.BooleanVar(), tk.BooleanVar(), tk.BooleanVar()

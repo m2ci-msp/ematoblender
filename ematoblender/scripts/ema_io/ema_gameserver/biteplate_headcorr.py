@@ -1,4 +1,4 @@
-__author__ = 'Kristy'
+__author__ = 'Kristy James, Alexander Hewer'
 
 # my code based on Alexander Hewer's
 import mathutils
@@ -258,6 +258,8 @@ class BitePlane(object):
         self.front_coil = mathutils.Vector(frontcoords)
 
         self.origin = mathutils.Vector()
+        self.shiftedOrigin = mathutils.Vector()
+
 
         self.x_axis = mathutils.Vector()
         self.y_axis = mathutils.Vector()
@@ -333,7 +335,7 @@ class BitePlane(object):
         return mathutils.Vector((shifted_position * self.x_axis,
                                  shifted_position * self.y_axis,
                                  shifted_position * self.z_axis
-                                ))
+                                )) - self.shiftedOrigin
 
     def project_to_global(self, local_loc):
         """Take coordinates in this local coordinate system, return the coordinates in the global system."""
