@@ -147,7 +147,7 @@ class Application(tk.Frame):
     def createTopFrame(self):
         """Put widgets in the top frame"""
         self.topframe = tk.Frame(self.root, relief='raised', bd=2)
-        self.topframe.pack(side=tk.TOP, fill=tk.X, expand=True)
+        self.topframe.pack(side=tk.TOP, fill=tk.X, expand=False)
         lbl = tk.Label(self.topframe,justify=tk.LEFT,
                        text='''This gameserver is the control centre for the Ematoblender package.
 It controls when data is requested from the data server, manipulates these data,
@@ -228,7 +228,7 @@ and passes them into Blender (or any other application that requests them).'''
 
         # manual server calls
         callsframe = tk.Frame(self.leftframe, relief='groove', bd=2)
-        callsframe.pack(fill=tk.X, expand=True)
+        callsframe.pack(fill=tk.X, expand=False)
         self.allow_man_calls = tk.BooleanVar()
         manallow = tk.Checkbutton(callsframe, text="Allow manual calls to the data server",
                                   variable=self.allow_man_calls,
@@ -246,8 +246,8 @@ and passes them into Blender (or any other application that requests them).'''
         manbtn3.grid(row=2, column=3)
         self.manual_buttons = [manbtn1, manbtn2, manbtn3]
 
-        self.nt_in = NetworkTrafficFrame(self.leftframe)
-        self.nt_in.pack()
+#        self.nt_in = NetworkTrafficFrame(self.leftframe)
+#        self.nt_in.pack()
 
     def createRightFrame(self):
         """Put widgets in the right frame"""
@@ -258,7 +258,7 @@ and passes them into Blender (or any other application that requests them).'''
 
         # options for data smoothing/delay
         smoothframe = tk.Frame(self.rightframe, relief='groove', bd=2)
-        smoothframe.pack(fill=tk.X, expand=True)
+        smoothframe.pack(fill=tk.X, expand=False)
         lbl = tk.Label(smoothframe, text='Apply rolling average by:') # todo - ensure is really applied
         lbl.grid(row=1, column=1, columnspan=4, sticky=tk.W)
         self.smooth_by = tk.IntVar()
@@ -321,75 +321,75 @@ and passes them into Blender (or any other application that requests them).'''
                 self.live_status.set('COMPLETE')
 
         corrframe = tk.Frame(self.rightframe, relief='groove', bd=2)
-        corrframe.pack(side=tk.TOP, fill=tk.X)
+        corrframe.pack(side=tk.TOP, fill=tk.X, expand=False)
         self.hcmethod = tk.IntVar()
 
         self.hc_fn = tk.StringVar()
 
         hc1frame = tk.Frame(corrframe)
-        hc1frame.grid(row=3, column=1)
+        hc1frame.grid(row=5, column=1)
         btn= tk.Button(hc1frame, text='Choose file', command=choose_file_and_load_hc)
-        btn.grid(row=1, column=1)
+        btn.grid(row=5, column=2, sticky=tk.W)
         lbl = tk.Label(hc1frame, textvariable=self.hc_fn)
-        lbl.grid(row=1, column=4, columnspan=3)
+        lbl.grid(row=5, column=4, columnspan=3)
         hc1frame.grid_remove()
 
         hc2frame = tk.Frame(corrframe)
-        hc2frame.grid(row=3, column=1)
+        hc2frame.grid(row=5, column=1)
         btn= tk.Button(hc2frame, text='Choose file', command=choose_file_and_load_hc)
         lbl = tk.Label(hc2frame, textvariable=self.hc_fn)
-        lbl.grid(row=1, column=4, columnspan=3)
-        btn.grid(row=3, column=1)
+        lbl.grid(row=5, column=4, columnspan=3)
+        btn.grid(row=5, column=1, sticky=tk.W)
 
         hc2frame.grid_remove()
 
         hc3frame = tk.Frame(corrframe)
-        hc3frame.grid(row=3, column=1)
+        hc3frame.grid(row=5, column=1)
         btn= tk.Button(hc3frame, text='Start streaming', command=record_hcmethod)
-        btn.grid(row=3, column=2)
+        btn.grid(row=5, column=1, sticky=tk.W)
         lbl = tk.Label(hc3frame, text='Secs:')
-        lbl.grid(row=3, column=4, columnspan=3)
+        lbl.grid(row=5, column=3, columnspan=3)
 
-        self.secentry = tk.Entry(hc3frame, width=4,)
-        self.secentry.grid(row=3, column=7)
+        self.secentry = tk.Entry(hc3frame, width=4, text="2")
+        self.secentry.grid(row=5, column=4)
         self.live_status = tk.StringVar()
         self.live_status_lbl = tk.Label(hc3frame, textvariable=self.live_status)
-        self.live_status_lbl.grid(row=3, column=8, columnspan=3)
+        self.live_status_lbl.grid(row=6, column=1, columnspan=3)
 
         hc3frame.grid_remove()
 
 
-        lbl = tk.Label(corrframe, text='Head-correction options:') # todo - add checkbox to switch on/off
-        lbl.grid(row=1, column=1, columnspan=3, sticky=tk.W)
-        c = tk.Radiobutton(corrframe, text="Pre-calculated", variable=self.hcmethod, value=1, command=show_hcmethod)
-        c.grid(row=2, column=1)
-        c = tk.Radiobutton(corrframe, text="Calculate from TSV file", variable=self.hcmethod, value=2, command=show_hcmethod)
-        c.grid(row=2, column=2)
+        lbl = tk.Label(corrframe, text='Head-correction options:', justify=tk.LEFT) # todo - add checkbox to switch on/off
+        lbl.grid(row=1, column=1, columnspan=1, sticky=tk.W)
+        c = tk.Radiobutton(corrframe, text="Pre-calculated", variable=self.hcmethod, value=1, command=show_hcmethod, justify=tk.LEFT)
+        c.grid(row=2, column=1, sticky=tk.W)
+        c = tk.Radiobutton(corrframe, text="Calculate from TSV file", variable=self.hcmethod, value=2, command=show_hcmethod, justify=tk.LEFT)
+        c.grid(row=3, column=1, sticky=tk.W)
         c = tk.Radiobutton(corrframe, text="Record live", variable=self.hcmethod, value=3, command=show_hcmethod)
-        c.grid(row=2, column=3)
+        c.grid(row=4, column=1, sticky=tk.W)
 
-        lbl = tk.Label(corrframe, text='Axis swap options:')
-        lbl.grid(row=4, column=1, columnspan=3, sticky=tk.W)
-        self.reflect_x, self.reflect_y, self.reflect_z = tk.BooleanVar(), tk.BooleanVar(), tk.BooleanVar()
-        check = tk.Checkbutton(corrframe, text='X', variable=self.reflect_x)
-        check.grid(row=5, column=1, sticky=tk.W)
-        check = tk.Checkbutton(corrframe, text='Y', variable=self.reflect_y)
-        check.grid(row=6, column=1, sticky=tk.W)
-        check = tk.Checkbutton(corrframe, text='Z', variable=self.reflect_z)
-        check.grid(row=7, column=1, sticky=tk.W)
-
-        lbl = tk.Label(corrframe, text='Axis order options:')
-        lbl.grid(row=4, column=3, columnspan=3, sticky=tk.W)
-        self.axis_order = tk.IntVar()
-        rad = tk.Radiobutton(corrframe, text='XYZ', variable=self.axis_order, value='XYZ')
-        rad.grid(row=5, column=3, sticky=tk.W)
-        rad = tk.Radiobutton(corrframe, text='YXZ', variable=self.axis_order, value='YXZ')
-        rad.grid(row=6, column=3, sticky=tk.W)
-        rad = tk.Radiobutton(corrframe, text='XZY', variable=self.axis_order, value='XZY')
-        rad.grid(row=7, column=3, sticky=tk.W)
-
-        lbl = tk.Label(corrframe, text='Order: Left-right, Back-front, Up-down')
-        lbl.grid(row=9, column=3, columnspan=3, sticky=tk.W)
+#        lbl = tk.Label(corrframe, text='Axis swap options:')
+#        lbl.grid(row=4, column=1, columnspan=3, sticky=tk.W)
+#        self.reflect_x, self.reflect_y, self.reflect_z = tk.BooleanVar(), tk.BooleanVar(), tk.BooleanVar()
+#        check = tk.Checkbutton(corrframe, text='X', variable=self.reflect_x)
+#        check.grid(row=5, column=1, sticky=tk.W)
+#        check = tk.Checkbutton(corrframe, text='Y', variable=self.reflect_y)
+#        check.grid(row=6, column=1, sticky=tk.W)
+#        check = tk.Checkbutton(corrframe, text='Z', variable=self.reflect_z)
+#        check.grid(row=7, column=1, sticky=tk.W)
+#
+#        lbl = tk.Label(corrframe, text='Axis order options:')
+#        lbl.grid(row=4, column=3, columnspan=3, sticky=tk.W)
+#        self.axis_order = tk.IntVar()
+#        rad = tk.Radiobutton(corrframe, text='XYZ', variable=self.axis_order, value='XYZ')
+#        rad.grid(row=5, column=3, sticky=tk.W)
+#        rad = tk.Radiobutton(corrframe, text='YXZ', variable=self.axis_order, value='YXZ')
+#        rad.grid(row=6, column=3, sticky=tk.W)
+#        rad = tk.Radiobutton(corrframe, text='XZY', variable=self.axis_order, value='XZY')
+#        rad.grid(row=7, column=3, sticky=tk.W)
+#
+#        lbl = tk.Label(corrframe, text='Order: Left-right, Back-front, Up-down')
+#        lbl.grid(row=9, column=3, columnspan=3, sticky=tk.W)
 
 
 
@@ -403,8 +403,8 @@ and passes them into Blender (or any other application that requests them).'''
         # SHOW orientation
 
 
-        self.nt_out = NetworkTrafficFrame(self.rightframe)
-        self.nt_out.pack(expand=False)
+#        self.nt_out = NetworkTrafficFrame(self.rightframe)
+#        self.nt_out.pack(expand=False)
 
     def createStatusLabel(self):
         """Put a label with some configurable text along the bottom"""
