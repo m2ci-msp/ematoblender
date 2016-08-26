@@ -21,7 +21,11 @@ class CoilSettings:
             entry["active"] = True
             entry["reference"] = "reference" in key
             entry["biteplate"] = "bitePlate" in key
-            jsonData[str(value)] = entry
+
+            if str(value) not in jsonData:
+                jsonData[str(value)] = []
+
+            jsonData[str(value)].append(entry)
 
         output = open("ematoblender/scripts/ema_shared/" + pps.json_loc, 'w')
         json.dump(jsonData, output)

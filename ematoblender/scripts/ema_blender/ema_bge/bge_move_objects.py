@@ -32,8 +32,8 @@ def bge_update_from_df(scene_objs, df, showall=True):
         new_location = getattr(ema_coil, 'bp_corr_loc', getattr(ema_coil, 'abs_loc', None))
 
         #print('transform', mathutils.Vector(ci.find_transform_by_index(ci)))
-        cubeobj.worldPosition = mathutils.Vector(new_location)\
-                       + mathutils.Vector(find_transform_by_index(ci))
+        cubeobj.worldPosition = mathutils.Vector(new_location)#\
+#                       + mathutils.Vector(find_transform_by_index(ci))
 
         # TODO: Currently using uncorrected rotation values for the moment
         cubeobj.worldOrientation = mathutils.Vector(ema_coil.abs_rot)
