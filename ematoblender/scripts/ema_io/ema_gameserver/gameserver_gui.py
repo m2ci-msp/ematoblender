@@ -350,7 +350,7 @@ and passes them into Blender (or any other application that requests them).'''
         lbl = tk.Label(hc3frame, text='Secs:')
         lbl.grid(row=5, column=3, columnspan=3)
 
-        self.secentry = tk.Entry(hc3frame, width=4, text="2")
+        self.secentry = tk.Entry(hc3frame, width=4)
         self.secentry.grid(row=5, column=4)
         self.live_status = tk.StringVar()
         self.live_status_lbl = tk.Label(hc3frame, textvariable=self.live_status)
@@ -386,7 +386,7 @@ and passes them into Blender (or any other application that requests them).'''
         lbl = tk.Label(referenceFrame, text='Secs:')
         lbl.grid(row=2, column=2, columnspan=3)
 
-        self.refsecentry = tk.Entry(referenceFrame, width=4, text="2")
+        self.refsecentry = tk.Entry(referenceFrame, width=4)
         self.refsecentry.grid(row=2, column=4)
 
         self.ref_live_status = tk.StringVar()
