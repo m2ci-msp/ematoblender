@@ -54,6 +54,15 @@ class ExternalFittingServer:
 
     #--------------------------------------------------------------------------#
 
+    def set_settings(self):
+
+        self.send(
+            self.actionBuilder.build_set_settings_action(
+                settings.weights, settings.priorSize)
+        )
+
+    #--------------------------------------------------------------------------#
+
     def send(self, dataToBeSent):
 
         self.socket.sendto(bytes(json.dumps(dataToBeSent), "utf-8"),

@@ -24,6 +24,15 @@ class ActionBuilder:
         action["indices"] = indices
         return action
 
+    def build_set_settings_action(self, weights, priorSize):
+
+        action = self.__base_action("SET_SETTINGS")
+        action["speakerSmoothnessTerm"] = weights["speakerSmoothnessTerm"]
+        action["phonemeSmoothnessTerm"] = weights["phonemeSmoothnessTerm"]
+        action["priorSize"] = priorSize
+
+        return action
+
     def __base_action(self, id):
 
         action = {}
