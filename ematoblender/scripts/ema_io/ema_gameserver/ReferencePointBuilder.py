@@ -34,4 +34,5 @@ class ReferencePointBuilder:
         dm.head_corr_bp_correct(df, self.headCorrector.biteplane, self.headCorrector.refplane)
 
         # get reference coil and set shifted origin in biteplane
-        self.headCorrector.biteplane.shiftedOrigin =  df.give_coils()[ci.find_sensor_index('REF')].ref_loc
+        self.headCorrector.biteplane.shiftedOrigin =  mathutils.Vector((df.give_coils()[ci.find_sensor_index('REF')].bp_corr_loc))
+        print(self.headCorrector.biteplane.shiftedOrigin)
