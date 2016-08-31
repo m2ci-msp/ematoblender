@@ -7,6 +7,7 @@ import json
 
 from .ActionBuilder import ActionBuilder
 from .ExternalFittingServerSettings import ExternalFittingServerSettings as settings
+from .GameServerSettings import GameServerSettings as gameSettings
 
 class ExternalFittingServer:
 
@@ -69,7 +70,10 @@ class ExternalFittingServer:
         coilObjects = [dataFrame.components[0].coils[i] for i in settings.coilIndices]
 
         # now get the actual coil positions
-        coilPositions = [position for coil in coilObjects for position in coil.abs_loc]
+        if gameSettings.useHeadCorrection == False:
+            coilPositions = [position for coil in coilObjects for position in coil.abs_loc]
+        else:
+            coilPositions = [position for coil in coilObjects for position in coil.bp_corr_loc]
 
         return coilPositions
 
