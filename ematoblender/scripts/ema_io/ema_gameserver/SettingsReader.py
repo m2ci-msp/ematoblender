@@ -25,6 +25,7 @@ class SettingsReader:
         GameServerSettings.rtcHost = settings["rtcHost"]
         GameServerSettings.rtcPort = settings["rtcPort"]
         GameServerSettings.bitePlateFrontIsBack = settings["bitePlateFrontIsBack"]
+        GameServerSettings.useHeadCorrection = settings["useHeadCorrection"]
 
     def set_external_fitting_server_settings(settings):
 
