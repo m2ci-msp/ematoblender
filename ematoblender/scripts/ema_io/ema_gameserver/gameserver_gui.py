@@ -1,7 +1,9 @@
-__author__ = 'Kristy'
+__author__ = 'Kristy James'
+__credits__ = "Alexander Hewer"
 
 import os
 import tkinter as tk
+import time
 from tkinter import ttk
 from tkinter import filedialog as fd
 
@@ -470,6 +472,12 @@ and passes them into Blender (or any other application that requests them).'''
             SettingsReader.read_from(fn)
             self.servobj.init_headcorrection()
             self.servobj.externalServer.reset()
+            # wait a  little bit for the commands to reach the
+            # server
+            time.sleep(0.5)
+            self.servobj.externalServer.set_settings()
+
+            time.sleep(0.5)
             self.servobj.externalServer.set_model_vertex_indices()
 
 
