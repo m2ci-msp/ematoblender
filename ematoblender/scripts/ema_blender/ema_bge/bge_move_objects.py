@@ -4,7 +4,7 @@ import mathutils
 from .bge_menus_overlays import bge_update_overlay_status_decorator
 from ..blender_networking import send_to_gameserver, recv_from_gameserver
 from ..blender_shared_objects import ema_active_meshes
-from ..coil_info import find_transform_by_index
+# from ..coil_info import find_transform_by_index
 from .. import  blender_shared_objects as bsh
 from ..coord_transforms import PointsTransformationMatrix
 from .. import coord_transforms as ct
