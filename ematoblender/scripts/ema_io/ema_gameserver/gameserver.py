@@ -29,6 +29,7 @@ import xml.etree.ElementTree as et
 from . import wave_recording as wr
 from . import data_manipulation as dm
 from .biteplate_headcorr import HeadCorrector
+from .biteplate_headcorr import BitePlane
 from .tongue_model import TongueModel
 from .ExternalFittingServer import ExternalFittingServer
 from .GameServerSettings import GameServerSettings as settings
@@ -144,6 +145,19 @@ class GameServer(socketserver.UDPServer):
         # store headcorrection matrices
         self.headcorrection = HeadCorrector()
         self.referencePointBuilder = ReferencePointBuilder(self.headcorrection)
+
+        self.headcorrection.biteplane = BitePlane()
+        self.headcorrection.biteplane.set_origin(settings.bitePlane["origin"])
+
+        self.headcorrection.biteplane.set_axes(
+            tuple(settings.bitePlane["xAxis"]),
+            tuple(settings.bitePlane["yAxis"]),
+            tuple(settings.bitePlane["zAxis"])
+        )
+
+        self.headcorrection.biteplane.set_shifted_origin(
+            tuple(settings.bitePlane["shiftedOrigin"])
+            )
 
         print('Initial headcorrection status is', settings.useHeadCorrection)
 

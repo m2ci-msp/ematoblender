@@ -4,7 +4,7 @@ __email__   = "hewer@coli.uni-saarland.de"
 
 class GameServerSettings:
 
-    useHeadCorrection = True
+    useHeadCorrection = False
 
     host = "localhost"
     port = 1111
@@ -22,3 +22,11 @@ class GameServerSettings:
     smoothFrames = 4
 
     bitePlateFrontIsBack = False
+
+    bitePlane = {
+        "xAxis" : [1, 0, 0],
+        "yAxis" : [0, 1, 0],
+        "zAxis" : [0, 0, 1],
+        "origin" : [0, 0, 0],
+        "shiftedOrigin" : [0, 0, 0]
+    }

@@ -28,8 +28,8 @@ class HeadCorrector(object):
 
     def __init__(self):
 
-        self.biteplane = NotImplemented
-        self.refplane = NotImplemented # coordinate system around reference sensors in global space
+        self.biteplane = BitePlane() # NotImplemented
+        self.refplane = ReferencePlane() # NotImplemented # coordinate system around reference sensors in global space
         self.inputmode = NotImplemented
 
         self.active_indices = NotImplemented
@@ -204,7 +204,8 @@ class HeadCorrector(object):
         referenceLeft, referenceRight, referenceFront = [ci.find_sensor_index(n) for n in ['MR', 'ML', 'FT']]  #todo: check order
 
         # create a coordinate-system based on reference sensors (fully-defined here)
-        self.refplane = ReferencePlane(*[df.give_coils()[x].abs_loc for x in [referenceLeft, referenceRight, referenceFront]])
+        self.refplane = ReferencePlane()
+        self.refplane.build(*[df.give_coils()[x].abs_loc for x in [referenceLeft, referenceRight, referenceFront]])
 
         # transform the bpcoils into the FOR of the refplane
         for c in bpcoils:
@@ -216,7 +217,8 @@ class HeadCorrector(object):
 
         # create an origin-less biteplane FOR in reference space
 #        self.biteplane = BitePlane(*[df.give_coils()[x].ref_loc for x in [bitePlateLeft, bitePlateRight, bitePlateFront]])
-        self.biteplane = BitePlane(bitePlateLeftPos, bitePlateRightPos, bitePlateFrontPos, settings.bitePlateFrontIsBack)
+        self.biteplane = BitePlane()
+        self.biteplane.build(bitePlateLeftPos, bitePlateRightPos, bitePlateFrontPos, settings.bitePlateFrontIsBack)
 
 class BitePlane(object):
     """Use biteplate coordinates to construct a local coordinate system centered around an origin.
@@ -247,7 +249,17 @@ class BitePlane(object):
                 dict[k] = mathutils.Vector(v)
         self.__dict__ = dict
 
-    def __init__(self, leftcoords, rightcoords, frontcoords, frontIsBack=False):
+    def __init__(self):
+
+        self.x_axis = mathutils.Vector((1, 0, 0))
+        self.y_axis = mathutils.Vector((0, 1, 0))
+        self.z_axis = mathutils.Vector((0, 0, 1))
+
+        self.origin = mathutils.Vector()
+        self.shiftedOrigin = mathutils.Vector()
+
+
+    def build(self, leftcoords, rightcoords, frontcoords, frontIsBack=False):
         """Collect the coil positions.
         Leftcoords/Rightcoords are on the left/right respectively from the experimenter's perspective,
         ie for the subject dexter/sinister."""
@@ -256,14 +268,6 @@ class BitePlane(object):
         self.left_coil = mathutils.Vector(leftcoords)
         self.right_coil = mathutils.Vector(rightcoords)
         self.front_coil = mathutils.Vector(frontcoords)
-
-        self.origin = mathutils.Vector()
-        self.shiftedOrigin = mathutils.Vector()
-
-
-        self.x_axis = mathutils.Vector()
-        self.y_axis = mathutils.Vector()
-        self.z_axis = mathutils.Vector()
 
         self.transform_mat = None
         self.frontIsBack = frontIsBack
@@ -326,8 +330,18 @@ class BitePlane(object):
 
     def set_origin(self, ui_loc):
         """Set the origin to the upper-incisor location in global space."""
-        self.origin = ui_loc
+        self.origin = mathutils.Vector((ui_loc))
         self.ui_origin = True
+
+    def set_axes(self, xAxis, yAxis, zAxis):
+
+        self.x_axis = mathutils.Vector((xAxis))
+        self.y_axis = mathutils.Vector((yAxis))
+        self.z_axis = mathutils.Vector((zAxis))
+
+    def set_shifted_origin(self, shiftedOrigin):
+
+        self.shiftedOrigin = mathutils.Vector((shiftedOrigin))
 
     def project_to_lcs(self, global_loc):
         """Return the coordinates in the current coordinate system."""
@@ -378,9 +392,12 @@ class ReferencePlane(BitePlane):
     """Class describing a coordinate system from the head-sensors in the
     space of either global coords or biteplate-corrected coords, depending on input given."""
 
-    def __init__(self, leftcoords, rightcoords, frontcoords):
+    def __init__(self):
+        super().__init__()
+
+    def build(self, leftcoords, rightcoords, frontcoords):
         print('Initialising a reference plane object')
-        super().__init__(leftcoords, rightcoords, frontcoords)
+        super().build(leftcoords, rightcoords, frontcoords)
         super().set_origin((mathutils.Vector(frontcoords) +
                             mathutils.Vector(rightcoords) +
                             mathutils.Vector(leftcoords)) / 3)  # make the origin of the referenceplane system the centre
