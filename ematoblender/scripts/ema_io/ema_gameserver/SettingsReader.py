@@ -27,6 +27,9 @@ class SettingsReader:
         GameServerSettings.bitePlateFrontIsBack = settings["bitePlateFrontIsBack"]
         GameServerSettings.useHeadCorrection = settings["useHeadCorrection"]
 
+        if settings["useHeadCorrection"]:
+            GameServerSettings.bitePlane = settings["bitePlane"]
+
     def set_external_fitting_server_settings(settings):
 
         ExternalFittingServerSettings.host = settings["host"]
@@ -38,6 +41,10 @@ class SettingsReader:
         ExternalFittingServerSettings.modelVertexIndices = coilCorrespondences["modelVertexIndices"]
         ExternalFittingServerSettings.coilPositionNames = coilCorrespondences["coilPositionNames"]
         ExternalFittingServerSettings.coilIndices = coilCorrespondences["coilIndices"]
+
+        ExternalFittingServerSettings.weights = settings["weights"]
+        ExternalFittingServerSettings.priorSize = settings["priorSize"]
+
 
     def set_coil_settings(settings):
 
