@@ -10,6 +10,7 @@ from tkinter import filedialog as fd
 from .gameserver import GameServer, MyUDPHandler
 from .GameServerSettings import GameServerSettings
 from .SettingsReader import SettingsReader
+from .SettingsWriter import SettingsWriter
 from . import rtclient as rtc
 from ...ema_shared import properties as pps
 
@@ -125,6 +126,7 @@ class Application(tk.Frame):
 
         # create the filemenu
         filemenu.add_command(label="Open project", command=self.open_project)
+        filemenu.add_command(label="Save project", command=self.save_project)
 #        filemenu.add_command(label="Clear Cache", command=example_command)
 #        filemenu.add_command(label="Pause Sending/Receiving", command=example_command)
         filemenu.add_separator()
@@ -320,6 +322,12 @@ and passes them into Blender (or any other application that requests them).'''
                 self.live_status_lbl.update()
 
                 self.servobj.headcorrection.load_live(self.servobj, seconds=secs)
+
+                GameServerSettings.bitePlane["origin"] = tuple(self.servobj.headcorrection.biteplane.origin)
+                GameServerSettings.bitePlane["xAxis"] = tuple(self.servobj.headcorrection.biteplane.x_axis)
+                GameServerSettings.bitePlane["yAxis"] = tuple(self.servobj.headcorrection.biteplane.y_axis)
+                GameServerSettings.bitePlane["zAxis"] = tuple(self.servobj.headcorrection.biteplane.z_axis)
+
                 self.live_status.set('COMPLETE')
 
         corrframe = tk.Frame(self.rightframe, relief='groove', bd=2)
@@ -376,6 +384,7 @@ and passes them into Blender (or any other application that requests them).'''
 
             secs = int(self.refsecentry.get())
             self.servobj.referencePointBuilder.load_live(self.servobj, seconds=secs)
+            GameServerSettings.bitePlane["shiftedOrigin"] = tuple(self.servobj.headcorrection.biteplane.shiftedOrigin)
             self.ref_live_status.set('COMPLETE')
 
         referenceFrame = tk.Frame(self.rightframe, relief='groove', bd=2)
@@ -470,7 +479,9 @@ and passes them into Blender (or any other application that requests them).'''
         if fn != "":
 
             SettingsReader.read_from(fn)
-            self.servobj.init_headcorrection()
+            if GameServerSettings.useHeadCorrection:
+                self.servobj.init_headcorrection()
+
             self.servobj.externalServer.reset()
             # wait a  little bit for the commands to reach the
             # server
@@ -480,8 +491,16 @@ and passes them into Blender (or any other application that requests them).'''
             time.sleep(0.5)
             self.servobj.externalServer.set_model_vertex_indices()
 
+    def save_project(self):
 
+        options = {}
+        options['defaultextension'] = '.json'
+        options['filetypes'] = [('JSON files', '.json')]
+        fn = fd.asksaveasfilename(**options)
 
+        if fn != "":
+
+            SettingsWriter.write_to(fn)
 
 
 class NetworkTrafficFrame(tk.Frame):
