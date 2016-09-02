@@ -181,8 +181,8 @@ class HeadCorrector(object):
         if not os.path.exists(os.path.dirname(outputfp)):
             os.makedirs(os.path.dirname(outputfp))
 
-        print('Saving changes of base to file:', outputfp)
-        pickle.dump(self.__dict__, open(outputfp, 'wb'))
+#        print('Saving changes of base to file:', outputfp)
+#        pickle.dump(self.__dict__, open(outputfp, 'wb'))
 
     def give_bp_rs(self):
         """Return the biteplane obj and the refplane object"""
