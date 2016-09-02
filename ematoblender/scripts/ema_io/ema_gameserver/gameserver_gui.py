@@ -279,47 +279,18 @@ and passes them into Blender (or any other application that requests them).'''
         self.frameentry.grid(row=2, column=4, padx=4)
 
 
-        # options for head-correction
-
-        def show_hcmethod():
-            """What to show in the head-correction area based on the chosen head-correction method"""
-            print('Trigger hcmethod', self.hcmethod.get())
-            hc1frame.grid_remove()
-            hc2frame.grid_remove()
-            hc3frame.grid_remove()
-            if self.hcmethod.get() == 1:
-                hc1frame.grid()
-            elif self.hcmethod.get() ==2:
-                hc2frame.grid()
-            else:
-                hc3frame.grid()
-
-        # headcorrection methods using the three solutions
-
-        def choose_file_and_load_hc():
-            fn = fd.askopenfilename()
-            self.hc_fn.set(fn)
-            if os.path.splitext(fn)[1] == '.tsv':
-                # load tsv
-                self.servobj.headcorrection.load_from_tsv_file(fn)
-            elif os.path.splitext(fn)[1] == '.p':
-                # pickled
-                self.servobj.headcorrection.load_picked_from_file(fn)
-            else:
-                self.hc_fn.set("Invalid file selected.")
-
-        def record_hcmethod():
-            self.live_status.set('Button pressed')
-            self.live_status_lbl.update()
+        def record_biteplane():
+            self.biteplane_live_status.set('Button pressed')
+            self.biteplane_live_status_lbl.update()
             try:
-                secs = int(self.secentry.get())
+                secs = int(self.biteplane_secentry.get())
             except ValueError:
-                self.secentry.text = ''
-                self.live_status.set('INVALID SECONDS')
-                self.live_status_lbl.update()
+                self.biteplane_secentry.text = ''
+                self.biteplane_live_status.set('INVALID SECONDS')
+                self.biteplane_live_status_lbl.update()
             else:
-                self.live_status.set('RECORDING')
-                self.live_status_lbl.update()
+                self.biteplane_live_status.set('RECORDING')
+                self.biteplane_live_status_lbl.update()
 
                 self.servobj.headcorrection.load_live(self.servobj, seconds=secs)
 
@@ -328,68 +299,37 @@ and passes them into Blender (or any other application that requests them).'''
                 GameServerSettings.bitePlane["yAxis"] = tuple(self.servobj.headcorrection.biteplane.y_axis)
                 GameServerSettings.bitePlane["zAxis"] = tuple(self.servobj.headcorrection.biteplane.z_axis)
 
-                self.live_status.set('COMPLETE')
+                self.biteplane_live_status.set('COMPLETE')
 
-        corrframe = tk.Frame(self.rightframe, relief='groove', bd=2)
-        corrframe.pack(side=tk.TOP, fill=tk.X, expand=False)
-        self.hcmethod = tk.IntVar()
-
-        self.hc_fn = tk.StringVar()
-
-        hc1frame = tk.Frame(corrframe)
-        hc1frame.grid(row=5, column=1)
-        btn= tk.Button(hc1frame, text='Choose file', command=choose_file_and_load_hc)
-        btn.grid(row=5, column=2, sticky=tk.W)
-        lbl = tk.Label(hc1frame, textvariable=self.hc_fn)
-        lbl.grid(row=5, column=4, columnspan=3)
-        hc1frame.grid_remove()
-
-        hc2frame = tk.Frame(corrframe)
-        hc2frame.grid(row=5, column=1)
-        btn= tk.Button(hc2frame, text='Choose file', command=choose_file_and_load_hc)
-        lbl = tk.Label(hc2frame, textvariable=self.hc_fn)
-        lbl.grid(row=5, column=4, columnspan=3)
-        btn.grid(row=5, column=1, sticky=tk.W)
-
-        hc2frame.grid_remove()
-
-        hc3frame = tk.Frame(corrframe)
-        hc3frame.grid(row=5, column=1)
-        btn= tk.Button(hc3frame, text='Start streaming', command=record_hcmethod)
-        btn.grid(row=5, column=1, sticky=tk.W)
-        lbl = tk.Label(hc3frame, text='Secs:')
-        lbl.grid(row=5, column=3, columnspan=3)
-
-        self.secentry = tk.Entry(hc3frame, width=4)
-        self.secentry.grid(row=5, column=4)
-        self.live_status = tk.StringVar()
-        self.live_status_lbl = tk.Label(hc3frame, textvariable=self.live_status)
-        self.live_status_lbl.grid(row=6, column=1, columnspan=3)
-
-        hc3frame.grid_remove()
-
-
-        lbl = tk.Label(corrframe, text='Head-correction options:', justify=tk.LEFT) # todo - add checkbox to switch on/off
+        bitePlaneFrame = tk.Frame(self.rightframe, relief='groove', bd=2)
+        bitePlaneFrame.pack(side=tk.TOP, fill=tk.X, expand=False)
+        lbl = tk.Label(bitePlaneFrame, text='Record biteplane:', justify=tk.LEFT)
         lbl.grid(row=1, column=1, columnspan=1, sticky=tk.W)
-        c = tk.Radiobutton(corrframe, text="Pre-calculated", variable=self.hcmethod, value=1, command=show_hcmethod, justify=tk.LEFT)
-        c.grid(row=2, column=1, sticky=tk.W)
-        c = tk.Radiobutton(corrframe, text="Calculate from TSV file", variable=self.hcmethod, value=2, command=show_hcmethod, justify=tk.LEFT)
-        c.grid(row=3, column=1, sticky=tk.W)
-        c = tk.Radiobutton(corrframe, text="Record live", variable=self.hcmethod, value=3, command=show_hcmethod)
-        c.grid(row=4, column=1, sticky=tk.W)
+
+        btn= tk.Button(bitePlaneFrame, text='Start streaming', command=record_biteplane)
+        btn.grid(row=2, column=1, sticky=tk.W)
+        lbl = tk.Label(bitePlaneFrame, text='Secs:')
+        lbl.grid(row=2, column=2, columnspan=3)
+
+        self.biteplane_secentry = tk.Entry(bitePlaneFrame, width=4)
+        self.biteplane_secentry.grid(row=2, column=4)
+
+        self.biteplane_live_status = tk.StringVar()
+        self.biteplane_live_status_lbl = tk.Label(bitePlaneFrame, textvariable=self.biteplane_live_status)
+        self.biteplane_live_status_lbl.grid(row=3, column=1, columnspan=3)
 
         def record_refpoint():
             self.ref_live_status.set('RECORDING')
             self.ref_live_status_lbl.update()
 
-            secs = int(self.refsecentry.get())
+            secs = int(self.ref_secentry.get())
             self.servobj.referencePointBuilder.load_live(self.servobj, seconds=secs)
             GameServerSettings.bitePlane["shiftedOrigin"] = tuple(self.servobj.headcorrection.biteplane.shiftedOrigin)
             self.ref_live_status.set('COMPLETE')
 
         referenceFrame = tk.Frame(self.rightframe, relief='groove', bd=2)
         referenceFrame.pack(side=tk.TOP, fill=tk.X, expand=False)
-        lbl = tk.Label(referenceFrame, text='Record reference point:', justify=tk.LEFT) # todo - add checkbox to switch on/off
+        lbl = tk.Label(referenceFrame, text='Record reference point:', justify=tk.LEFT)
         lbl.grid(row=1, column=1, columnspan=1, sticky=tk.W)
 
         btn= tk.Button(referenceFrame, text='Start streaming', command=record_refpoint)
@@ -397,8 +337,8 @@ and passes them into Blender (or any other application that requests them).'''
         lbl = tk.Label(referenceFrame, text='Secs:')
         lbl.grid(row=2, column=2, columnspan=3)
 
-        self.refsecentry = tk.Entry(referenceFrame, width=4)
-        self.refsecentry.grid(row=2, column=4)
+        self.ref_secentry = tk.Entry(referenceFrame, width=4)
+        self.ref_secentry.grid(row=2, column=4)
 
         self.ref_live_status = tk.StringVar()
         self.ref_live_status_lbl = tk.Label(referenceFrame, textvariable=self.ref_live_status)
