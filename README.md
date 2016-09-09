@@ -6,6 +6,19 @@ It's currently supporting watching the coil objects move from the WAVE or static
 For version 1.0 the system has the ability to do live-control of a human-like face in Blender.
 For version 1.1 the system can also include a multilinear tongue model. More details to come.
 
+## License
+
+Ematoblender itself is distributed under the terms of the GNU General Public License version 3.
+
+However, Ematoblender also makes use of the following components that are distributed under a different license:
+
+- [ematoblender-model](https://github.com/m2ci-msp/ematoblender-model)
+- [ematoblender-model](https://github.com/m2ci-msp/ematoblender-example-data)
+- [multilinear-model-tools](https://github.com/m2ci-msp/multilinear-model-tools)
+- [multilinear-tongue-model](https://github.com/m2ci-msp/multilinear-tongue-model)
+
+In case, you plan to use these components, be sure to check on the respective pages under which conditions you are allowed to use the component.
+
 ## Installation
 Cross-platform installation is easy! Just clone the this repository, and in the root directory run:
 
@@ -173,7 +186,3 @@ Diagnostic tests still to come. In the meantime, running the server externally w
 ## Contributors
 
 Kristy James (Saarland University, University of Groningen)
-
-## License
-
-This program is distributed under the terms of the GNU General Public License version 3.
