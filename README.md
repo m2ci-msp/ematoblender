@@ -10,7 +10,7 @@ For version 1.1 the system can also include a multilinear tongue model. More det
 
 Ematoblender itself is distributed under the terms of the GNU General Public License version 3.
 
-However, Ematoblender also makes use of the following components that are distributed under a different license:
+However, Ematoblender also makes use of the following components that may be available under a different license:
 
 - [ematoblender-model](https://github.com/m2ci-msp/ematoblender-model)
 - [ematoblender-model](https://github.com/m2ci-msp/ematoblender-example-data)
