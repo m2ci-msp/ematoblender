@@ -25,10 +25,15 @@ task fetchAvatar() {
 task fetchExamples() {
 
   def dataDir = file("$rootProject.projectDir/data")
+  def projectDir = file("$rootProject.projectDir/projects")
 
   outputs.dir dataDir
+  outputs.dir projectDir
 
   doLast{
+
+    dataDir.mkdirs()
+    projectDir.mkdirs()
 
     download{
 
@@ -40,7 +45,35 @@ task fetchExamples() {
 
       dest dataDir
     }
+
+    download{
+      src "https://github.com/m2ci-msp/ematoblender-example-data/releases/download/v0.1/VP08.project.json"
+      dest projectDir
+    }
   }
+}
 
+task fetchModel{
 
+  def modelDir = file("$rootProject.projectDir/model")
+
+  outputs.dir modelDir
+
+  doLast{
+
+    modelDir.mkdirs()
+
+    download{
+
+      src( [
+             "https://github.com/m2ci-msp/multilinear-tongue-model/releases/download/v0.1/tongue_model.json",
+             "https://github.com/m2ci-msp/multilinear-tongue-model/releases/download/v0.1/tongue_model.yaml"
+           ]
+         )
+
+      dest modelDir
+
+    }
+  }
+  
 }
