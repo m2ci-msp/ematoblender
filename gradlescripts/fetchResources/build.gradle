@@ -77,3 +77,11 @@ task fetchModel{
   }
   
 }
+
+task fetchResources{
+
+  dependsOn "fetchAvatar"
+  dependsOn "fetchExamples"
+  dependsOn "fetchModel"
+
+}
