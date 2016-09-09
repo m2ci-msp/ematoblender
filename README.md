@@ -13,13 +13,16 @@ Ematoblender itself is distributed under the terms of the GNU General Public Lic
 However, Ematoblender also makes use of the following components that may be available under a different license:
 
 - [ematoblender-model](https://github.com/m2ci-msp/ematoblender-model)
-- [ematoblender-model](https://github.com/m2ci-msp/ematoblender-example-data)
+- [ematoblender-example-data](https://github.com/m2ci-msp/ematoblender-example-data)
 - [multilinear-model-tools](https://github.com/m2ci-msp/multilinear-model-tools)
 - [multilinear-tongue-model](https://github.com/m2ci-msp/multilinear-tongue-model)
 
 In case, you plan to use these components, be sure to check on the respective pages under which conditions you are allowed to use the component.
 
 ## Installation
+
+### Ematoblender
+
 Cross-platform installation is easy! Just clone the this repository, and in the root directory run:
 
   *   ``./gradlew setup`` if you're using Linux/OSX in the terminal, or
@@ -39,14 +42,16 @@ The installation script will check your versions, and warn you if you need to up
 It will also notify you if certain packages are not installed (such as mathutils) and give you OS-specific advice about
 how to rectify this. Therefore don't be shy about reading the terminal output if the build fails!
 
-For the C++ utilities, you need the additional dependencies:
+### External resources
 
-6. armadillo (http://arma.sourceforge.net/)
-7. Insight Segmentation and Registration Toolkit (http://www.itk.org/)
-8. Asio library (http://think-async.com/)
+Running ```./gradlew fetchResources`` will download
 
-Right now, these dependencies are not checcked by the gradle script.
+- a Blender scene containing the avatar from [https://github.com/m2ci-msp/ematoblender-model](https://github.com/m2ci-msp/ematoblender-model),
+- example EMA data from [https://github.com/m2ci-msp/ematoblender-example-data](https://github.com/m2ci-msp/ematoblender-example-data),
+- and a multilinear tongue model from [https://github.com/m2ci-msp/multilinear-tongue-model](https://github.com/m2ci-msp/multilinear-tongue-model).
 
+If you want to use the multilinear tongue model, be sure to download and compile the ema-tracking-server from
+[https://github.com/m2ci-msp/multilinear-model-tools](https://github.com/m2ci-msp/multilinear-model-tools).
 
 ## Execution
 The execution of this package is made significantly easier with gradle:
