@@ -17,7 +17,7 @@ gameMesh = bge.logic.getCurrentController().owner.meshes[0]
 #coils = ["coil01", "coil02", "coil03", "coil04", "coil05"]
 
 # bind game mesh to tongue model
-modelBinding = multilinearmodel.GameMeshBinding('./front_aligned_tongue_model.json', gameMesh)
+modelBinding = multilinearmodel.GameMeshBinding('./model/tongue_model.json', gameMesh)
 
 first = True
 
