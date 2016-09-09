@@ -1,5 +1,5 @@
 [
-  "./data/Example3.tsv",
-  "./data/Example3.tsv",
-  "./data/Example2.bvh"
+  "/Users/alex/work/programming/ematoblender/data/VP08_bitePlane.json",
+  "/Users/alex/work/programming/ematoblender/data/VP08_nordwind.json",
+  "/Users/alex/work/programming/ematoblender/data/VP08_referencePoint.json"
 ]
