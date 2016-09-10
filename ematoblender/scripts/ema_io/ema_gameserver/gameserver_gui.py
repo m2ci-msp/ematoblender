@@ -1,11 +1,16 @@
-__author__ = 'Kristy'
+__author__ = 'Kristy James'
+__credits__ = "Alexander Hewer"
 
 import os
 import tkinter as tk
+import time
 from tkinter import ttk
 from tkinter import filedialog as fd
 
 from .gameserver import GameServer, MyUDPHandler
+from .GameServerSettings import GameServerSettings
+from .SettingsReader import SettingsReader
+from .SettingsWriter import SettingsWriter
 from . import rtclient as rtc
 from ...ema_shared import properties as pps
 
@@ -13,15 +18,19 @@ from ...ema_shared import properties as pps
 def main(args=None):
     # start the server
     global server
-    server = GameServer(pps.game_server_cl_args if args is None else args,
-                        serve_in_thread=True)
+    GameServerSettings.port = pps.gameserver_port
+    GameServerSettings.host = pps.gameserver_host
+
+    server = GameServer(serve_in_thread=True)
+#    server = GameServer(pps.game_server_cl_args if args is None else args,
+#                        serve_in_thread=True)
     print('Server will now serve forever.')
 
     # start the GUI
     root = tk.Tk()
     root.geometry("900x500")
     root.title("Ematoblender Gameserver {}".format(server.server_address))
-    
+
     if os.name == 'nt': # windows icon
         icon = os.path.normpath(__file__ + os.sep + '../../../../images/ti.ico')
         root.iconbitmap(icon)
@@ -29,10 +38,10 @@ def main(args=None):
         try:
             icon = os.path.normpath(__file__ + os.sep + '../../../../images/ti.png')
             root.iconphoto(True, tk.PhotoImage(file=icon))
-            
+
         except FileNotFoundError:
             pass
-            
+
         except:
             icon = os.path.normpath(__file__ + os.sep + '../../../../images/ti.xbm')
             root.iconbitmap('@'+icon)
@@ -49,11 +58,6 @@ def main(args=None):
 def on_closing(r, a):
     a.quit()
     r.destroy()
-
-
-def example_command():
-    print('weeee!!!')
-
 
 class Application(tk.Frame):
     """ GUI class for the gameserver application. """
@@ -97,20 +101,20 @@ class Application(tk.Frame):
     def eval_smoothing(self, *args):
         """Convert the output of the smoothing options section into something that can be used in GS."""
         print('Key or button pressed in smoothing frame.')
-        self.servobj.cla.smoothframes, self.servobj.cla.smoothms = None, None
+        GameServerSettings.smoothFrames, GameServerSettings.smoothMs = None, None
 
         if self.smooth_by.get() == 1: # smooth by ms
             self.msentry.config(state=tk.NORMAL)
             self.frameentry.config(state=tk.DISABLED)
             if self.msentry.get().isnumeric():
-                self.servobj.cla.smoothframes = self.servobj.n_frames_smoothed(ms=float(self.msentry.get()))
+                GameServerSettings.smoothFrames = self.servobj.n_frames_smoothed(ms=float(self.msentry.get()))
             else:  # entry is not numeric
                 self.msentry.delete(0, tk.END) # delete any non-numeric things
         else: # smooth by frames
             self.msentry.config(state=tk.DISABLED)
             self.frameentry.config(state=tk.NORMAL)
             if self.frameentry.get().isdigit(): # must be an integer
-                self.servobj.cla.smoothframes = self.servobj.n_frames_smoothed(frames=int(self.frameentry.get()))
+                GameServerSettings.smoothFrames = self.servobj.n_frames_smoothed(frames=int(self.frameentry.get()))
             else:
                 self.frameentry.delete(0, tk.END)
 
@@ -121,8 +125,10 @@ class Application(tk.Frame):
         filemenu = tk.Menu(menubar, tearoff=0)
 
         # create the filemenu
-        filemenu.add_command(label="Clear Cache", command=example_command)
-        filemenu.add_command(label="Pause Sending/Receiving", command=example_command)
+        filemenu.add_command(label="Open project", command=self.open_project)
+        filemenu.add_command(label="Save project", command=self.save_project)
+#        filemenu.add_command(label="Clear Cache", command=example_command)
+#        filemenu.add_command(label="Pause Sending/Receiving", command=example_command)
         filemenu.add_separator()
         filemenu.add_command(label="Exit", command=self.quit)
         menubar.add_cascade(label="File", menu=filemenu)
@@ -131,13 +137,13 @@ class Application(tk.Frame):
         editmenu = tk.Menu(menubar, tearoff=0)
         editmenu.add_command(label="Show/Hide Networking", command=self.toggle_networking_display)
         editmenu.add_separator()
-        editmenu.add_command(label="User Preferences", command=example_command)
+#        editmenu.add_command(label="User Preferences", command=example_command)
         menubar.add_cascade(label="Edit", menu=editmenu)
 
         # create the Help menu
         helpmenu = tk.Menu(menubar, tearoff=0)
-        helpmenu.add_command(label="Go to documentation", command=example_command)
-        helpmenu.add_command(label="About", command=example_command)
+#        helpmenu.add_command(label="Go to documentation", command=example_command)
+#        helpmenu.add_command(label="About", command=example_command)
         menubar.add_cascade(label="Help", menu=helpmenu)
 
         self.root.config(menu=menubar)
@@ -145,7 +151,7 @@ class Application(tk.Frame):
     def createTopFrame(self):
         """Put widgets in the top frame"""
         self.topframe = tk.Frame(self.root, relief='raised', bd=2)
-        self.topframe.pack(side=tk.TOP, fill=tk.X, expand=True)
+        self.topframe.pack(side=tk.TOP, fill=tk.X, expand=False)
         lbl = tk.Label(self.topframe,justify=tk.LEFT,
                        text='''This gameserver is the control centre for the Ematoblender package.
 It controls when data is requested from the data server, manipulates these data,
@@ -181,22 +187,22 @@ and passes them into Blender (or any other application that requests them).'''
 
         def set_tsvdir():
             self.tsvfilelocation.set(fd.askdirectory())
-            self.servobj.cla.printdir = self.tsvfilelocation.get()
+            GameServerSettings.receivedDataOutputDir = self.tsvfilelocation.get()
 
         def set_wavdir():
             self.wavfilelocation.set(fd.askdirectory())
-            self.servobj.cla.wavdir = self.wavfilelocation.get()
+            GameServerSettings.waveDir = self.wavfilelocation.get()
 
         def set_tsvbtn():
             self.tsvbtn.config(state=tk.ACTIVE if self.savetsv.get() else tk.DISABLED)
             self.tsvlab.config(state=tk.ACTIVE if self.savetsv.get() else tk.DISABLED)
             self.servobj.repl.print_tsv = self.savetsv.get()
-            self.servobj.cla.print = self.savetsv.get()
+            GameServerSettings.saveReceivedData = self.savetsv.get()
 
         def set_wavbtn():
             self.wavbtn.config(state=tk.ACTIVE if self.savewav.get() else tk.DISABLED)
             self.wavlab.config(state=tk.ACTIVE if self.savewav.get() else tk.DISABLED)
-            self.servobj.cla.wav = self.savewav.get()
+            GameServerSettings.outputWave = self.savewav.get()
 
         tk.Label(saveframe, text="Save received TSV").grid(row=1, column=1, sticky=tk.W)
         btn = tk.Checkbutton(saveframe, variable=self.savetsv, command=set_tsvbtn)
@@ -219,14 +225,14 @@ and passes them into Blender (or any other application that requests them).'''
 
         self.savetsv.set(False)
         self.savewav.set(False)
-        self.servobj.cla.print, self.servobj.cla.wav = self.savetsv.get(), self.savewav.get()
+        GameServerSettings.saveReceivedData, GameServerSettings.outputWave = self.savetsv.get(), self.savewav.get()
 
         # TODO: Choose which audio input
 
 
         # manual server calls
         callsframe = tk.Frame(self.leftframe, relief='groove', bd=2)
-        callsframe.pack(fill=tk.X, expand=True)
+        callsframe.pack(fill=tk.X, expand=False)
         self.allow_man_calls = tk.BooleanVar()
         manallow = tk.Checkbutton(callsframe, text="Allow manual calls to the data server",
                                   variable=self.allow_man_calls,
@@ -244,8 +250,8 @@ and passes them into Blender (or any other application that requests them).'''
         manbtn3.grid(row=2, column=3)
         self.manual_buttons = [manbtn1, manbtn2, manbtn3]
 
-        self.nt_in = NetworkTrafficFrame(self.leftframe)
-        self.nt_in.pack()
+#        self.nt_in = NetworkTrafficFrame(self.leftframe)
+#        self.nt_in.pack()
 
     def createRightFrame(self):
         """Put widgets in the right frame"""
@@ -256,7 +262,7 @@ and passes them into Blender (or any other application that requests them).'''
 
         # options for data smoothing/delay
         smoothframe = tk.Frame(self.rightframe, relief='groove', bd=2)
-        smoothframe.pack(fill=tk.X, expand=True)
+        smoothframe.pack(fill=tk.X, expand=False)
         lbl = tk.Label(smoothframe, text='Apply rolling average by:') # todo - ensure is really applied
         lbl.grid(row=1, column=1, columnspan=4, sticky=tk.W)
         self.smooth_by = tk.IntVar()
@@ -273,121 +279,95 @@ and passes them into Blender (or any other application that requests them).'''
         self.frameentry.grid(row=2, column=4, padx=4)
 
 
-        # options for head-correction
-
-        def show_hcmethod():
-            """What to show in the head-correction area based on the chosen head-correction method"""
-            print('Trigger hcmethod', self.hcmethod.get())
-            hc1frame.grid_remove()
-            hc2frame.grid_remove()
-            hc3frame.grid_remove()
-            if self.hcmethod.get() == 1:
-                hc1frame.grid()
-            elif self.hcmethod.get() ==2:
-                hc2frame.grid()
-            else:
-                hc3frame.grid()
-
-        # headcorrection methods using the three solutions
-
-        def choose_file_and_load_hc():
-            fn = fd.askopenfilename()
-            self.hc_fn.set(fn)
-            if os.path.splitext(fn)[1] == '.tsv':
-                # load tsv
-                self.servobj.headcorrection.load_from_tsv_file(fn)
-            elif os.path.splitext(fn)[1] == '.p':
-                # pickled
-                self.servobj.headcorrection.load_picked_from_file(fn)
-            else:
-                self.hc_fn.set("Invalid file selected.")
-
-        def record_hcmethod():
-            self.live_status.set('Button pressed')
-            self.live_status_lbl.update()
+        def record_biteplane():
+            self.biteplane_live_status.set('Button pressed')
+            self.biteplane_live_status_lbl.update()
             try:
-                secs = int(self.secentry.get())
+                secs = int(self.biteplane_secentry.get())
             except ValueError:
-                self.secentry.text = ''
-                self.live_status.set('INVALID SECONDS')
-                self.live_status_lbl.update()
+                self.biteplane_secentry.text = ''
+                self.biteplane_live_status.set('INVALID SECONDS')
+                self.biteplane_live_status_lbl.update()
             else:
-                self.live_status.set('RECORDING')
-                self.live_status_lbl.update()
+                self.biteplane_live_status.set('RECORDING')
+                self.biteplane_live_status_lbl.update()
 
                 self.servobj.headcorrection.load_live(self.servobj, seconds=secs)
-                self.live_status.set('COMPLETE')
 
-        corrframe = tk.Frame(self.rightframe, relief='groove', bd=2)
-        corrframe.pack(side=tk.TOP, fill=tk.X)
-        self.hcmethod = tk.IntVar()
+                GameServerSettings.bitePlane["origin"] = tuple(self.servobj.headcorrection.biteplane.origin)
+                GameServerSettings.bitePlane["xAxis"] = tuple(self.servobj.headcorrection.biteplane.x_axis)
+                GameServerSettings.bitePlane["yAxis"] = tuple(self.servobj.headcorrection.biteplane.y_axis)
+                GameServerSettings.bitePlane["zAxis"] = tuple(self.servobj.headcorrection.biteplane.z_axis)
 
-        self.hc_fn = tk.StringVar()
+                self.biteplane_live_status.set('COMPLETE')
 
-        hc1frame = tk.Frame(corrframe)
-        hc1frame.grid(row=3, column=1)
-        btn= tk.Button(hc1frame, text='Choose file', command=choose_file_and_load_hc)
-        btn.grid(row=1, column=1)
-        lbl = tk.Label(hc1frame, textvariable=self.hc_fn)
-        lbl.grid(row=1, column=4, columnspan=3)
-        hc1frame.grid_remove()
+        bitePlaneFrame = tk.Frame(self.rightframe, relief='groove', bd=2)
+        bitePlaneFrame.pack(side=tk.TOP, fill=tk.X, expand=False)
+        lbl = tk.Label(bitePlaneFrame, text='Record biteplane:', justify=tk.LEFT)
+        lbl.grid(row=1, column=1, columnspan=1, sticky=tk.W)
 
-        hc2frame = tk.Frame(corrframe)
-        hc2frame.grid(row=3, column=1)
-        btn= tk.Button(hc2frame, text='Choose file', command=choose_file_and_load_hc)
-        lbl = tk.Label(hc2frame, textvariable=self.hc_fn)
-        lbl.grid(row=1, column=4, columnspan=3)
-        btn.grid(row=3, column=1)
+        btn= tk.Button(bitePlaneFrame, text='Start streaming', command=record_biteplane)
+        btn.grid(row=2, column=1, sticky=tk.W)
+        lbl = tk.Label(bitePlaneFrame, text='Secs:')
+        lbl.grid(row=2, column=2, columnspan=3)
 
-        hc2frame.grid_remove()
+        self.biteplane_secentry = tk.Entry(bitePlaneFrame, width=4)
+        self.biteplane_secentry.grid(row=2, column=4)
 
-        hc3frame = tk.Frame(corrframe)
-        hc3frame.grid(row=3, column=1)
-        btn= tk.Button(hc3frame, text='Start streaming', command=record_hcmethod)
-        btn.grid(row=3, column=2)
-        lbl = tk.Label(hc3frame, text='Secs:')
-        lbl.grid(row=3, column=4, columnspan=3)
+        self.biteplane_live_status = tk.StringVar()
+        self.biteplane_live_status_lbl = tk.Label(bitePlaneFrame, textvariable=self.biteplane_live_status)
+        self.biteplane_live_status_lbl.grid(row=3, column=1, columnspan=3)
 
-        self.secentry = tk.Entry(hc3frame, width=4,)
-        self.secentry.grid(row=3, column=7)
-        self.live_status = tk.StringVar()
-        self.live_status_lbl = tk.Label(hc3frame, textvariable=self.live_status)
-        self.live_status_lbl.grid(row=3, column=8, columnspan=3)
+        def record_refpoint():
+            self.ref_live_status.set('RECORDING')
+            self.ref_live_status_lbl.update()
 
-        hc3frame.grid_remove()
+            secs = int(self.ref_secentry.get())
+            self.servobj.referencePointBuilder.load_live(self.servobj, seconds=secs)
+            GameServerSettings.bitePlane["shiftedOrigin"] = tuple(self.servobj.headcorrection.biteplane.shiftedOrigin)
+            self.ref_live_status.set('COMPLETE')
+
+        referenceFrame = tk.Frame(self.rightframe, relief='groove', bd=2)
+        referenceFrame.pack(side=tk.TOP, fill=tk.X, expand=False)
+        lbl = tk.Label(referenceFrame, text='Record reference point:', justify=tk.LEFT)
+        lbl.grid(row=1, column=1, columnspan=1, sticky=tk.W)
+
+        btn= tk.Button(referenceFrame, text='Start streaming', command=record_refpoint)
+        btn.grid(row=2, column=1, sticky=tk.W)
+        lbl = tk.Label(referenceFrame, text='Secs:')
+        lbl.grid(row=2, column=2, columnspan=3)
+
+        self.ref_secentry = tk.Entry(referenceFrame, width=4)
+        self.ref_secentry.grid(row=2, column=4)
+
+        self.ref_live_status = tk.StringVar()
+        self.ref_live_status_lbl = tk.Label(referenceFrame, textvariable=self.ref_live_status)
+        self.ref_live_status_lbl.grid(row=3, column=1, columnspan=3)
 
 
-        lbl = tk.Label(corrframe, text='Head-correction options:') # todo - add checkbox to switch on/off
-        lbl.grid(row=1, column=1, columnspan=3, sticky=tk.W)
-        c = tk.Radiobutton(corrframe, text="Pre-calculated", variable=self.hcmethod, value=1, command=show_hcmethod)
-        c.grid(row=2, column=1)
-        c = tk.Radiobutton(corrframe, text="Calculate from TSV file", variable=self.hcmethod, value=2, command=show_hcmethod)
-        c.grid(row=2, column=2)
-        c = tk.Radiobutton(corrframe, text="Record live", variable=self.hcmethod, value=3, command=show_hcmethod)
-        c.grid(row=2, column=3)
 
-        lbl = tk.Label(corrframe, text='Axis swap options:')
-        lbl.grid(row=4, column=1, columnspan=3, sticky=tk.W)
-        self.reflect_x, self.reflect_y, self.reflect_z = tk.BooleanVar(), tk.BooleanVar(), tk.BooleanVar()
-        check = tk.Checkbutton(corrframe, text='X', variable=self.reflect_x)
-        check.grid(row=5, column=1, sticky=tk.W)
-        check = tk.Checkbutton(corrframe, text='Y', variable=self.reflect_y)
-        check.grid(row=6, column=1, sticky=tk.W)
-        check = tk.Checkbutton(corrframe, text='Z', variable=self.reflect_z)
-        check.grid(row=7, column=1, sticky=tk.W)
-
-        lbl = tk.Label(corrframe, text='Axis order options:')
-        lbl.grid(row=4, column=3, columnspan=3, sticky=tk.W)
-        self.axis_order = tk.IntVar()
-        rad = tk.Radiobutton(corrframe, text='XYZ', variable=self.axis_order, value='XYZ')
-        rad.grid(row=5, column=3, sticky=tk.W)
-        rad = tk.Radiobutton(corrframe, text='YXZ', variable=self.axis_order, value='YXZ')
-        rad.grid(row=6, column=3, sticky=tk.W)
-        rad = tk.Radiobutton(corrframe, text='XZY', variable=self.axis_order, value='XZY')
-        rad.grid(row=7, column=3, sticky=tk.W)
-
-        lbl = tk.Label(corrframe, text='Order: Left-right, Back-front, Up-down')
-        lbl.grid(row=9, column=3, columnspan=3, sticky=tk.W)
+#        lbl = tk.Label(corrframe, text='Axis swap options:')
+#        lbl.grid(row=4, column=1, columnspan=3, sticky=tk.W)
+#        self.reflect_x, self.reflect_y, self.reflect_z = tk.BooleanVar(), tk.BooleanVar(), tk.BooleanVar()
+#        check = tk.Checkbutton(corrframe, text='X', variable=self.reflect_x)
+#        check.grid(row=5, column=1, sticky=tk.W)
+#        check = tk.Checkbutton(corrframe, text='Y', variable=self.reflect_y)
+#        check.grid(row=6, column=1, sticky=tk.W)
+#        check = tk.Checkbutton(corrframe, text='Z', variable=self.reflect_z)
+#        check.grid(row=7, column=1, sticky=tk.W)
+#
+#        lbl = tk.Label(corrframe, text='Axis order options:')
+#        lbl.grid(row=4, column=3, columnspan=3, sticky=tk.W)
+#        self.axis_order = tk.IntVar()
+#        rad = tk.Radiobutton(corrframe, text='XYZ', variable=self.axis_order, value='XYZ')
+#        rad.grid(row=5, column=3, sticky=tk.W)
+#        rad = tk.Radiobutton(corrframe, text='YXZ', variable=self.axis_order, value='YXZ')
+#        rad.grid(row=6, column=3, sticky=tk.W)
+#        rad = tk.Radiobutton(corrframe, text='XZY', variable=self.axis_order, value='XZY')
+#        rad.grid(row=7, column=3, sticky=tk.W)
+#
+#        lbl = tk.Label(corrframe, text='Order: Left-right, Back-front, Up-down')
+#        lbl.grid(row=9, column=3, columnspan=3, sticky=tk.W)
 
 
 
@@ -401,8 +381,8 @@ and passes them into Blender (or any other application that requests them).'''
         # SHOW orientation
 
 
-        self.nt_out = NetworkTrafficFrame(self.rightframe)
-        self.nt_out.pack(expand=False)
+#        self.nt_out = NetworkTrafficFrame(self.rightframe)
+#        self.nt_out.pack(expand=False)
 
     def createStatusLabel(self):
         """Put a label with some configurable text along the bottom"""
@@ -429,7 +409,38 @@ and passes them into Blender (or any other application that requests them).'''
             self.streamtext.set("Stop streaming")
             self.streaming = True
 
+    def open_project(self):
 
+        options = {}
+        options['defaultextension'] = '.json'
+        options['filetypes'] = [('JSON files', '.json')]
+        fn = fd.askopenfilename(**options)
+
+        if fn != "":
+
+            SettingsReader.read_from(fn)
+            if GameServerSettings.useHeadCorrection:
+                self.servobj.init_headcorrection()
+
+            self.servobj.externalServer.reset()
+            # wait a  little bit for the commands to reach the
+            # server
+            time.sleep(0.5)
+            self.servobj.externalServer.set_settings()
+
+            time.sleep(0.5)
+            self.servobj.externalServer.set_model_vertex_indices()
+
+    def save_project(self):
+
+        options = {}
+        options['defaultextension'] = '.json'
+        options['filetypes'] = [('JSON files', '.json')]
+        fn = fd.asksaveasfilename(**options)
+
+        if fn != "":
+
+            SettingsWriter.write_to(fn)
 
 
 class NetworkTrafficFrame(tk.Frame):

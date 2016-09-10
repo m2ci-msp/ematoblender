@@ -4,7 +4,7 @@ import mathutils
 from .bge_menus_overlays import bge_update_overlay_status_decorator
 from ..blender_networking import send_to_gameserver, recv_from_gameserver
 from ..blender_shared_objects import ema_active_meshes
-from ..coil_info import find_transform_by_index
+# from ..coil_info import find_transform_by_index
 from .. import  blender_shared_objects as bsh
 from ..coord_transforms import PointsTransformationMatrix
 from .. import coord_transforms as ct
@@ -32,8 +32,8 @@ def bge_update_from_df(scene_objs, df, showall=True):
         new_location = getattr(ema_coil, 'bp_corr_loc', getattr(ema_coil, 'abs_loc', None))
 
         #print('transform', mathutils.Vector(ci.find_transform_by_index(ci)))
-        cubeobj.worldPosition = mathutils.Vector(new_location)\
-                       + mathutils.Vector(find_transform_by_index(ci))
+        cubeobj.worldPosition = mathutils.Vector(new_location)#\
+#                       + mathutils.Vector(find_transform_by_index(ci))
 
         # TODO: Currently using uncorrected rotation values for the moment
         cubeobj.worldOrientation = mathutils.Vector(ema_coil.abs_rot)

@@ -8,7 +8,7 @@ buildscript {
   }
   dependencies {
         classpath 'org.ajoberstar:gradle-git:1.4.2'
-        classpath 'de.undercouch:gradle-download-task:1.0'
+//        classpath 'de.undercouch:gradle-download-task:1.0'
         classpath 'org.m2ci.msp:gradle-findbinary-plugin:0.4'
   }
 }

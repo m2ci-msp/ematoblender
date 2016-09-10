@@ -75,22 +75,28 @@ def head_corr_bp_correct(df, biteplate_refspace, headpos_refspace):
     print('refcoils', refcoils)
     print('active', active)
     from .biteplate_headcorr import ReferencePlane
-    current_rs = ReferencePlane(*[x.abs_loc for x in refcoils[:3]]) # todo: this could be a source of error - are these the correct coils?
 
+    referenceLeft, referenceRight, referenceFront = [ci.find_sensor_index(n) for n in ['MR', 'ML', 'FT']]
+    current_rs = ReferencePlane()
+    current_rs.build(*[df.give_coils()[x].abs_loc for x in [referenceLeft, referenceRight, referenceFront]])
 
-    if not hasattr(biteplate_refspace, 'ui_origin'):  # ON FIRST ACTIVE SENSOR READING
-        print('\n\n\n This is the first reading of the active sensors.')
-        # set the origin of the biteplate CS as UI
-        ui_index = [x[0] for x in active if x[2] == 'UI'][0]
-        ui_coil = df.give_coils()[ui_index]
-        ui_coil.ref_loc = current_rs.project_to_lcs(ui_coil.abs_loc)
-        biteplate_refspace.set_origin(ui_coil.ref_loc)
+#    if not hasattr(biteplate_refspace, 'ui_origin'):  # ON FIRST ACTIVE SENSOR READING
+#        print('\n\n\n This is the first reading of the active sensors.')
+#        # set the origin of the biteplate CS as UI
+#        ui_index = [x[0] for x in active if x[2] == 'UI'][0]
+#        ui_coil = df.give_coils()[ui_index]
+#        ui_coil.ref_loc = current_rs.project_to_lcs(ui_coil.abs_loc)
+#        biteplate_refspace.set_origin(ui_coil.ref_loc)
 
     # FOR EACH SAMPLE
     for c in df.give_coils():
         # transform locations relative to reference sensors (get head-corrected locations in global space)
         #print('current coil being corrected', c)
+   #     print("original")
+   #     print(c.abs_loc)
         c.ref_loc = tuple(current_rs.project_to_lcs(c.abs_loc))
+   #     print("corrected")
+   #     print(c.ref_loc)
         # transform ALL locations from head-corrected space to biteplane space.
         c.bp_corr_loc = tuple(biteplate_refspace.project_to_lcs(c.ref_loc))
         #print('one coil\'s new location', c.bp_corr_loc)

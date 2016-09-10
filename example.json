@@ -1,0 +1,40 @@
+{
+    "coilSettings":
+    {
+        "tongueCenter": 8,
+        "tongueMiddleLeft": 9,
+        "tongueTip": 10,
+        "tongueBack": 14,
+        "tongueMiddleRight": 15,
+        "bitePlateLeft": 6,
+        "bitePlateRight": 7,
+        "bitePlateFront": 5,
+        "referenceLeft": 0,
+        "referenceRight": 1,
+        "referenceFront": 4,
+        "referenceOrigin": 12,
+        "upperLip": 3,
+        "lowerLip": 2,
+        "lowerIncisor": 13
+    },
+    "externalFittingServerSettings":
+    {
+        "coilCorrespondences":
+        {
+            "coilIndices": [14, 8, 15, 10, 9],
+            "coilPositionNames": ["tongueBack", "tongueCenter", "tongueMiddleRight", "tongueTip", "tongueMiddleLeft"],
+            "modelVertexIndices": [1991, 2230, 2236, 2549, 2687]
+        },
+        "host": "localhost",
+        "neededAmountForFixedSpeaker": 100,
+        "port": 1234
+    },
+    "gameServerSettings":
+    {
+        "host": "localhost",
+        "port": "9995",
+        "rtcHost": "localhost",
+        "rtcPort": 9995,
+        "bitePlateFrontIsBack": true
+    }
+}

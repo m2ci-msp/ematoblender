@@ -1,9 +1,11 @@
 import bge
+import bpy
 import socket
 import json
 import numpy
 import mathutils
 import GameLogic
+import os
 
 import multilinearmodel
 
@@ -16,8 +18,13 @@ gameMesh = bge.logic.getCurrentController().owner.meshes[0]
 # name coil objects
 #coils = ["coil01", "coil02", "coil03", "coil04", "coil05"]
 
+# create model path
+userPref = bpy.utils.script_path_pref()
+basePath = os.path.join(os.path.dirname(os.path.dirname(userPref)), "model")
+modelFile = os.path.join(basePath, "tongue_model.json")
+
 # bind game mesh to tongue model
-modelBinding = multilinearmodel.GameMeshBinding('./front_aligned_tongue_model.rmm', gameMesh)
+modelBinding = multilinearmodel.GameMeshBinding(modelFile, gameMesh)
 
 first = True
 
@@ -61,11 +68,11 @@ def model():
     if(len(byteData) > 0):
         stringData = byteData.decode('utf-8')
         decodedJson = json.loads(stringData)
-        idWeights = decodedJson["idWeights"]
-        expWeights = decodedJson["expWeights"]
+        speakerWeights = decodedJson["speakerWeights"]
+        phonemeWeights = decodedJson["phonemeWeights"]
         timeStamp = decodedJson["timeStamp"]
       #  coilPositions = convertToVectors(decodedJson["coilPositions"])
-        modelBinding.update_for_weights(idWeights, expWeights)
+        modelBinding.update_for_weights(speakerWeights, phonemeWeights)
 #        updateCoils(coilPositions)
 
 def convertToVectors(positions):

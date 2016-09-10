@@ -1,3 +1,4 @@
+include ":gradlescripts:fetchResources"
 include ":gradlescripts:setup:findDependencies"
 include ":gradlescripts:setup:checkVersions"
 include ":gradlescripts:setup:setupEnvironment"

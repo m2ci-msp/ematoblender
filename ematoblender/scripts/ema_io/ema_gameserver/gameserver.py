@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-__author__ = 'Kristy'
+__author__ = "Kristy James, Alexander Hewer"
 
 """
 Intermediate server script. This acts as a client (using rtclient.py methods) to communicate with the data server,
@@ -29,7 +29,11 @@ import xml.etree.ElementTree as et
 from . import wave_recording as wr
 from . import data_manipulation as dm
 from .biteplate_headcorr import HeadCorrector
+from .biteplate_headcorr import BitePlane
 from .tongue_model import TongueModel
+from .ExternalFittingServer import ExternalFittingServer
+from .GameServerSettings import GameServerSettings as settings
+from .ReferencePointBuilder import ReferencePointBuilder
 
 # global properties, coil definitions
 from ...ema_shared import properties as pps
@@ -38,9 +42,6 @@ from ...ema_blender import coil_info as ci
 # connection objects (this server essentially wraps rtc behaviour)
 from . import rtclient as rtc
 from ..rtc3d_parser import DataFrame, JSONBuilder
-
-
-
 
 def main(argv):
     """
@@ -87,7 +88,9 @@ def main(argv):
     print("Server was shutdown")
 
 
+
 class GameServer(socketserver.UDPServer):
+
     """
     Used for smoothing measurements, performing other corrections before coordinates are sent to game loop.
     Game server, inherits from socketserver, handling is defined in MyUDPHandler.
@@ -100,45 +103,29 @@ class GameServer(socketserver.UDPServer):
         else:
             return relloc + os.sep + 'EMA_'
 
-    def __init__(self, cl_args, serve_in_thread=False):
+    def __init__(self, serve_in_thread=False):
 
-        # Create the server, binding to localhost on port 9999
-        print('Now creating the gameserver with command line arguments:', cl_args)
-        if type(cl_args) == list:
-            cl_args = parser.parse_args(cl_args)
 
-        HOST = pps.gameserver_host
-        PORT = pps.gameserver_port
+#        print('Now creating the gameserver with settings:', settings)
 
-        super().__init__((HOST, PORT), MyUDPHandler)
+        # get HOST and PORT from shared properties
+#        HOST = pps.gameserver_host
+#        PORT = pps.gameserver_port
+
+        super().__init__((settings.host, settings.port), MyUDPHandler)
 
         print('Game server is', self)
 
-        self.cla = cl_args
-        print('Initial CL args are', self.cla)
-
-
-        # store headcorrection matrices
-        self.headcorrection = HeadCorrector()
-        print('Initial headcorrection status is', self.cla.headcorrect)
-
-        # store info relating to the tongue model
-        self.tongue_model = TongueModel()
-
-        # TODO: This is a temporary solution, should use image and raytracing
-        self.tongue_model.set_vertex_indices(1991,2230,2236,2549, 2687)
-
-        # TODO: This ia a temporary solution, should get this from the coil-indices file and be customisable in GUI
-        self.tongue_model.set_position_names('Back', 'Center', 'Right', 'Tip', "Left")
-        self.tongue_model.set_tongue_coil_indices(14,8,15,10,9)#(15,9,16,11,10)
-
+        # external fitting server
+        self.externalServer = ExternalFittingServer()
 
         self.last_cam_trans = None  # storage needed for handler
         self.cam_pos = None
 
         # import or start the client connection
         if rtc.connection is None or rtc.replies is None:
-            p_conn, p_repl = rtc.init_connection(wavehost=self.cla.host, waveport=self.cla.port)
+            p_conn, p_repl = rtc.init_connection(
+                wavehost=settings.rtcHost, waveport=settings.rtcPort)
         else:
             p_conn, p_repl = rtc.connection, rtc.replies
         self.conn, self.repl = p_conn, p_repl
@@ -154,11 +141,32 @@ class GameServer(socketserver.UDPServer):
             self.serve_thread = threading.Thread(target=self.serve_forever)
             self.serve_thread.start()
 
+    def init_headcorrection(self):
+        # store headcorrection matrices
+        self.headcorrection = HeadCorrector()
+        self.referencePointBuilder = ReferencePointBuilder(self.headcorrection)
+
+        self.headcorrection.biteplane = BitePlane()
+        self.headcorrection.biteplane.set_origin(settings.bitePlane["origin"])
+
+        self.headcorrection.biteplane.set_axes(
+            tuple(settings.bitePlane["xAxis"]),
+            tuple(settings.bitePlane["yAxis"]),
+            tuple(settings.bitePlane["zAxis"])
+        )
+
+        self.headcorrection.biteplane.set_shifted_origin(
+            tuple(settings.bitePlane["shiftedOrigin"])
+            )
+
+        print('Initial headcorrection status is', settings.useHeadCorrection)
+
+
 
     def set_smoothing_n(self, n=None):
         """sets the smoothing from the most recent cla values"""
         if n is None:
-            n = self.n_frames_smoothed(ms=self.cla.smoothms, frames=self.cla.smoothframes)
+            n = self.n_frames_smoothed(ms=settings.smoothMs, frames=settings.smoothFrames)
         self.smooth_n = n
         self.repl.change_smoothing_length(self.smooth_n)
 
@@ -188,15 +196,16 @@ class GameServer(socketserver.UDPServer):
         """Use rtclient functions to initialise streaming, start printing/wave recording too if needed."""
         newest_df = rtc.start_streaming(self.conn, self.repl)
 
-        print('starting streaming with arguments', self.cla.wav, self.cla.print)
+#        print('starting streaming with arguments', self.settings["waveFile"], self.cla.print)
         timestring = time.strftime('%Y%m%d-%H.%M.%S')
-        if self.cla.wav and not block_wav:
-            self.wave_name = self.output_prefix(self.cla.wavdir) + timestring+'.wav'
+
+        if settings.outputWave:
+            self.wave_name = self.output_prefix(settings.waveOutputDir) + timestring +'.wav'
             # get the latest audio sample number to this value:
             self.repl.wave_sampnum_deque = wr.start_sound_recording(self.wave_name) # give the wave sample id deque to the client
 
-        if self.cla.print and not block_print:
-            self.tsv_name = self.output_prefix(self.cla.printdir) + timestring + '.tsv'
+        if settings.outputReceivedData:
+            self.tsv_name = self.output_prefix(settings.receivedDataOutputDir + timestring + '.tsv')
             print('tsv goes here:', self.tsv_name)
             self.repl.starting_timestamp=None
             self.repl.print_fo = open(self.tsv_name, 'w')  # open the print file in stream-reader
@@ -220,7 +229,7 @@ class GameServer(socketserver.UDPServer):
         return newest_x
 
     def shutdown_server_threads(self):
-        """Shut down this particular socketserver, 
+        """Shut down this particular socketserver,
         as well as the conn and replies connections from rtclient,
         and the request handler if running in a thread.
         """
@@ -233,26 +242,16 @@ class GameServer(socketserver.UDPServer):
 
         self.shutdown()
 
-
 # create the request handler
 class MyUDPHandler(socketserver.BaseRequestHandler):
     """
     Python standard UDP socket server. UDP used because  of speed reasons.
     """
-    tsv_name = None
-    wave_name = None
+
+    # tsv_name = None
+    # wave_name = None
     recording = wr.recording
     stop_recording = wr.stop_recording
-    json_transmission = pps.transmit_json_to_cpp
-
-    def json_transmit(self, dataframe):
-        """Pack this dataframe as JSON and send it to the C++ server"""
-        jpacket = JSONBuilder.pack_wrapper(dataframe,
-                                           self.server.tongue_model.get_vertex_indices(),
-                                           self.server.tongue_model.get_tongue_coil_indices())
-        print('Sending to ', self.server.tongue_model.cpp_address)
-        print(self.socket)
-        self.socket.sendto(bytes(jpacket, encoding='ascii'), self.server.tongue_model.cpp_address)
 
     def handle(self):
         """Handle requests sent to the gameserver from Blender."""
@@ -262,7 +261,7 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
         self.socket = self.request[1]
 
         print("UDP Gameserver received the request:", self.data)
-        print('Headcorrection is', self.server.cla.headcorrect)
+        print('Headcorrection is', settings.useHeadCorrection)
         kill_server = False
 
         # catch the data to be sent
@@ -270,8 +269,6 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
         if self.data == b'SINGLE_DF':
             newest_df = rtc.get_one_df(self.server.conn, self.server.repl)
             data_to_send = newest_df  # returns unsmoothed data
-            if self.__class__.json_transmission:
-                self.json_transmit(data_to_send)
 
         elif self.data == b'START_STREAM':
             self.server.gs_start_streaming()
@@ -289,14 +286,10 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
             and average rotation values using the average_quaternions fn.
             """
             data_to_send = DataFrame(fromlist=newest_x)  # returns averaged data from the latest x dfs
-            if self.__class__.json_transmission:
-                self.json_transmit(data_to_send)
 
         elif self.data == b'STREAM_STOP':
             newest_x = self.server.gs_stop_streaming()
             data_to_send = DataFrame(fromlist=newest_x)  # returns averaged data from the latest x dfs
-            if self.__class__.json_transmission:
-                self.json_transmit(data_to_send)
 
         # qualitative data, no manipulation
         elif self.data == b'PARAMETERS':
@@ -320,27 +313,27 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
             print('choosing data', self.server.last_cam_trans, server.cam_pos)
             data_to_send = [self.server.last_cam_trans, self.server.cam_pos]
 
-        elif self.data == b'JSON_ON':
-            self.__class__.json_transmission = True
+        elif self.data == b'SET_MODEL_VERTEX_INDICES':
+            self.server.externalFittingServer.set_model_vertex_indices()
+            data_to_send = b'SET MODEL VERTEX INDICES.'
 
-        elif self.data == b'JSON_OFF':
-            self.__class__.json_transmission = False
-
-        elif self.data.startswith(b'VERTEX_INDICES:'):
-            self.server.tongue_model.parse_vertex_message(self.data)
-            data_to_send = b'MESH VERTIEX INDICES RECEIVED AND STORED.'
+        elif self.data == b'RESET':
+            self.server.externalFittingServer.reset()
 
         else:
             data_to_send = b'NO DATA REQUESTED.'
 
         # head-correct the data to be sent
-        if type(data_to_send) == DataFrame and self.server.cla.headcorrect:
+        if type(data_to_send) == DataFrame and settings.useHeadCorrection:
             print('performing head-correction on this dataframe with', self.server.headcorrection.biteplane)
             print('performing head correction on this df', data_to_send)
             data_to_send, self.server.last_cam_trans, self.server.cam_pos = dm.head_corr_bp_correct(data_to_send,
-             self.server.headcorrection.biteplane,
-            self.server.headcorrection.refplane)
+             self.server.headcorrection.biteplane, self.server.headcorrection.refplane)
             print('Applying head-correction')
+
+        # fit data frame in external fitting server
+        if type(data_to_send) == DataFrame:
+            self.server.externalServer.fit(data_to_send)
 
         # serialise the data to be sent
         pd = pickle.dumps(data_to_send)
@@ -405,4 +398,3 @@ if __name__ == "__main__":
 
     # default CL arguments outside of main in case this is not specified
     main(argv=sys.argv)
-
