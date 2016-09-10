@@ -11,6 +11,7 @@ from .gameserver import GameServer, MyUDPHandler
 from .GameServerSettings import GameServerSettings
 from .SettingsReader import SettingsReader
 from .SettingsWriter import SettingsWriter
+from .OverrideSettings import OverrideSettings
 from . import rtclient as rtc
 from ...ema_shared import properties as pps
 
@@ -62,6 +63,8 @@ def on_closing(r, a):
 class Application(tk.Frame):
     """ GUI class for the gameserver application. """
     def __init__(self, master=None, servobj=None):
+
+        OverrideSettings.save()
         tk.Frame.__init__(self, master)
         self.root = master
 

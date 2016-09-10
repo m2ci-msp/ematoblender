@@ -6,6 +6,7 @@ import json
 from .GameServerSettings import GameServerSettings
 from .ExternalFittingServerSettings import ExternalFittingServerSettings
 from .CoilSettings import CoilSettings
+from .OverrideSettings import OverrideSettings
 
 class SettingsReader:
 
@@ -17,6 +18,7 @@ class SettingsReader:
         __class__.set_game_server_settings(settingsDictionary["gameServerSettings"])
         __class__.set_external_fitting_server_settings(settingsDictionary["externalFittingServerSettings"])
         __class__.set_coil_settings(settingsDictionary["coilSettings"])
+        __class__.set_override_settings(settingsDictionary["overrideSettings"])
 
     def set_game_server_settings(settings):
 
@@ -50,3 +52,9 @@ class SettingsReader:
 
         CoilSettings.coils = settings
         CoilSettings.save()
+
+    def set_override_settings(settings):
+
+        OverrideSettings.overrides = settings
+        OverrideSettings.save()
+            
