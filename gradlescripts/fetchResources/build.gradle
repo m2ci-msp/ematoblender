@@ -40,6 +40,7 @@ task fetchExamples() {
       src( [
              "https://github.com/m2ci-msp/ematoblender-example-data/releases/download/v0.1/VP08_bitePlane.json",
              "https://github.com/m2ci-msp/ematoblender-example-data/releases/download/v0.1/VP08_nordwind.json",
+             "https://github.com/m2ci-msp/ematoblender-example-data/releases/download/v0.1/VP08_nordwind.wav",
              "https://github.com/m2ci-msp/ematoblender-example-data/releases/download/v0.1/VP08_referencePoint.json"
            ])
 
