@@ -3,8 +3,8 @@
 Watch your tongue! Ematoblender is a Python package intended to be run in Blender, and utilises either a static data file or a live connection to the NDI Wave EMA machine to visualise articulographic data.
 It's currently supporting watching the coil objects move from the WAVE or static data.
 
-For version 1.0 the system has the ability to do live-control of a human-like face in Blender.
-For version 1.1 the system can also include a multilinear tongue model. More details to come.
+Version 1.0 has has the ability to do live-control of a human-like face in Blender. This version formed the basis of the Read My Points paper presented at SIGMORPHON.
+In version 1.1 (as presented at Interspeech 2016) the system also includes a multilinear tongue model. This system has a more complex architecture but significantly improved graphics.
 
 ## License
 
@@ -44,7 +44,7 @@ how to rectify this. Therefore don't be shy about reading the terminal output if
 
 ### External resources
 
-Running ```./gradlew fetchResources`` will download
+Running ``./gradlew fetchResources`` will download
 
 - a Blender scene containing the avatar from [https://github.com/m2ci-msp/ematoblender-model](https://github.com/m2ci-msp/ematoblender-model),
 - example EMA data from [https://github.com/m2ci-msp/ematoblender-example-data](https://github.com/m2ci-msp/ematoblender-example-data),
@@ -65,34 +65,26 @@ To execute these, double-click on the icon, or if there is a problem, right-clic
 These scripts use gradle to launch the dataserver and gameserver with GUIs enabled.
 
 All that is left is to run Blender (the package's menu should be loaded on startup) and set up your scene,
-as described below.
-
-Alternatively you can run these scripts manually for more control:
-This involves:
-
-1. Running the static server ``python ematoblender/dataserver.py`` (various CL options)
-1. Running the game server ``python ematoblender/gameserver.py`` (various CL options)
-
-1. If you want to eschew the Blender options, you can load the initial coil positions using the ``run_bpy.py`` script
-in a blend file saved in the repository's root directory. Else just use the menu in Blender.
+as described below. Then press ``P`` over the viewport to run the visualisation.
 
 ## Configuring Blender
 
 You can find the Ematoblender options on the Properties panel (press ``N`` and scroll to the end.
-To configure a scene that will stream data that moves a face I recommend you open the blend file in ``ematoblender/DEMO_MODEL.blend``
+To configure a scene that will stream data that moves a face I recommend you open the blend file in ``ematoblender/DEMO_MODEL.blend`` 
+for version 1.0 or the appropriate new head model in the other repositories listed above. 
 You will need to manually adjust the position of the head around your data, and re-parent any wayward coil objects.
 
 Alternatively you can construct a scene from scratch using the Ematoblender options.
 1. Load the gamemaster (this handles the logic)
-2. Load the game assets (this loads menus etc) **TODO**
-4. Load the face mesh (pre-rigged) ** TODO**
-5. Load the tongue model **TODO**
-6. Load the palate model **TODO **
+2. Load the game assets (this loads menus etc)
+4. Load the face mesh (pre-rigged)
+5. Load the tongue model
+6. Load the palate model
 
 3. Request some head-corrected data from the gameserver (this will give a rough estimate of where the assets need to be
-placed to be controlled by the data. **TODO**
+placed to be controlled by the data.
 8. Ensure that you have performed a biteplate recording for head-correction
-7. Adapt the palate model by performing a palate trace. **TODO**
+7. Adapt the palate model by performing a palate trace.
 
 9. Save the blend file.
 
@@ -101,7 +93,8 @@ placed to be controlled by the data. **TODO**
 
 ## Architecture
 
-It has a three-part architecture:
+It has a three-part architecture.
+These scripts are run by gradle, but if you would like to utilise only one component they are as follows: 
 
 1. The real-time server as either:
 
@@ -136,9 +129,9 @@ It has a three-part architecture:
     2. Create the basic objects and logic bricks to make the game engine work.
     3. Append external assets like rigged lips/tongues/palate traces etc, and game menus etc.
     4. Initialise the game server and get one frame of locational information to set an initial position for the coils.
-    5. [ONGOING] Scale the assets so they fit the initial data shape and link them to the game's objects.
+    5. Scale the assets so they fit the initial data shape and link them to the game's objects.
 
-    Also, there is [ONGOING] work to fit these functions into an add-on, so that instead of running the script, this can be done at the click of a button.
+    Also, there is ongoing work to fit these functions into an add-on, so that instead of running the script, this can be done at the click of a button.
 
     &nbsp;
 
@@ -146,35 +139,17 @@ It has a three-part architecture:
     1. The ``scripts.ema_shared.properties.py`` file contains various constants that are accessed from either (or both!) of the Blender game loop or the Blender scene construction routines.
     These generally refer to the names and locations of assets (these names are very important as they the main way of accessing objects in Blender), or of external files that need to be imported/accessed.
     2. The properties file needs access to a JSON file with information about which sensor lies where on the subject.
-     The standard file is ``scripts.ema_shared.sensor_info.json`` but you can change this reference if needed (keep the structure the same though!).
+     There is ongoing work to move this into a browser-based GUI.
       These help determine which sensors should be updated every tick, or used for head-correction etc.
-
-## Directory Structure
-
-The directory structure should be fairly self-explanatory:
-
-  * The root directory holds most of the gradle files and directories used to run the package.
-  * The package content is within the ``ematoblender`` subdirectory.
-
- Within the ``ematoblender/scripts`` directory, the ``startup`` folder holds scripts automatically launched by Blender.
- Other modules are imported as normal. They can be basically separated as follows:
-
- 1.  ``ema_io`` handles the real-time server and gameserver's behaviour, ie all of the behaviour that deals with decoding different EMA data formats, representing them as ``DataFrame`` or ``Component`` objects, (un)packing them to/from binary, responding to commands like a WAVE would.
- 2.  ``ema_shared`` handles the Blender-wide information, like properties, sensor information, persistent Blender objects, as well as game-server-level bevaviour like head-correction or smoothing.
- 3.  ``ema_bge`` contains the main game loop (``bge_emareadin``) and other functionality broken out into theme-based modules.
- 4.  ``ema_bpy`` contains the main building loop (``bpy_emareadin``) and other functionality broken out into theme-based modules.
-
-The assets to be imported should (but don't have to) be in the sub-folder ``./blender_objects``, and unless the default directory is changed, ``.tsv`` outputs of the streamed data are written into the ``./output`` folder with their timestamp.
 
 ## Motivation
 
-This project is for a Masters Thesis, aiming to create a real-time 3D visualisation of EMA data.
-It is envisioned that the final project will support a symbolic representation of the tongue and lips, with future extensions adding more passive articulators and making the behaviour appear more natural.
+This project was originally a Masters Thesis, aiming to create a real-time 3D visualisation of EMA data using Blender's Inverse Kinematics functionality.
 The architecture allows for manipulations (such as delays) at the game server level that would be ideal for researching different conditions of visual feedback by manipulating the live or static data before it is visualised.
-Additionally, the customisability of Blender allows for additions into the game-scene such as targets etc.
+With the recent addition of the multilinear tongue model we are striving for improved realism in the graphics.
 
 
-## Installation
+## More Installation Tips
 
 Install Blender from the [Blender website](http://www.blender.org/download/). If you use Windows (which is necessary for interfacing with the NDI WAVE), ensure you have the 32-bit installation.
 The application was developed on Blender version 2.74/5.
@@ -184,10 +159,7 @@ Blender comes with an installation of Python, but you will require an external i
 In ./scripts/ema_shared/properties you should set the variable ``abspath_to_repo`` with the location of the downloaded repository. This helps Blender find the pre-made assets.
 At the moment you can build a .blend file on your own, but a pre-built scene are being finalised and will be available online soon!
 
-## Tests
-
-Diagnostic tests still to come. In the meantime, running the server externally with some data and ``run_bpy`` within Blender should result in a working demo.
 
 ## Contributors
 
-Kristy James (Saarland University, University of Groningen)
+Kristy James (Saarland University, University of Groningen), Alexander Hewer (Saarland University, DFKI Language Technology Lab)
