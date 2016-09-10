@@ -5,6 +5,10 @@ import aud
 import time
 import random
 import math
+import json
+import os
+import bpy
+
 from .. import blender_shared_objects as bsh
 from ...ema_shared import properties as pps
 
@@ -30,9 +34,18 @@ def sound_setup(*filepath):
     sound_actuator = bge.logic.getCurrentController().owner.actuators['SoundAct']
     #print(sound_actuator, sound_actuator.__dir__())
 
+    # get override information
+    userPref = bpy.utils.script_path_pref()
+    overridesFile = os.path.join(userPref, "ema_shared", "overrides.json")
+    fileStream = open(overridesFile, "r")
+    overrides = json.load(fileStream)
+    fileStream.close()
+
+    audioOverride = overrides["audio"]
+
     # prepare the sound factory
-    if pps.sound_override is not None and os.path.isfile(pps.sound_override):
-        soundpath = pps.sound_override
+    if audioOverride["active"] == True:
+        soundpath = audioOverride["path"]
         print('USING MANUAL SOUND OVERRIDE:', soundpath)
     else:
         soundpath = bsh.soundpath

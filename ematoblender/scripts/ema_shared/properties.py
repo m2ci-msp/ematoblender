@@ -106,7 +106,7 @@ UL_empty_name = 'UL_Empty'
 LL_empty_name = 'LL_Empty'
 
 # show debugging lines
-show_debugging_lines = True
+show_debugging_lines = False
 
 
 # choose to send things to wave, like requesting frequency of streaming etc
@@ -122,7 +122,7 @@ tongue_armature_name = 'MSArmature'
 tongue_intervals = 9
 
 # cameras to give viewports to
-display_cameras = ['FCamera', 'MSCamera']  # missing CircularCamera #  ]#] # TODO: DrawLine does not respond to this, so cannot use debuggin with 2 cams.
+display_cameras = ['MSCamera', 'CircularCamera'] # 'FCamera', 'MSCamera']  # missing CircularCamera #  ]#] # TODO: DrawLine does not respond to this, so cannot use debuggin with 2 cams.
 
 development_mode = True
 

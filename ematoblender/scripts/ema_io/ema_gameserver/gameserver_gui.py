@@ -11,6 +11,7 @@ from .gameserver import GameServer, MyUDPHandler
 from .GameServerSettings import GameServerSettings
 from .SettingsReader import SettingsReader
 from .SettingsWriter import SettingsWriter
+from .OverrideSettings import OverrideSettings
 from . import rtclient as rtc
 from ...ema_shared import properties as pps
 
@@ -62,6 +63,8 @@ def on_closing(r, a):
 class Application(tk.Frame):
     """ GUI class for the gameserver application. """
     def __init__(self, master=None, servobj=None):
+
+        OverrideSettings.save()
         tk.Frame.__init__(self, master)
         self.root = master
 
@@ -281,19 +284,18 @@ and passes them into Blender (or any other application that requests them).'''
 
         def record_biteplane():
             self.biteplane_live_status.set('Button pressed')
-            self.biteplane_live_status_lbl.update()
+
             try:
                 secs = int(self.biteplane_secentry.get())
             except ValueError:
                 self.biteplane_secentry.text = ''
                 self.biteplane_live_status.set('INVALID SECONDS')
-                self.biteplane_live_status_lbl.update()
+
             else:
                 self.biteplane_live_status.set('RECORDING')
-                self.biteplane_live_status_lbl.update()
 
                 self.servobj.headcorrection.load_live(self.servobj, seconds=secs)
-
+                
                 GameServerSettings.bitePlane["origin"] = tuple(self.servobj.headcorrection.biteplane.origin)
                 GameServerSettings.bitePlane["xAxis"] = tuple(self.servobj.headcorrection.biteplane.x_axis)
                 GameServerSettings.bitePlane["yAxis"] = tuple(self.servobj.headcorrection.biteplane.y_axis)
@@ -320,8 +322,6 @@ and passes them into Blender (or any other application that requests them).'''
 
         def record_refpoint():
             self.ref_live_status.set('RECORDING')
-            self.ref_live_status_lbl.update()
-
             secs = int(self.ref_secentry.get())
             self.servobj.referencePointBuilder.load_live(self.servobj, seconds=secs)
             GameServerSettings.bitePlane["shiftedOrigin"] = tuple(self.servobj.headcorrection.biteplane.shiftedOrigin)
