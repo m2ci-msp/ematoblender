@@ -6,6 +6,9 @@ It's currently supporting watching the coil objects move from the WAVE or static
 Version 1.0 has has the ability to do live-control of a human-like face in Blender. This version formed the basis of the Read My Points paper presented at SIGMORPHON.
 In version 1.1 (as presented at Interspeech 2016) the system also includes a multilinear tongue model. This system has a more complex architecture but significantly improved graphics.
 
+*Please note*: This version is still missing the palate reconstruction feature described in the Interspeech paper.
+It will be added in a future release.
+
 ## License
 
 Ematoblender itself is distributed under the terms of the GNU General Public License version 3.
